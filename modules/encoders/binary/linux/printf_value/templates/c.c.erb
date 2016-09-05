@@ -1,0 +1,6 @@
+#include <stdio.h>
+int main(){
+<% @strings_to_leak.each do |leak| -%>
+      printf("<%= leak %>");
+<% end -%>
+}
