@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<system>
+		<system_name>example_server</system_name>
+		<base platform="linux"/>
+
+		<!--<vulnerability>-->
+			<!--<input into="strings_to_leak" from="strings_encoded">-->
+				<!--<encoder module_path=".*rot13">-->
+					<!--<input s="strings_to_encode">-->
+						<!--<encoder module_path=".*rot13">-->
+							<!--<input>-->
+								<!--<value>Hello this is a test...</value>-->
+							<!--</input>-->
+						<!--</encoder>-->
+					<!--</input>-->
+				<!--</encoder>-->
+			<!--</input>-->
+		<!--</vulnerability>-->
+
+		<!--<generator module_path=".*hello_world"/ write_to="strings_to_leak">-->
+		<!--<vulnerability read_fact="strings_to_leak"/>-->
+
+		<!--Each vuln has a fact myvuln_strings_to_leak-->
+		<!--write_results_to = myvuln_strings_to_leak-->
+
+		<vulnerability />
+
+		<vulnerability read_fact="strings_to_leak">
+			<input into="strings_to_leak">
+				<generator/>
+			</input>
+		</vulnerability>
+
+		<vulnerability read_fact="strings_to_leak">
+			<input into="strings_to_leak">
+				<encoder>
+					<input into="strings_to_encode">
+							<generator/>
+					</input>
+				</encoder>
+			</input>
+		</vulnerability>
+
+
+		<network type="private_network" range="dhcp"/>
+	</system>
+
+</scenario>
