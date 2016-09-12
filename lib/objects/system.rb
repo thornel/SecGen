@@ -99,31 +99,26 @@ class System
       selected.write_output_variable = write_outputs_to
       selected.write_to_module_with_id = write_to_module_with_id
       selected.unique_id = unique_id
+
+      # feed through the input from any previous module's output
+      previously_selected_modules.each do |previous_module|
+        if previous_module.write_to_module_with_id == unique_id && previous_module.write_output_variable
+          selected.received_inputs[previous_module.write_output_variable] = previous_module.output
+        end
+      end
+
       # pre-calculate any secgen_local/local.rb outputs
       if selected.local_calc_file
         Print.verbose 'Module includes local calculation of output. Processing...'
-
-        # feed through the input from any previous module's output
-        # TODO TODO -- out of this if statement?
-        previously_selected_modules.each do |previous_module|
-          Print.err "#{previous_module.write_to_module_with_id} vs #{unique_id}"
-          if previous_module.write_to_module_with_id == unique_id
-            Print.err "FOUND!!!!!!!!"
-            Print.err "receiving #{previous_module.write_output_variable} - #{previous_module.output}"
-            selected.received_inputs[previous_module.write_output_variable] = previous_module.output
-          end
-        end
-
         # build arguments
         args_string = ''
         selected.received_inputs.each do |input_key, input_value|
           args_string += "'--#{input_key}=#{input_value}'"
         end
 
-        Print.err( "#{selected.local_calc_file} #{args_string}" )
-        selected.output = `#{selected.local_calc_file} #{args_string}`.chomp
+        Print.debug "#{selected.local_calc_file} #{args_string}"
+        selected.output = `ruby #{selected.local_calc_file} #{args_string}`.chomp
         Print.verbose "Output: #{selected.output}"
-
       end
 
       # add any modules that the selected module requires
@@ -135,7 +130,6 @@ class System
     Print.std "Module added: #{selected.printable_name}"
 
     selected_modules
-
   end
 
   def check_conflicts_with_list(module_for_possible_exclusion, selected_modules)
