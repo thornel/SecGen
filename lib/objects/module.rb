@@ -30,7 +30,7 @@ class Module
     self.conflicts = []
     self.requires = []
     self.attributes = {}
-    self.output = 'dynamic'
+    self.output = ''
     self.write_to_module_with_id = write_output_variable = ''
     self.received_inputs = {}
 

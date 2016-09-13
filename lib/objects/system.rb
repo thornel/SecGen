@@ -30,7 +30,7 @@ class System
 
       # for each module specified in the scenario
       module_selectors.each do |module_filter|
-        selected_modules += select_modules(module_filter.module_type, module_filter.attributes, available_modules, selected_modules, module_filter.unique_id, module_filter.write_output_variable, module_filter.write_to_module_with_id)
+        selected_modules += select_modules(module_filter.module_type, module_filter.attributes, available_modules, selected_modules, module_filter.unique_id, module_filter.write_output_variable, module_filter.write_to_module_with_id, module_filter.received_inputs)
       end
       selected_modules
 
@@ -62,7 +62,7 @@ class System
   # returns a list containing a module (plus dependencies recursively) of the module type with the required attributes
   # modules are selected from the list of available modules and will be checked against previously selected modules for conflicts
   # raises an exception when unable to resolve and the retry limit has not been reached
-  def select_modules(module_type, required_attributes, available_modules, previously_selected_modules, unique_id, write_outputs_to, write_to_module_with_id)
+  def select_modules(module_type, required_attributes, available_modules, previously_selected_modules, unique_id, write_outputs_to, write_to_module_with_id, received_inputs)
     # select based on selected type, access, cve...
 
     search_list = available_modules.clone
@@ -99,6 +99,8 @@ class System
       selected.write_output_variable = write_outputs_to
       selected.write_to_module_with_id = write_to_module_with_id
       selected.unique_id = unique_id
+      # propagate any literal values passed in via the scenario
+      selected.received_inputs = received_inputs
 
       # feed through the input from any previous module's output
       previously_selected_modules.each do |previous_module|
@@ -174,7 +176,7 @@ class System
         Print.verbose "Dependency satisfied by previously selected module: #{existing.printable_name}"
       else
         Print.verbose 'Adding required modules...'
-        modules_to_add += select_modules('any', required, available_modules, modules_to_add + selected_modules, '', '', '')
+        modules_to_add += select_modules('any', required, available_modules, modules_to_add + selected_modules, '', '', '', '')
       end
     end
     modules_to_add

@@ -8,33 +8,27 @@
 		<system_name>example_server</system_name>
 		<base platform="linux"/>
 
-		<!--<vulnerability>-->
-			<!--<input into="strings_to_leak" from="strings_encoded">-->
-				<!--<encoder module_path=".*rot13">-->
-					<!--<input s="strings_to_encode">-->
-						<!--<encoder module_path=".*rot13">-->
-							<!--<input>-->
-								<!--<value>Hello this is a test...</value>-->
-							<!--</input>-->
-						<!--</encoder>-->
-					<!--</input>-->
-				<!--</encoder>-->
+		<vulnerability />
+
+		<!--<vulnerability read_fact="strings_to_leak">-->
+			<!--<input into="strings_to_leak">-->
+				<!--<value>leak this!</value>-->
 			<!--</input>-->
 		<!--</vulnerability>-->
 
-		<!--<generator module_path=".*hello_world"/ write_to="strings_to_leak">-->
-		<!--<vulnerability read_fact="strings_to_leak"/>-->
+		<!--<vulnerability read_fact="strings_to_leak">-->
+		<!--<input into="strings_to_leak">-->
+		<!--<generator/>-->
+		<!--</input>-->
+		<!--</vulnerability>-->
 
-		<!--Each vuln has a fact myvuln_strings_to_leak-->
-		<!--write_results_to = myvuln_strings_to_leak-->
-
-		<vulnerability />
-
-		<vulnerability read_fact="strings_to_leak">
-			<input into="strings_to_leak">
-				<generator/>
-			</input>
-		</vulnerability>
+		<!-- TODO DOESN'T YET WORK TO SEND MULTIPLE VALUES-->
+		<!--<vulnerability read_fact="strings_to_leak">-->
+			<!--<input into="strings_to_leak">-->
+				<!--<value>leak this!</value>-->
+				<!--<value>and this!</value>-->
+			<!--</input>-->
+		<!--</vulnerability>-->
 
 		<vulnerability read_fact="strings_to_leak">
 			<input into="strings_to_leak">
