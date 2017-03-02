@@ -19,8 +19,8 @@
   <default_input into="read_input_code">
     <encoder type="string_selector">
         <input into="strings_to_encode">
-            <value>gets(&input);</value>
-            <value>scanf("%1000[^\n]", input);</value>
+            <value>char input[1000];\ngets(input);</value>
+            <value>char input[1000];\nscanf("%s", input);</value>
         </input>
     </encoder>
   </default_input>

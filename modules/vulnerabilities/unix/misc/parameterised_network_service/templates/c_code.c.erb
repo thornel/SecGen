@@ -4,12 +4,31 @@
    $read_input_code = $secgen_parameters['read_input_code'].first
 %>
 
- #include <stdio.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include "authentication_helper.c"
    
  int main()
  {
     printf("Hello, world!\n");
     
     <%= $read_input_code %>
+	
+	bool authenticated = login();
+	if(authenticated)
+    {
+       	// Now the user is authenticated
+		printf("You are now logged in.");
+    }
+	else
+	{
+		printf("Unable to log you in.");
+	}
+
     return 0;
  }
+
+void secretFunction()
+{
+    printf("This is a secret funtion!\n");
+}
