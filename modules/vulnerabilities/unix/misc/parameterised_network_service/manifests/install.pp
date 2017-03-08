@@ -1,4 +1,9 @@
 class parameterised_network_service::install {
+
+	$json_inputs = base64('decode', $::base64_inputs)
+	$secgen_parameters = parsejson($json_inputs)
+	$read_input_code = $secgen_parameters['read_input_code']
+
 	# Create new directory to clean up	
 	file { '/tmp/code':
 		ensure => 'directory',
