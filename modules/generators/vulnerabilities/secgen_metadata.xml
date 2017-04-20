@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Vulnerabilities Generator</name>
+  <author>Leah Thorne</author>
+  <module_license>MIT</module_license>
+  <description></description>
+
+  <type>vulnerabilities</type>
+  <type>string_generator</type>
+  <platform>linux</platform>
+
+  <read_fact>max_score</read_fact>
+  <read_fact>ctf_style</read_fact>
+
+  <default_input into="max_score">
+	<value>20</value>
+  </default>
+
+  <default_input into="ctf_style">
+	<value>false</value>
+  </default>
+
+  <output_type>vulnerabilities</output_type>
+</generator>
