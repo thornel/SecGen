@@ -2,7 +2,7 @@ class parameterised_network_service::install {
 
 	$json_inputs = base64('decode', $::base64_inputs)
 	$secgen_parameters = parsejson($json_inputs)
-	$read_input_code = $secgen_parameters['read_input_code']
+	$code = parsejson($secgen_parameters['code'][0])
 
 	# Create new directory to clean up	
 	file { '/tmp/code':
@@ -18,6 +18,11 @@ class parameterised_network_service::install {
 	file { "/tmp/code/authentication_helper.c":
 		ensure => file,
 		content => template('parameterised_network_service/authentication_helper.c')
+	}
+
+	file { "/tmp/code/notes.c":
+		ensure => file,
+		content => template('parameterised_network_service/notes.c')
 	}
 
 	# Compile the code on the VM

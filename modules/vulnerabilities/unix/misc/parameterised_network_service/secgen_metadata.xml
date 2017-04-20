@@ -13,16 +13,11 @@
   <access>remote</access>
   <platform>linux</platform>
 
-  <read_fact>read_input_code</read_fact>
+  <read_fact>code</read_fact>  
 
-
-  <default_input into="read_input_code">
-    <encoder type="string_selector">
-        <input into="strings_to_encode">
-            <value>char input[1000];\ngets(input);</value>
-            <value>char input[1000];\nscanf("%s", input);</value>
-        </input>
-    </encoder>
+  <default_input into="code">
+    <generator type="vulnerabilities" >	
+	</generator>	
   </default_input>
 
   <conflict>
