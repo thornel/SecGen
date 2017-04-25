@@ -17,11 +17,11 @@
 
   <default_input into="max_score">
 	<value>20</value>
-  </default>
+  </default_input>
 
   <default_input into="ctf_style">
 	<value>false</value>
-  </default>
+  </default_input>
 
   <output_type>vulnerabilities</output_type>
 </generator>

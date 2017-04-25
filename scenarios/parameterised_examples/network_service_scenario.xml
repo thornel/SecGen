@@ -13,7 +13,7 @@
 			<input into="code">
 				<generator type="vulnerabilities" >	
 				  	<input into="max_score">
-					    <value>30</value>
+					    <value>10</value>
 					</input>
 					<input into="ctf_style">
 					    <value>true</value>
