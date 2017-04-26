@@ -8,12 +8,14 @@ require 'json'
 class VulnerabilitiesGenerator < StringGenerator
 	attr_accessor :max_score
 	attr_accessor :ctf_style
+	attr_accessor :helper
 
 	def initialize
 		super
 		self.module_name = 'Vulnerabilities Generator / Builder'
 		self.max_score = ''
 		self.ctf_style = ''
+		self.helper = VulnerabilitiesHelper.new
 	end
 
 	#Initialises the options that are passed in from the .xml using the StringGenerator
@@ -34,12 +36,12 @@ class VulnerabilitiesGenerator < StringGenerator
 	end
 
 	def generate
-		self.max_score = self.max_score.to_i
+		max_score = self.max_score.to_i
 		current_total = 0
 		flag_position = '$$ctf_flag'
+		helper = self.helper
 
 		#Gets an array of all the available vulnerabilities
-		helper = Vulnerabilities_Helper.new
 		vulnerabilities = helper.get_vulnerabilities(flag_position)
 
 		#Initialises array that will be used for the output - it will contain all the code points and the code that has been selected for that point (secure or insecure)
@@ -47,20 +49,22 @@ class VulnerabilitiesGenerator < StringGenerator
 		Print.local_verbose 'Vulnerabilities added:'
 
 		#Loops while there are still enough points left to populate and there are still vulnerabilities left to use
-		while current_total < self.max_score && vulnerabilities.length > 0
+		while current_total < max_score && vulnerabilities.length > 0
 
 			#Gets all the vulnerabilities available to choose from
-			available_vulnerabilities = helper.get_available_vulnerabilities(vulnerabilities, self.max_score, current_total)
+			available_vulnerabilities = helper.get_available_vulnerabilities(vulnerabilities, max_score, current_total)
 
 			if available_vulnerabilities.length > 0
 				#Get randomly selected vulnerability
-				random_vulnerability = helper.randomly_select_vulnerability(available_vulnerabilities, flag_position, ctf_style)
+				random_vulnerability = helper.randomly_select_vulnerability(available_vulnerabilities, flag_position, self.ctf_style)
 
 				#Adds vulnerability to the code array
 				code[random_vulnerability.id] = random_vulnerability.insecure_code
 
 				#Deletes the vulnerability from the array as it's already been used and added to the code array
-				vulnerability_index = vulnerabilities.index{ |v| v.id ==  random_vulnerability.id }
+				vulnerability_index = vulnerabilities.index{
+						|v| v.id ==  random_vulnerability.id
+				}
 				vulnerabilities.delete_at(vulnerability_index)
 
 				#Adds the points for that vulnerability to the current total

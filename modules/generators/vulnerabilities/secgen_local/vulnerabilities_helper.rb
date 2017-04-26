@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
-class Vulnerabilities_Helper
+require './modules/generators/vulnerabilities/secgen_local/vulnerabilities_helper'
+class VulnerabilitiesHelper
 
   def get_vulnerabilities(flag_position)
     #Creates an array of all the available vulnerabilities
@@ -15,19 +16,19 @@ class Vulnerabilities_Helper
     vulnerabilities.select { | v | v.points.to_i <= (max_score - current_total) }
   end
 
-  def randomly_select_vulnerability(available_vulnerabilities, flag_position, ctf_style)
+  def randomly_select_vulnerability(vulnerabilities, flag_position, ctf_style)
     #Picks a random number that'll be used to pick out a vulnerability from the array
-    i = Random.rand(0...available_vulnerabilities.length)
+    i = Random.rand(0...vulnerabilities.length)
 
     #Replaces the flag position in the insecure code with either the ctf_flag or nothing
     #And returns the randomly selected vulnerability
     if ctf_style == 'true'
-      available_vulnerabilities[i].insecure_code.sub flag_position, available_vulnerabilities[i].ctf_flag
+      vulnerabilities[i].insecure_code = vulnerabilities[i].insecure_code.sub flag_position, vulnerabilities[i].ctf_flag
     else
-      available_vulnerabilities[i].insecure_code.sub flag_position, ''
+      vulnerabilities[i].insecure_code = vulnerabilities[i].insecure_code.sub flag_position, ''
     end
 
-    return available_vulnerabilities[i]
+    return vulnerabilities[i]
   end
 
 end
