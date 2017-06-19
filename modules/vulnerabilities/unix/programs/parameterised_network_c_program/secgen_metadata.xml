@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+
+  <name>Random Parameterised Network Service</name>
+  <author>Leah Thorne</author>
+  <module_license>MIT</module_license>
+  <description>Parameterised network service filled with SecGen generated content -- including randomised code for inserting vulnerabilities.</description>
+
+  <type>service</type>
+  <privilege>user_rwx</privilege>
+  <access>remote</access>
+  <platform>linux</platform>
+
+  <read_fact>code</read_fact>  
+
+  <default_input into="code">
+    <generator type="vulnerabilities" >	
+	</generator>	
+  </default_input>
+
+  <conflict>
+    <type>service</type>
+  </conflict>
+
+</vulnerability>

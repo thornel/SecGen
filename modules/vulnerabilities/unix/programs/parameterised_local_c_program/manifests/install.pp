@@ -1,4 +1,4 @@
-class parameterised_network_service::install {
+class parameterised_local_c_program::install {
 
 	$json_inputs = base64('decode', $::base64_inputs)
 	$secgen_parameters = parsejson($json_inputs)
@@ -12,17 +12,27 @@ class parameterised_network_service::install {
 	# Copy the code to the VM
 	file { "/tmp/code/c_code.c":
 		ensure => file,
-		content => template('parameterised_network_service/c_code.c.erb')
+		content => template('parameterised_local_c_program/c_code.c.erb')
+	}
+
+	file { "/tmp/code/c_code_helper.c":
+		ensure => file,
+		content => template('parameterised_local_c_program/c_code_helper.c')
 	}
 	
 	file { "/tmp/code/authentication_helper.c":
 		ensure => file,
-		content => template('parameterised_network_service/authentication_helper.c')
+		content => template('parameterised_local_c_program/authentication_helper.c.erb')
 	}
 
 	file { "/tmp/code/notes.c":
 		ensure => file,
-		content => template('parameterised_network_service/notes.c')
+		content => template('parameterised_local_c_program/notes.c')
+	}
+
+	file { "/tmp/code/notes_helper.c":
+		ensure => file,
+		content => template('parameterised_local_c_program/notes_helper.c')
 	}
 
 	# Compile the code on the VM

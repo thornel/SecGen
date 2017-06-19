@@ -4,16 +4,16 @@
 	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	   xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
 
-	<!-- an example system hosting a parameterised randomly generated website -->
+	<!-- an example system hosting a parameterised randomly generated network C program -->
 	<system>
 		<system_name>web_server</system_name>
 		<base platform="linux"/>
 
-		<vulnerability module_path=".*parameterised_network_service">
+		<vulnerability module_path=".*parameterised_network_c_program">
 			<input into="code">
 				<generator type="vulnerabilities" >	
 				  	<input into="max_score">
-					    <value>10</value>
+					    <value>100</value>
 					</input>
 					<input into="ctf_style">
 					    <value>true</value>

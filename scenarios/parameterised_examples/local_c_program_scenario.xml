@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<!-- an example system hosting a parameterised randomly generated local C program -->
+	<system>
+		<system_name>web_server</system_name>
+		<base platform="linux"/>
+
+		<vulnerability module_path=".*parameterised_local_c_program">
+			<input into="code">
+				<generator type="vulnerabilities" >	
+				  	<input into="max_score">
+					    <value>100</value>
+					</input>
+					<input into="ctf_style">
+					    <value>true</value>
+					</input>	
+				</generator>	
+		  	</input>            		
+    	</vulnerability>
+                
+		<network type="private_network" range="dhcp"/>
+	</system>
+
+</scenario>

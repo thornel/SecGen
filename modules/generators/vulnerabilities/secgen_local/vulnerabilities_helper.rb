@@ -6,7 +6,7 @@ class VulnerabilitiesHelper
     #Creates an array of all the available vulnerabilities
     #flag_position constant is placed in the insecure code to be replaced later with the flag option or nothing later for ctf_style
     Array[
-        Vulnerability.new('password_get', '10', 'char input[1000];gets(input);', 'char input[15];scanf("%s", input);' + flag_position, 'printf("Cat Flag");'),
+        Vulnerability.new('password_get', '10', 'char password[1000];gets(password);', 'char password[15];scanf("%s", password);' + flag_position, 'printf("Cat Flag");'),
         Vulnerability.new('secret_function', '10', '', 'void secretFunction(){printf("This is a secret funtion!\n");' + flag_position + '}', 'printf("Dog Flag");')
     ]
   end

@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include "authentication_helper.c"
+#include "notes.c"
+<% require 'json'
+	$secret_function = @code["secret_function"];
+%>
+int main()
+{
+    printf("Hello, world!\n");
+
+    bool authenticated = login();
+    if(authenticated)
+    {
+        // Now the user is authenticated
+        printf("You are now logged in.\n");
+        printf("Enter help for what commands you can use.\n");
+
+        bool exit;
+        while(exit == false) {
+            char command[15];
+            scanf("%s", command, 15);
+
+            if (strncmp(command, "help", 4) == 0) {
+                printf("Here are the list of commands you can use:\n");
+                printf("list - list all the created notes\n");
+                printf("view - to view a specific file\n");
+            } else if (strncmp(command, "list", 4) == 0) {
+                list_all_notes();
+            } else if (strncmp(command, "view", 4) == 0) {
+                view_note();
+            } else if (strncmp(command, "create", 6) == 0) {
+                create_note();
+            } else if (strcmp(command, "edit") == 0) {
+                edit_note();
+            } else if (strcmp(command, "rename") == 0) {
+                rename_note();
+            } else if (strcmp(command, "delete") == 0) {
+                delete_note();
+            } else if (strcmp(command, "exit") == 0) {
+                exit = true;
+            } else {
+                printf("Command unrecognised.");
+            }
+
+            printf("\n");
+            printf("Command exited\n.");
+            printf("-----------------------------------------------\n");
+        }
+    }
+    else
+    {
+        printf("Unable to log you in.");
+    }
+
+    return 0;
+}
+
+<%= $secret_function %>
