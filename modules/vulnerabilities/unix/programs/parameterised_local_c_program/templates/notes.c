@@ -33,21 +33,16 @@ void create_note(){
     if(!dir) return;
 
     char filename[20];
-    printf("\nEnter note title: \n");
-    scanf("%s", filename, 20);
+    printf("\nEnter note title (no spaces): \n");
+    scanf("%s", filename);
 
-    //build file path
     char file_path[50];
-    strcpy(file_path, notes_directory_path);
-    strcat(file_path, "/");
-    strcat(file_path, filename);
-    strcat(file_path, ".txt");
+    build_file_path(file_path, notes_directory_path, filename);
 
-    printf("Creating new note: %s\n", file_path);
+    printf("Creating new note - %s\n", file_path);
 
     FILE *file = fopen(file_path, "w+");
     char file_contents[200];
-
 
     printf("\nEnter note contents (enter a blank line to finish):\n");
 
@@ -82,7 +77,42 @@ void create_note(){
 }
 
 void view_note(){
+    DIR *dir = get_notes_dir(notes_directory_path);
+    if(!dir) return;
 
+    char filename[20];
+    printf("\nEnter note title: \n");
+    scanf("%s", filename);
+
+    char file_path[50];
+    build_file_path(file_path, notes_directory_path, filename);
+
+    printf("Opening note - %s\n", file_path);
+    FILE *file = fopen(file_path, "r");
+    char buf[1000];
+
+    if (!file) {
+        printf("\nFile does not exist.\n");
+        return;
+    }
+
+    printf("\nEnter 'q' to return to main menu. Note reads:\n");
+    while (fgets(buf, 1000, file) != NULL){
+        printf("%s",buf);
+    }
+
+    bool completed = false;
+    while(completed == false) {
+        char exit[1];
+        scanf(" %c", exit);
+
+        if(strncmp(exit, "q", 1) == 0){
+            completed = true;
+        }
+    }
+
+    fclose(file);
+    closedir(dir);
 }
 
 void edit_note(){
@@ -96,3 +126,4 @@ void rename_note(){
 void delete_note(){
 
 }
+

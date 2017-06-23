@@ -31,6 +31,13 @@ DIR* get_notes_dir(char directory_path[15]){
     return dir;
 }
 
+void build_file_path(char file_path[50], char directory_path[15], char filename[20]){
+    strcpy(file_path, directory_path);
+    strcat(file_path, "/");
+    strcat(file_path, filename);
+    strcat(file_path, ".txt");
+}
+
 void append_line_to_note(char file_contents[200], char line[200]){
     if(strlen(file_contents) > 0){
         strcat(file_contents, "\n");
