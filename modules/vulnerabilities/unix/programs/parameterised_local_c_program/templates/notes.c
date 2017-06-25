@@ -116,14 +116,39 @@ void view_note(){
 }
 
 void edit_note(){
-
+    //TO-DO: Complete method
 }
 
 void rename_note(){
-
+    //TO-DO: Complete method
 }
 
 void delete_note(){
+	DIR *dir = get_notes_dir(notes_directory_path);
+    if(!dir) return;
 
+    char filename[20];
+    printf("\nEnter note title to delete the note: \n");
+    scanf("%s", filename);
+
+    char file_path[50];
+    build_file_path(file_path, notes_directory_path, filename);
+
+    printf("Deleting note: %s\n", file_path);
+
+    int ret;
+    ret = remove(file_path);
+
+    if(ret == 0)
+    {
+        printf("File deleted successfully\n");
+    }
+    else
+    {
+        printf("Error: unable to delete the file\n");
+        fprintf(stderr, "Error message: %s\n", strerror(errno));
+    }
+
+    closedir(dir)
 }
 
