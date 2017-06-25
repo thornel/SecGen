@@ -117,7 +117,37 @@ void edit_note(){
 }
 
 void rename_note(){
-    //TO-DO: Complete method
+    DIR *dir = get_notes_dir(directory_path);
+    if(!dir) return;
+
+    char current_filename[20];
+    char new_filename[20];
+    printf("\nEnter note title to rename: \n");
+    scanf("%s", current_filename);
+    printf("\nEnter new note title: \n");
+    scanf("%s", new_filename);
+
+    char current_file_path[50];
+    char new_file_path[50];
+    build_file_path(current_file_path, directory_path, current_filename);
+    build_file_path(new_file_path, directory_path, new_filename);
+
+    printf("Renaming note to: %s\n", new_file_path);
+
+    int ret;
+    ret = rename(current_file_path, new_file_path);
+
+    if(ret == 0)
+    {
+        printf("File renamed successfully.\n");
+    }
+    else
+    {
+        printf("Error: unable to rename the file.\n");
+        fprintf(stderr, "Error message: %s\n", strerror(errno));
+    }
+
+    closedir(dir);
 }
 
 void delete_note(){
@@ -138,11 +168,11 @@ void delete_note(){
 
     if(ret == 0)
     {
-        printf("File deleted successfully\n");
+        printf("File deleted successfully.\n");
     }
     else
     {
-        printf("Error: unable to delete the file\n");
+        printf("Error: unable to delete the file.\n");
         fprintf(stderr, "Error message: %s\n", strerror(errno));
     }
 
