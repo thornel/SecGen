@@ -9,6 +9,22 @@
 		<system_name>web_server</system_name>
 		<base platform="linux"/>
 
+		<vulnerability module_path=".*crackable_user_account">
+			<input into="accounts">
+				<generator type="account">
+					<input into="username">
+						<value>testuser</value>
+					</input>
+					<input into="password">
+						<value>test</value>
+					</input>
+					<input into="super_user">
+						<value>false</value>
+					</input>
+				</generator>
+			</input>
+		</vulnerability>
+
 		<vulnerability module_path=".*parameterised_local_c_program">
 			<input into="code">
 				<generator type="vulnerabilities" >	
