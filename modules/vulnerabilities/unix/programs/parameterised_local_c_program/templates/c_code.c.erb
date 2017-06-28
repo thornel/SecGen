@@ -16,6 +16,10 @@ int main()
         printf("You are now logged in.\n");
         printf("Enter help for what commands you can use.\n");
 
+		    uid_t uid = getuid();
+        struct passwd *pw = getpwuid(uid);
+        set_notes_directory_path(pw->pw_dir);
+
         bool exit;
         while(exit == false) {
             char command[15];
@@ -27,7 +31,7 @@ int main()
 								printf("view - to view a note\n");
 								printf("create - to create a new note\n");
 								printf("edit - to add lines to a note\n");
-								//printf("rename - to rename a note\n");
+								printf("rename - to rename a note\n");
 								printf("delete - to delete a note\n");
 								printf("exit - to exit the program\n");
             } else if (strncmp(command, "list", 4) == 0) {

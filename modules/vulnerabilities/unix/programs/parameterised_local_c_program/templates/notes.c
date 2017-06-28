@@ -5,7 +5,14 @@
 #include <string.h>
 #include "notes_helper.c"
 
-char directory_path[15] = "/usr/notes";
+char *directory_path;
+
+void set_notes_directory_path(char notes_directory_path[15]){
+    char *path = notes_directory_path;
+    strcat(path, "/notes");
+    directory_path = path;
+    return;
+}
 
 void list_all_notes(){
     DIR* dir = get_notes_dir(directory_path);
