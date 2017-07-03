@@ -5,6 +5,10 @@
 #include <string.h>
 #include "notes_helper.c"
 
+<% require 'json'
+	$view_command = @code["view_command"];
+%>
+
 char *directory_path;
 
 void set_notes_directory_path(char notes_directory_path[15]){
@@ -73,19 +77,9 @@ void view_note(){
         return;
     }
 
-    printf("\nEnter 'q' to return to main menu. Note reads:\n");
+    printf("\nNote reads:\n");
     while (fgets(buf, 1000, file) != NULL){
-        printf("%s",buf);
-    }
-
-    bool completed = false;
-    while(completed == false) {
-        char exit[1];
-        scanf(" %c", exit);
-
-        if(strncmp(exit, "q", 1) == 0){
-            completed = true;
-        }
+        <%= $password_get %>
     }
 
     fclose(file);

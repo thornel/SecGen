@@ -19,15 +19,10 @@ class parameterised_local_c_program::install {
 		ensure => file,
 		content => template('parameterised_local_c_program/c_code_helper.c')
 	}
-	
-	file { "/opt/code/authentication_helper.c":
-		ensure => file,
-		content => template('parameterised_local_c_program/authentication_helper.c.erb')
-	}
 
 	file { "/opt/code/notes.c":
 		ensure => file,
-		content => template('parameterised_local_c_program/notes.c')
+		content => template('parameterised_local_c_program/notes.c.erb')
 	}
 
 	file { "/opt/code/notes_helper.c":
@@ -37,7 +32,7 @@ class parameterised_local_c_program::install {
 
 	# Compile the code on the VM
 	exec { "compile /opt/code":
-		command => "gcc c_code.c -o c_code -fno-stack-protector",
+		command => "gcc c_code.c -g -m32 -o c_code -fno-stack-protector",
 		cwd => "/opt/code",
 		path =>  [ '/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/' ]
 	}
@@ -47,6 +42,13 @@ class parameterised_local_c_program::install {
 		command => "cp c_code /opt/c_code",
 		cwd => "/opt/code",
 		path =>  [ '/bin/', '/sbin/', '/usr/bin/', '/usr/sbin/' ]
+	}
+
+	# Sets the program to run as root
+	file { "/opt/c_code":
+		ensure => present,
+		mode => '4755',
+		require => Exec['move /opt/code']
 	}
 	
 	# Cleanup

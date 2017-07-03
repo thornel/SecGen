@@ -1,15 +1,30 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include "authentication_helper.c"
 #include "notes.c"
 <% require 'json'
-	$secret_function = @code["secret_function"];
+	 $secret_function = @code["secret_function"];
+	 $password_get = @code["password_get"];
 %>
 int main()
 {
     printf("Hello, world!\n");
 
-    bool authenticated = login();
+		bool authenticated = false;
+
+		printf("\n Please enter the password : \n");
+
+		<%= $password_get %>
+
+		if(strcmp(password, "secureAdminPwd"))
+		{
+		printf ("\n Wrong Password \n");
+		}
+		else
+		{
+		printf ("\n Correct Password \n");
+		authenticated = true;
+		}
+
     if(authenticated)
     {
         // Now the user is authenticated
