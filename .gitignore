@@ -3,3 +3,17 @@ unusedcode
 .DS_Store
 .idea
 mount
+log
+.directory
+batch/failed
+batch/successful
+lib/test/tmp
+modules/generators/challenges/exif/secgen_local/tmp.jpg
+modules/generators/challenges/compression/zip/tmp
+modules/generators/challenges/image/random_jpg/secgen_local/tmp.jpg
+secgen.conf
+modules/encoders/compression/huffman/tmp
+.rakeTasks
+modules/**/Gemfile.lock
+modules/generators/network/pcap/files/packet.pcap
+lib/resources/images/scenario

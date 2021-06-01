@@ -12,12 +12,31 @@
     June 30th 2011 and July 1st 2011. AKA the smiley face backdoor.</description>
 
   <type>ftp</type>
-  <privilege>user</privilege>
+  <privilege>root_rwx</privilege>
   <access>remote</access>
   <platform>linux</platform>
+  <difficulty>low</difficulty>
+
+  <read_fact>anonymous_ftp</read_fact>
+  <read_fact>ftpd_banner</read_fact>
+  <read_fact>port</read_fact>
+
+  <!-- No organisation by default, overrides other values if provided through scenario. -->
+  <read_fact>organisation</read_fact>
+
+  <default_input into="anonymous_ftp">
+    <value>false</value>
+  </default_input>
+
+  <default_input into="ftpd_banner">
+    <generator type="message_generator"/>
+  </default_input>
+
+  <default_input into="port">
+    <value>21</value>
+  </default_input>
 
   <!--optional vulnerability details-->
-  <difficulty>low</difficulty>
   <!--<cve></cve>-->
   <cvss_base_score>10</cvss_base_score>
   <cvss_vector>AV:N/AC:L/Au:N/C:C/I:C/A:C</cvss_vector>
@@ -26,14 +45,14 @@
   <software_name>vsftpd</software_name>
   <software_license>GPLv2</software_license>
 
-  <!--optional breadcrumb (info that is leaked and required to exploit)-->
-  <!--<breadcrumb></breadcrumb>-->
-
   <!--optional hints-->
-  <!--<msf_module></msf_module>-->
   <hint>A backdoor in a service</hint>
   <solution>Remotely exploitable backdoor in the FTP service</solution>
 
+  <!--Cannot co-exist with other ftp servers (default to same ports)-->
+  <conflict>
+    <type>$ftp^</software_name>
+  </conflict>
   <!--Cannot co-exist with other installations-->
   <conflict>
     <software_name>vsftpd</software_name>

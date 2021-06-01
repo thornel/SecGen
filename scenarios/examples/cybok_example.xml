@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<name>A CyBOK tagged lab with VMs</name>
+	<author>Thomas Shaw</author>
+	<description>
+		Example description of the lab. Includes one reading and one video.
+	</description>
+	<type>ctf-lab</type>
+	<type>hackerbot-lab</type>
+	<type>lab-sheet</type>
+	<difficulty>easy</difficulty>
+
+	<!-- Scenario wide CyBOK tags. A scenario can have one to many knowledge areas: -->
+
+	<CyBOK KA="AAA" topic="Authorisation">
+		<keyword>access control</keyword>
+		<keyword>ACCESS CONTROL - DAC (DISCRETIONARY ACCESS CONTROL)</keyword>
+		<keyword>Unix File Permissions</keyword>
+	</CyBOK>
+	<CyBOK KA="C" topic="Cryptography">
+		<keyword>stream ciphers</keyword>
+		<keyword>substitution ciphers</keyword>
+	</CyBOK>
+
+	<!--
+  	  	Content tags (i.e. video and reading) are implicitly connected to the scenario level knowledge areas to reduce duplication.
+   	 	In the case that a piece of content covers knowledge areas outside of the scenario's CyBOK tags, they can have additional content-wide CyBOK tags as seen below.
+     -->
+
+	<!-- Zero to many videos, with zero to many CyBOK areas: -->
+
+	<video>
+		<title>A video!</title>
+		<by>Somebody</by>
+		<url>www.example.com</url>
+		<description>This is the text section of the video description.</description>
+		<CyBOK KA="OSV" topic="OS Security Principles">
+			<keyword>security models</keyword>
+		</CyBOK>
+	</video>
+
+	<!-- Zero to many readings, with zero to many CyBOK areas: -->
+	<reading>
+		<title>An article to read</title>
+		<by>Somebody</by>
+		<url>www.example2.com</url>
+		<CyBOK KA="OSV" topic="OS Security Principles">
+			<keyword>security models</keyword>
+		</CyBOK>
+	</reading>
+
+	<!-- random system with random vuln, as an example -->
+	<system>
+		<system_name>example_system</system_name>
+		<base />
+		<vulnerability/>
+		<network type="private_network" range="dhcp"/>
+	</system>
+
+</scenario>

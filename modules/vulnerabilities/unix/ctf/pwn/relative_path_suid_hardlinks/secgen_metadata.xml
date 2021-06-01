@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  <name>Relative path setuid access</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>A setuid program feeds the user a flag from it's home directory.
+    A second flag is available via hardlink trickery (possible due to disabled newer protections).
+  </description>
+
+  <type>system</type>
+  <type>ctf_challenge</type>
+  <privilege>none</privilege>
+  <access>local</access>
+  <platform>linux</platform>
+
+  <challenge_type>pwn</challenge_type>
+  <challenge_subtype>access_controls</challenge_subtype>
+  <difficulty>medium</difficulty>
+
+  <read_fact>accounts</read_fact>
+
+  <default_input into="accounts">
+
+    <generator type="account">
+      <input into="password">
+        <generator type="strong_password_generator"/>
+      </input>
+      <input into="leaked_filenames">
+        <value>flag1</value>
+        <value>flag2</value>
+      </input>
+      <input into="strings_to_leak">
+        <generator type="flag_generator"/>
+        <generator type="flag_generator"/>
+      </input>
+    </generator>
+
+  </default_input>
+
+  <!--optional details-->
+  <hint>There is a security problem caused by not using an absolute filename when opening the file, it opens "flag1" rather than "/home/user/flag1". Remember, any user can create a hard link to a file (therefore they can make a "copy" of the SUID program wherever they like).</hint>
+  <solution>Make a hard link to the SUID program in a directory that the attacker can write to, then also make a hard link to any file the SUID user owns, and name it "flag1" in the same directory as the program, then when you execute the program it will write out the contents of the file.</solution>
+
+  <requires>
+    <type>update</type>
+  </requires>
+
+  <requires>
+    <module_path>utilities/unix/system/accounts</module_path>
+  </requires>
+
+  <requires>
+    <module_path>.*gcc</module_path>
+  </requires>
+
+  <!-- Need a way on to the box. -->
+  <!-- <requires>
+    <privilege>user_rwx</privilege>
+  </requires> -->
+
+</vulnerability>

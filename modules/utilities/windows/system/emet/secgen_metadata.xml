@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Enhanced Mitigation Experience Toolkit (EMET)</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>The Enhanced Mitigation Experience Toolkit (EMET) is designed to help customers with their defense in depth strategies against cyberattacks, by helping detect and block exploitation techniques that are commonly used to exploit memory corruption vulnerabilities. EMET anticipates the most common actions and techniques adversaries might use in compromising a computer, and helps protect by diverting, terminating, blocking, and invalidating those actions and techniques.</description>
+
+  <type>security_settings</type>
+  <platform>windows</platform>
+
+  <!-- for now we just make all windows modules conflict with linux bases -->
+  <conflict>
+    <module_path>bases/.*</module_path>
+    <platform>linux</platform>
+  </conflict>
+
+</utility>

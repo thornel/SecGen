@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+
+  <name>WebWolf</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>WebWolf is a separate web application which simulates an attackers machine. It makes it possible for us to make a clear distinction between what takes place on the attacked website and the actions you need to do as an "attacker".</description>
+
+  <type>web_training_platform</type>
+  <type>webapp</type>
+  <privilege>info_leak</privilege>
+  <access>remote</access>
+  <platform>linux</platform>
+
+  <read_fact>port</read_fact>
+  <read_fact>hostname</read_fact>
+
+  <default_input into="port">
+    <value>9090</value>
+  </default_input>
+
+  <default_input into="hostname">
+    <value>localhost</value>
+  </default_input>
+
+  <reference>https://github.com/WebGoat/WebGoat</reference>
+
+  <software_name>webgoat</software_name>
+  <software_license>GPLv2</software_license>
+
+  <!-- shares the logins registered for WebGoat -->
+  <requires>
+    <module_path>.*/webgoat</module_path>
+  </requires>
+
+</vulnerability>

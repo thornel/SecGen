@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Local Security Policy</name>
+  <author>Paul Cannon</author>
+  <author>Adam Yohrling</author>
+  <author>Emlyn Butterfield</author>
+  <module_license>Apache v2</module_license>
+  <description>Configure local security policy (LSP) for windows servers.
+  </description>
+
+  <type>system</type>
+  <platform>windows</platform>
+
+  <!--optional details-->
+  <reference>https://forge.puppet.com/ayohrling/local_security_policy</reference>
+
+  <read_fact>accounts</read_fact>
+
+  <!-- for now we just make all windows modules conflict with linux bases -->
+  <conflict>
+    <module_path>bases/.*</module_path>
+    <platform>linux</platform>
+  </conflict>
+
+</utility>

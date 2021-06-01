@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Custom List Generator</name>
+  <author>Jason Zeller</author>
+  <module_license>MIT</module_license>
+  <description>Allows you to specify custom password list to generate from.
+  Available password lists are located in: lib/resources/passwordlists
+  </description>
+
+  <type>password_generator</type>
+  <type>custom_list_password</type>
+  <platform>linux</platform>
+  <platform>windows</platform>
+
+  <read_fact>list_name</read_fact>
+
+  <default_input into="list_name">
+    <value>jtrpassword.lst</value>
+  </default_input>
+
+  <output_type>generated_passwords</output_type>
+
+</generator>

@@ -1,0 +1,281 @@
+
+## Introduction to Sandboxing and Isolation
+
+There are many reasons for not trusting software: the authors may have designed the software to act maliciously (malware) or they may have made some design or implementation mistakes that make the software vulnerable to attack. This is where access controls come in. Access controls restrict what each *subject* on a system is authorised to do. Traditionally access controls (such as Unix file permissions, which are user-oriented) have focussed on restricting what each user on a system can do. However, over time this has proven to be insufficient since this means that every program on a system is trusted with all of a user's authorisation: any program can read or delete all of a user's personal documents, Web history, and so on.
+
+*Sandboxing* (or application-oriented access controls) involves restricting what a program or group of programs can do. This can significantly improve the security of a system since a rogue program can do far less damage to the system if it is restricted to only the permissions it requires to function correctly.
+
+One approach to sandboxing is to run applications in isolated environments, with only access to resources (such as files) that are accessible from within the sandbox.
+
+## Container-based sandboxes and chroot
+
+Container-based sandboxes share the kernel but have separate user-space resources. This is more efficient than system-level virtualisation. For example, chroot() is a system call on Unix systems, that changes the root directory for a process and its children. The new namespace of the application limits it to only access files inside the specified directory tree. A wrapper program "chroot" can be used to launch programs into a "chroot jail". Only root can perform a chroot but should change identity asap because root can also escape a chroot jail (by performing another `chroot()`), so no program in a chroot should ever stay as root.
+
+There are resources such as process controls and networking that are not mediated. Other mechanisms solve some of these problems, such as FreeBSD Jails.
+
+You will create a chroot environment (a directory containing all the files that the "sandboxed" programs require), and run some programs inside it:...
+
+**On your desktop system**:
+
+Create a directory:
+
+```bash
+sudo mkdir /opt/chrootdir
+```
+
+Copy everything needed to run ls (LS) inside a chroot into a directory
+
+First, we should look at the details of the ls executable:
+
+```bash
+ls -la /bin/ls
+```
+`
+-rwxr-xr-x 1 root root 138856 Feb 28  2019 /bin/ls
+`
+
+These details show that the file in /bin/ls is not a symbolic link.
+
+Now try running the ldd command on ls:
+
+```bash
+ldd /bin/ls
+```
+
+You should get a result that looks something like this:
+
+```bash
+linux-vdso.so.1 (0x00007ffcfe2cf000)
+
+libselinux.so.1 > /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007f954890d000)
+
+libc.so.6 > /lib/x86_64-linux-gnu/libc.so.6 (0x00007f954856e000)
+
+libpcre.so.3 > /lib/x86_64-linux-gnu/libpcre.so.3 (0x00007f95482fb000)
+
+libdl.so.2 > /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f95480f7000)
+
+/lib64/ld-linux-x86-64.so.2 (0x00007f9548d56000)
+
+libpthread.so.0 > /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f9547eda000)
+```
+
+If you are patient you could copy each required file into your chroot directory. Otherwise, as you can see, all the files can be found in /lib/ and /lib64/.
+
+Try the following (copy all the /lib/ files into the cage):
+
+```bash
+sudo rsync -av /lib* /opt/chrootdir/
+```
+
+Finally, copy ls.
+
+```bash
+sudo rsync -av /bin/ls /opt/chrootdir/bin/
+```
+
+Run ls in a chroot:
+
+```bash
+sudo chroot /opt/chrootdir/ /bin/ls
+```
+
+Note that ls can only see the files that are in the chroot cage.
+
+Run ls in the chroot, and attempt to view the root (/) directory:
+
+```bash
+sudo chroot /opt/chrootdir/ /bin/ls /
+```
+
+Note that again, as far as anything in the chrooted program is concerned, what the rest of the system calls "/opt/chrootdir/", it sees as "/". This is referred to as the program's *namespace*.
+
+Create a more complete chroot environment, for running command line programs, including bash (the Linux shell command prompt).
+
+```bash
+sudo rsync -av /bin/ /opt/chrootdir/bin/
+
+sudo rsync -av /etc/ /opt/chrootdir/etc/
+
+sudo rsync -av /usr/ /opt/chrootdir/usr/
+
+sudo mkdir /opt/chrootdir/home/
+```
+
+This will take a fair while. You can continue the exercise in another bash window/tab, or read about [*bind mounting*](http://docs.1h.com/Bind_mounts) while you wait.
+
+> You may want to work through the Docker section while you wait, or go get yourself a cup of coffee.
+
+Once the install is complete, bind mount /sys, /dev, and /proc into the cage:
+
+```bash
+sudo mkdir /opt/chrootdir/dev /opt/chrootdir/sys /opt/chrootdir/proc
+
+sudo mount --bind /dev /opt/chrootdir/dev
+sudo mount --bind /sys /opt/chrootdir/sys
+sudo mount --bind /proc /opt/chrootdir/proc
+```
+
+Read `man mount` to see what this does, and understand the security consequences.
+
+==Lab Book Question: Why can it be a bad idea to bind mount the entire root "/" directory into the chroot cage?==
+
+Now run bash inside the chroot:
+
+```bash
+sudo chroot /opt/chrootdir /bin/bash
+```
+
+Create a new user within the chroot (you will be prompted to enter a password for the new user):
+
+```bash
+sudo useradd -d /home/username username; sudo passwd username
+```
+
+Then to make bash switch to this new user::
+
+```bash
+su - username
+```
+
+Note that you can now run commands and (mostly) only affect the chroot directory.
+
+Experiment with what is possible from within the chroot cage. You may wish to copy across further files and their dependencies from the main system to run from inside the chroot.
+
+> Tips: to share the same X server (so you can run graphical program from the chroot, run "export DISPLAY=:0".
+
+What can you see in /, /opt, /proc?
+
+==Lab Book Question: Can you access anything outside of the chroot? As a normal user? As root?==
+
+Understand that you can still access the network and possibly do damage via the bind mounted directories.
+
+In general, we would typically create a minimal install for a chroot environment, such as [*https://wiki.debian.org/Debootstrap*](https://wiki.debian.org/Debootstrap)
+
+## Docker
+
+Docker builds on chroot, and additional virtualisation features to automate the creation and deployment of containerised OS's and applications. Docker improves security compared to chroot, using LXC (and others, such as libcontainer) to provide added isolation by making use of Linux kernel cgroups to limit resources such as CPU, memory, block I/O, network. Compared to chroot Docker provides some additional protection against root users escaping confinement.
+
+Docker is portable across Linux systems, and makes use of reusable base images, and automated approaches for automating building containers to specifications.
+
+Docker *images* are reusable bases that can be used to create *containers*, and can be downloaded via the docker command, and can be browsed online at Docker Hub: [*https://hub.docker.com/*](https://hub.docker.com/)
+
+If you had an Internet connection you could run a command such as `docker pull ubuntu` to download an image based on Ubuntu Linux.
+
+We have prepared an isolated environment for you, with some bases already downloaded for you to use.
+
+View the bases available:
+
+```bash
+sudo docker images
+```
+
+The bases available to you already includes busybox, ubuntu:xenial, and debian:stretch. Busybox is a very minimal Linux system popular on embedded devices; Ubuntu and Debian are *complete distributions of Linux*; these bases provide a minimal installation of these distros, but into these containers, you could install pretty much any Ubuntu/Debian packages within.
+
+Create a container and launch a command into a container:
+
+```bash
+sudo docker run busybox echo "hello this is busybox"
+
+sudo docker run busybox echo "busybox!"
+```
+
+And run:
+
+```bash
+sudo docker run debian:stretch echo "debian!"
+```
+
+Each of the above commands created and then runs a command in a new container based on images. Note the amazing speed to create new containers compared to manual creation for chroot, or how long it can take to create full VMs.
+
+View a list of all the Docker containers on your system:
+
+```bash
+sudo docker ps -a
+```
+
+Run an interactive command-line:
+
+```bash
+sudo docker run -it busybox sh
+```
+> Press Ctrl-D to exit.
+
+Run an interactive Ubuntu command-line:
+
+```bash
+sudo docker run -it ubuntu:xenial bash
+```
+
+==Lab Book Question: Using Docker, can you access anything outside of the chroot? As a normal user? As root? How much isolation does it provide? How does this compare to a full VM, for example in oVirt?==
+
+**BEFORE YOU EXIT THE SAFETY OF THE DOCKER CONTAINER**, run:
+
+```bash
+rm -rf /
+```
+
+> **This deletes everything!**
+
+What can you see in /, /opt, /proc of the container?
+
+> Press Ctrl-D to exit the container.
+
+What can you see in /, /opt, /proc?
+
+Docker can grant containers to access files or the network.
+
+Ensure you have a secret file:
+
+```bash
+cat $HOME/mysecret
+```
+
+Run a container with access to your secret file:
+
+```bash
+sudo docker run -v $HOME/mysecret:/srv/mysecret:ro -it ubuntu:xenial sh
+```
+
+Access the file within the container:
+
+```bash
+cat /srv/mysecret
+```
+
+Attempt to write to the file within the container.
+
+> Press Ctrl-D to exit the container.
+
+==Lab Book Question: How does Docker's file sharing feature work?==
+
+Note that our various containers are still running:
+
+```bash
+sudo docker ps -a
+```
+
+Containers can be stopped, run:
+
+```bash
+sudo docker stop CONTAINER_ID
+```
+
+> Where container\_id is one of the containers on your system.
+
+Or to stop them all:
+
+```bash
+sudo docker stop $(sudo docker ps -a -q)
+```
+And containers can be deleted:
+
+```bash
+sudo docker rm CONTAINER_ID
+```
+
+And to delete all the containers that are stopped:
+
+```bash
+sudo docker container prune
+```

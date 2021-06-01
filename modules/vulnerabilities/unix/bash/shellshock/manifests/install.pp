@@ -11,9 +11,12 @@ class shellshock::install{
     creates     => '/usr/local/src/bash-4.1/',
   }
 
+  ensure_packages('build-essential')
+  ensure_packages('gcc-multilib')
+
   exec { 'configure-make-make-install-bash':
     cwd     => '/usr/local/src/bash-4.1/',
     command => '/bin/bash /usr/local/src/bash-4.1/configure; /usr/bin/make; /usr/bin/make install;',
-    require => Exec['unpack-bash-tar'],
+    require => [Exec['unpack-bash-tar'],Package['build-essential', 'gcc-multilib']],
   }
 }

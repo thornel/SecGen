@@ -1,12 +1,16 @@
 # Security Scenario Generator (SecGen)
 
 ## Summary
-SecGen is a Ruby application that uses virtualization software to create vulnerable virtual machines so students can learn security penetration testing techniques. 
+SecGen creates vulnerable virtual machines, lab environments, and hacking challenges, so students can learn security penetration testing techniques.
 
-Boxes like Metasploitable2 are always the same, this project uses Vagrant, Puppet, and Ruby to quickly create randomly vulnerable virtual machines that can be used for learning or CTF events. 
+Boxes like Metasploitable2 are always the same, this project uses Vagrant, Puppet, and Ruby to create randomly vulnerable virtual machines that can be used for learning or for hosting CTF events.
+
+[The latest version is available at: http://github.com/cliffe/SecGen/](http://github.com/cliffe/SecGen/)
+
+[Please complete a short survey to tell us how you are using SecGen.](https://tinyurl.com/SecGenFeedback)
 
 ## Introduction
-Computer security students benefit from engaging in hacking challenges. Practical lab work and pre-configured hacking challenges are common practice both in security education and also as a pastime for security-minded individuals. Competitive hacking challenges, such as capture the flag (CTF) competitions have become a mainstay at industry conferences and are the focus of large online communities. Virtual machines (VMs) provide an effective way of sharing targets for hacking, and can be designed in order to test the skills of the attacker. Websites such as Vulnhub host pre-configured hacking challenge VMs and are a valuable resource for those learning and advancing their skills in computer security. However, developing these hacking challenges is time consuming, and once created, essentially static. That is, once the challenge has been "solved" there is no remaining challenge for the student, and if the challenge is created for a competition or assessment, the challenge cannot be reused without risking plagiarism, and collusion. 
+Computer security students benefit from engaging in hacking challenges. Practical lab work and pre-configured hacking challenges are common practice both in security education and also as a pastime for security-minded individuals. Competitive hacking challenges, such as capture the flag (CTF) competitions have become a mainstay at industry conferences and are the focus of large online communities. Virtual machines (VMs) provide an effective way of sharing targets for hacking, and can be designed in order to test the skills of the attacker. Websites such as Vulnhub host pre-configured hacking challenge VMs and are a valuable resource for those learning and advancing their skills in computer security. However, developing these hacking challenges is time consuming, and once created, essentially static. That is, once the challenge has been "solved" there is no remaining challenge for the student, and if the challenge is created for a competition or assessment, the challenge cannot be reused without risking plagiarism, and collusion.
 
 Security Scenario Generator (SecGen) generates randomised vulnerable systems. VMs are created based on a scenario specification, which describes the constraints and properties of the VMs to be created. For example, a scenario could specify the creation of a system with a remotely exploitable vulnerability that would result in user-level compromise, and a locally exploitable flaw that would result in root-level compromise. This would require the attacker to discover and exploit both randomly selected vulnerabilities in order to obtain root access to the system. Alternatively, the scenario that is defined can be more specific, specifying certain kinds of services (such as FTP or SMB) or even exact vulnerabilities (by CVE).
 
@@ -18,26 +22,43 @@ SecGen is free software: you can redistribute it and/or modify it under the term
 SecGen contains modules, which install various software packages. Each SecGen module may contain or remotely source software, and each module defines its own license in the accompanying secgen_metadata.xml file.
 
 ## Installation
+SecGen is developed and tested on Ubuntu Linux. In theory, SecGen should run on Mac or Windows, if you have all the required software installed.
+
 You will need to install the following:
+- Ruby (development): https://www.ruby-lang.org/en/
+- Vagrant: http://www.vagrantup.com/
+- Virtual Box: https://www.virtualbox.org/
+- Puppet: http://puppet.com/
+- Packer: https://www.packer.io/
+- ImageMagick: https://www.imagemagick.org/
+- And the required Ruby Gems (including Nokogiri and Librarian-puppet)
 
-Ruby: https://www.ruby-lang.org/en/  
-Vagrant: http://www.vagrantup.com/  
-Virtual Box: https://www.virtualbox.org/  
-Puppet: http://puppet.com/  
-And the required Ruby Gems (including Nokogiri and Librarian-puppet)
-
-### On Ubuntu these commands should get you up and running
+### On Ubuntu (16.04) these commands will get you up and running
+Install all the required packages:
 ```bash
-curl -o vagrant.deb https://releases.hashicorp.com/vagrant/1.8.4/vagrant_1.8.4_x86_64.deb
-sudo dpkg -i vagrant.deb
-sudo apt-get install ruby-dev zlib1g-dev liblzma-dev build-essential patch virtualbox
-gem install bundle
+# install a recent version of vagrant
+wget https://releases.hashicorp.com/vagrant/1.9.8/vagrant_1.9.8_x86_64.deb
+sudo apt install ./vagrant_1.9.8_x86_64.deb
+# install other required packages via repos
+sudo apt-get install ruby-dev zlib1g-dev liblzma-dev build-essential patch virtualbox ruby-bundler imagemagick libmagickwand-dev exiftool libpq-dev libcurl4-openssl-dev libxml2-dev graphviz graphviz-dev libpcap0.8-dev git
 ```
 
-Copy SecGen to a directory of your choosing, such as /home/user/bin/SecGen, then:
+Copy SecGen to a directory of your choosing, such as */home/user/bin/SecGen*
+
+Then install gems:
 ```bash
 cd /home/user/bin/SecGen
 bundle install
+```
+
+To use the Windows basesboxes you will need to install Packer. Use the following command:
+```bash
+curl -SL https://releases.hashicorp.com/packer/1.3.2/packer_1.3.2_linux_amd64.zip -o packer_1.3.2_linux_amd64.zip
+unzip packer_1.3.2_linux_amd64.zip
+sudo mv packer /usr/local/
+sudo bash -c 'echo "export PATH=\"\$PATH:/usr/local/\"" >> /etc/environment'
+sudo vagrant plugin install winrm
+sudo vagrant plugin install winrm-fs
 ```
 
 ## Usage
@@ -46,24 +67,67 @@ Basic usage:
 ruby secgen.rb run
 ```
 This will use the default scenario to randomly generate VM(s).
+![gify goodness](lib/resources/images/readme_gifs/secgen_default_scenario_run.gif  "SecGen randomising a vulnerable VM -- part 1, randomisation")
+![gify goodness](lib/resources/images/readme_gifs/secgen_default_scenario_run_vm.gif  "SecGen randomising a vulnerable VM -- part 2, provisioning VMs")
 
 SecGen accepts arguments to change the way that it behaves, the currently implemented arguments are:
 
 ```bash
    ruby secgen.rb [--options] <command>
+      OPTIONS:
+      --scenario [xml file], -s [xml file]: Set the scenario to use
+        (defaults to /home/secgen/SecGen/scenarios/default_scenario.xml)
+      --project [output dir], -p [output dir]: Directory for the generated project
+        (output will default to /home/secgen/SecGen/projects/SecGen20200313_094915)
+      --shutdown: Shutdown VMs after provisioning (vagrant halt)
+      --network-ranges: Override network ranges within the scenario, use a comma-separated list
+      --forensic-image-type [image type]: Forensic image format of generated image (raw, ewf)
+      --read-options [conf path]: Reads options stored in file as arguments (see example.conf)
+      --memory-per-vm: Allocate generated VMs memory in MB (e.g. --memory-per-vm 1024)
+      --total-memory: Allocate total VM memory for the scenario, split evenly across all VMs.
+      --cpu-cores: Number of virtual CPUs for generated VMs
+      --help, -h: Shows this usage information
+      --system, -y [system_name]: Only build this system_name from the scenario
+      --snapshot: Creates a snapshot of VMs once built
+      --no-tests: Prevent post-provisioning tests from running.
 
-   OPTIONS:
-   --scenario [xml file], -s [xml file]: set the scenario to use
-              (defaults to scenarios/default_scenario.xml)
-   --project [output dir], -p [output dir]: directory for the generated project
-              (output will default to projects/SecGen_DATEandTIME)
-   --help, -h: shows this usage information
+      VIRTUALBOX OPTIONS:
+      --gui-output, -g: Show the running VM (not headless)
+      --nopae: Disable PAE support
+      --hwvirtex: Enable HW virtex support
+      --vtxvpid: Enable VTX support
+      --max-cpu-usage [1-100]: Controls how much cpu time a virtual CPU can use
+        (e.g. 50 implies a single virtual CPU can use up to 50% of a single host CPU)
 
-   COMMANDS:
-   run, r: builds project and then builds the VMs
-   build-project, p: builds project (vagrant and puppet config), but does not build VMs
-   build-vms, v: builds VMs from a previously generated project
+      OVIRT OPTIONS:
+      --ovirtuser [ovirt_username]
+      --ovirtpass [ovirt_password]
+      --ovirt-url [ovirt_api_url]
+      --ovirtauthz [ovirt authz]
+      --ovirt-cluster [ovirt_cluster]
+      --ovirt-network [ovirt_network_name]
+      --ovirt-affinity-group [ovirt_affinity_group_name]
+
+      ESXI OPTIONS:
+      --esxiuser [esxi_username]
+      --esxipass [esxi_password]
+      --esxi-url [esxi_api_url]
+      --esxi-datastore [esxi_datastore]
+      --esxi-disktype [esxi_disktype]
+      --esxi-network [esxi_network_name]
+
+      COMMANDS:
+      run, r: Builds project and then builds the VMs
+      build-project, p: Builds project (vagrant and puppet config), but does not build VMs
+      build-vms, v: Builds VMs from a previously generated project
               (use in combination with --project [dir])
+      ovirt-post-build: only performs the ovirt actions that normally follow a successful vm build
+              (snapshots and networking)
+      create-forensic-image: Builds forensic images from a previously generated project
+              (can be used in combination with --project [dir])
+      list-scenarios: Lists all scenarios that can be used with the --scenario option
+      list-projects: Lists all projects that can be used with the --project option
+      delete-all-projects: Deletes all current projects in the projects directory
 
 ```
 
@@ -73,323 +137,162 @@ SecGen generates VMs based on a scenario specification, which describes the cons
 ### Using existing scenarios
 Existing scenarios make SecGen's barrier for entry low: when invoking SecGen, a scenario can be specified as a command argument, and SecGen will then read the appropriate scenario definition and go about randomisation and VM generation. This removes the requirement for end users of the framework to understand SecGen's configuration specification.
 
-Scenarios can be found in the scenarios/ directory. For example, to spin up a VM that has any random vulnerability:
+Scenarios can be found in the scenarios/ directory. For example, to spin up a VM that has a random remotly exploitable vulnerability that results in user-level compromise:
 ```bash
-   ruby secgen.rb --scenario scenarios/simple_examples/simple_any_random_vulnerability.xml run
+   ruby secgen.rb --scenario scenarios/examples/remotely_exploitable_user_vulnerability.xml run
 ```
+![gify goodness](lib/resources/images/readme_gifs/secgen_random_example.gif  "Remotely exploitable example where an attacker ends up with user-level access")
+
+#### VMs for a security audit of an organisation
+To generate a set of VMs for a randomly generated fictional organisation, with a desktop system, webserver, and intranet server:
+```bash
+   ruby secgen.rb --scenario scenarios/security_audit/team_project.xml run
+```
+Note that the intranet server has a security remit, with instructions on performing a security audit of these systems. The desktop system can access the intranet to access the remit, but the attacker VM (for example, Kali) can be connected to the NIC only shared by the Web server to simulate the need to pivot attacks through the Web server, as they can't connect to the intranet system directly. The "marking guide" is in the form of the output scenario.xml in the project directory, which provides the details of the systems generated.
+
+#### VMs for a CTF event
+To generate a set of VMs for a CTF competition:
+```bash
+   ruby secgen.rb --scenario scenarios/ctf/flawed_fortress_1.xml run
+```
+Note that a 'CTFd_importable.zip' file is also generated, containing all the flags and hints, which you can import into the [CTFd scoreboard frontend](https://github.com/CTFd/CTFd).
+This is compatible with CTFd v2.0.2 and newer.
+
+**Default admin account:**
+Username: adminusername
+Password: adminpassword
 
 ### Defining new scenarios
 Writing your own scenarios enables you to define a VM or set of VMs with a configuration as specific or general as desired.
 
 SecGen's scenario specification is a powerful interface for specifying the constraints of the vulnerable systems to generate. Scenarios are defined in XML configuration files that specify systems in terms of a base, services/utilities, vulnerabilities, and networks.
-- system: a VM
-- base: a SecGen module that defines the OS platform (VM template) used to build the VM
-- vulnerability: a SecGen module that adds an insecure, hackable, state (including realistic software vulnerabilities known to be in the wild or fabricated hacking challenges)
-- service: a SecGen module that adds a (relatively secure) network service
-- utility: a SecGen module that adds (relatively secure) software or configuration changes
-- network: a virtual network card
- 
-The selection logic for choosing the modules to fulfill the specified constraints can filter on any of the attributes in each module's secgen_metadata.xml file (for example, difficulty level and/or CVE), and any ambiguity results in a random selection from the remaining matching options (for example, any vulnerability matching a specified difficulty level). 
 
-For example, scenarios/simple_examples/simple_any_random_vulnerability.xml specifies one system with a Debian Linux base, and a vulnerability. In this case the base module is specified by module name, so this selection is predefined (there is only one possible module that matches), and the vulnerability is randomly selected from the entire set of vulnerabilities because no attribute filters are specified, which could have limited down the potential matches.
-
-```xml
-<?xml version="1.0"?>
-
-<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
-
-  <system>
-    <system_name>random_server</system_name>
-    <base module_path="modules/bases/debian_puppet_32"/>
-    <vulnerability />
-  </system>
-</scenario>
-```
-
-Note that the filters specified are [regular expression (regexp)](https://en.wikipedia.org/wiki/Regular_expression) matches. For example, here the module_path is any that matches anything followed by "distcc":
-```xml
-<?xml version="1.0"?>
-
-<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
-
-  <system>
-    <system_name>distcc_server</system_name>
-    <base platform="linux"/>
-
-    <vulnerability module_path=".*distcc" />
-
-    <network type="private_network" range="dhcp" />
-  </system>
-
-</scenario>
-```
-
-Here scenarios/default_scenario.xml defines a scenario with a remotely exploitable vulnerability that grants access to a user account, and a locally exploitable root-level privilege escalation vulnerability. 
-
-```xml
-<?xml version="1.0"?>
-
-<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
-     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
-
-  <!-- an example remote storage system, with a remotely exploitable vulnerability that can then be escalated to root -->
-  <system>
-    <system_name>storage_server</system_name>
-    <base platform="linux"/>
-
-    <vulnerability privilege="user" access="remote" />
-    <vulnerability privilege="root" access="local" />
-
-    <service/>
-
-    <network type="private_network" range="dhcp"/>
-  </system>
-</scenario>
-
-```
-Note that with the exception of \<system_name>, all of the XML elements within \<system> will resolve to the addition of a SecGen module (a single module, plus any dependencies). The attributes specified filter down the set of modules to randomly select from. For example, the network card is selected from the available SecGen network card modules that are private_networks with dhcp.
+For details please see the **[Creating Scenarios guide](README-Creating-Scenarios.md)**.
 
 ## Modules
-SecGen is designed to be easily extendable with modules that define vulnerabilities and other kinds of software, configuration, and content changes. 
+SecGen is designed to be easily extendable with modules that define vulnerabilities and other kinds of software, configuration, and content changes.
 
-As stated above, the types of modules supported in SecGen are:
+The types of modules supported in SecGen are:
  - base: a SecGen module that defines the OS platform (VM template) used to build the VM
  - vulnerability: a SecGen module that adds an insecure, hackable, state (including realistic software vulnerabilities known to be in the wild or fabricated hacking challenges)
  - service: a SecGen module that adds a (relatively secure) network service
  - utility: a SecGen module that adds (relatively secure) software or configuration changes
  - network: a virtual network card
+ - generator: generates output, such as random text
+ - encoder: receives input, such as text, performs operations on that to produce output (such as, encoding/encryption/selection)
 
-Each vulnerability module is contained within the modules/vulnerabilies directory tree, which is organised to match the Metasploit Framework (MSF) modules directory structure. For example, the distcc_exec vulnerability module is contained within: modules/vulnerabilities/unix/misc/distcc_exec/. 
+Each vulnerability module is contained within the modules/vulnerabilies directory tree, which is organised to match the Metasploit Framework (MSF) modules directory structure. For example, the distcc_exec vulnerability module is contained within: modules/vulnerabilities/unix/misc/distcc_exec/.
 
 The root of the module directory always contains a secgen_metadata.xml file and also contains puppet files, which are used to make a system vulnerable.
 
-### secgen_metadata.xml
-The secgen_metadata.xml file defines the attributes of the module. In the case of vulnerability modules, this file contains information about the vulnerability, including CVE, privilege level the successful attacker gains, access level required in order to attack (remote vs local), metasploit module that can be used to exploit the vulnerability, CVSS score and vector string, difficulty level, and description. 
+For details please see the **[Modules Metadata guide](README-Modules-Metadata.md)**.
 
-This information is used to filter module selection for scenarios, and also used to specify modules that conflict with each other or to satisfy dependencies between modules.
+### Generators and encoders create and alter content
+Encoders and generators have code that is *evaluated at project build time*, such as encoding text, and generating flags and other potentially randomised content. In each case, this is a ruby script located within the module directory in **local/secgen_local.rb**. Although normally called by SecGen, secgen_local.rb scripts can be executed directly, and accept all the parameter inputs as command line arguments, and returns the output in JSON format to stdout. Other human readable output is written to stderr.
 
-Example:
-```xml
-<?xml version="1.0"?>
-
-<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
-  <name>DistCC Daemon Command Execution</name>
-  <author>Lewis Ardern</author>
-  <module_license>MIT</module_license>
-  <description>Distcc has a documented security weakness that enables remote code execution.</description>
-
-  <type>distcc</type>
-  <privilege>user</privilege>
-  <access>remote</access>
-  <platform>unix</platform>
-
-  <!--optional vulnerability details-->
-  <difficulty>medium</difficulty>
-  <cve>CVE-2004-2687</cve>
-  <cvss_base_score>9.3</cvss_base_score>
-  <cvss_vector>AV:N/AC:M/Au:N/C:C/I:C/A:C</cvss_vector>
-  <reference>https://www.rapid7.com/db/modules/exploit/unix/misc/distcc_exec</reference>
-  <reference>OSVDB-13378</reference>
-  <software_name>distcc</software_name>
-  <software_license>GPLv2</software_license>
-
-  <!--optional hints-->
-  <msf_module>exploit/unix/misc/distcc_exec</msf_module>
-  <hint>On a non-standard port</hint>
-  <solution>Distcc is vulnerable, and on a high port number.</solution>
-
-  <!--Cannot co-exist with other installations-->
-  <conflict>
-    <software_name>distcc</software_name>
-  </conflict>
-</vulnerability>
+```bash
+#ruby modules/encoders/string/base64/secgen_local/local.rb --strings_to_encode "encode this" --strings_to_encode "and this"
+BASE64 Encoder
+ Encoding '["encode this", "and this"]'
+ Encoded: ["ZW5jb2RlIHRoaXM=", "YW5kIHRoaXM="]
+["ZW5jb2RlIHRoaXM=","YW5kIHRoaXM="]
 ```
+![gify goodness](lib/resources/images/readme_gifs/base64_encoder_run.gif  "secgen_local.rb scripts can be executed directly")
+![gify goodness](lib/resources/images/readme_gifs/base64_encoder_code.gif  "Coding a generator or encoder is easy!")
 
-#### name
-The name of the module, with spaces and Title Caps.
+## Puppet is used to provision the VMs
+Each vulnerability, service, and utility module contains Puppet files which are used to provision the software and configuration changes onto the VMs. By the time Puppet is executed to provision VMs, all randomisation has previously taken place at build time.
 
-#### author
-Repeated one or more times for authors of the SecGen module and to acknowledge any authors of adapted Puppet modules from PuppetForge.
+For details please see the **[Modules Puppet guide](README-Modules-Puppet.md)**.
 
-#### module_license MIT|Apache v2
-The free and open source license the module is released under.
-
-#### description
-A description of the module and what it does.
-
-#### type
-A general category, in terms of the network protocol used (for example, ftp) if relevant.
-
-#### privilege user|root
-The level of privilege a successful attacker ends up with when exploitation is successful. User account, or root level access to the VM. As other challenges are added, the possible values will need to include database and information leaks.
-
-#### access remote|local
-The level of access the attacker needs to carry out the attack. Local access, such as an existing shell or user account, or remote, such as a vulnerable network service.
-
-#### platform unix|linux
-What OS(s) the module is compatible with.
-
-#### difficulty (optional) low|medium|high
-How hard the challenge is.
-
-#### cve (optional)
-For real vulnerabilies, the CVE where available.
-
-#### cvss_base_score (optional)
-The CVSS v2 Base Score. The score as [calculated based on the CVSS vector](https://nvd.nist.gov/cvss/v2-calculator?).
-
-#### cvss_vector (optional)
-The CVSS v2 vector string, for example: 'AV:L/AC:H/Au:N/C:N/I:P/A:C'
-
-Access Vector (AV): L = Local access, A = adjacent access, N = network access  
-Access Complexity (AC): H = High, M = Medium, L = Low  
-Authentication (Au): N = None required, S = Single instance, M = Multi instance  
-Confidentiality Impact (C): N = None, P = Partial, C = Complete  
-Integrity Impact (I): N = None, P = Partial, C = Complete  
-Availability Impact: N = None, P = Partial, C = Complete  
-
-[NIST provide a handy online tool.](https://nvd.nist.gov/cvss/v2-calculator?)
-
-#### reference (optional)
-Repeated for URLs with further information about the vulnerability, exploit, and software. For example, information about the vulnerability, links to exploits, and so on.
-
-#### software_name (optional)
-Package name of software installed by the puppet modules (as named in software repositories).
-
-#### software_license (optional) MIT|Apache v2
-The license of the installed/bundled software.
-
-#### msf_module (optional)
-A Metasploit module (if one exists) to compromise the vulnerability. For example, "exploit/unix/misc/distcc_exec".
-
-#### hint (optional)
-A hint to direct the attacker in the right direction.
-
-#### solution (optional)
-A solution to the challenge.
-
-#### conflict (optional)
-A module may conflict with other modules based on matches to attributes or module_path. Each conflict can have multiple conditions which must all be met for this to be considered a conflict. 
-
-For example, to conflict with modules that provide a web server and install apache:
-```xml
-<conflict>
-  <type>httpd</type>
-  <software_name>apache</software_name>
-<conflict>
-```
-That example would not conflict with other web servers that don't include "apache" in the software_name.
-
-If multiple \<conflict> elements are specified, it only takes any one conflict to prevent a conflicting module to be selected.
-
-When creating modules, __conflicts should be avoided wherever possible__, as they can significantly reduce the randomisation options for complex scenarios, and can cause complications in the resolution of scenarios (which is currently solved via bruteforce).
-
-#### requires (optional)
-A module can include \<requires> tags to require other modules that satisfy a set of conditions are also added to the scenario. When selecting a module, each of these dependencies is resolved by checking if a module has already been selected that satisfies the condition, in which case nothing happens, otherwise a module that satisfies all the conditions is randomly selected and added to the scenario. This is recursive so a module can require modules that require modules. 
-
-When conflicts occur (say for example, a previously selected module conflicts with all the valid options for resolving a dependency) the scenario is regenerated. This bruteforce approach is fairly effective, but \<conflict> tags should be avoided wherever possible because they add complexity and reduce randomisation possibilities.
-
-A module can have multiple \<requires>, each of which will ensure a single module fulfills all of the conditions, which are regexp matches against attributes.
-
-For example, for a module that needs to have a repo refresh (apt-get update) first:
-```xml
-  <requires>
-    <type>update</type>
-  </requires>
-```
-Or for a module that requires apache be installed by another module (rather than the module itself installing apache, alternatively):
-```xml
-<requires>
-    <type>httpd</type>
-    <software_name>apache</software_name>
-  </requires>
-```
-
-In this (silly) example, writable_shadow requires apache which requires update:
-![recursive_dependencies](https://cloud.githubusercontent.com/assets/670192/17168086/4a08e162-53d8-11e6-83a0-0892d4fc2d68.png)
-
-In another silly example, here apache requires ftp, but all ftp modules conflict with writable_shadow: 
-![recursive_dependency_resolution](https://cloud.githubusercontent.com/assets/670192/17168883/b18ff362-53dc-11e6-8288-fa49a5f3459e.png)
-
-### Puppet files
-Each vulnerability, service, and utility module contains Puppet files which are used to provision the software onto the VMs.
-
-The module directory contains
- - a Puppet module
- - Puppet entry point (same file name as the module directory, .pp)
-
-This example should help illustrate. Distcc has a documented security weakness that enables remote code execution. The below example comes from modules/vulnerabilities/misc/distcc_exec.
-
-A manifest/ directory contains the Puppet files for a distcc_exec Puppet class.
-
-As is convention, one file for Installation:
-````
-class distcc_exec::install{
-  package { 'distcc':
-    ensure => installed
-  }
-}
-````
-One file for configuration (plus a template file):
-````
-class distcc_exec::config{
-  file { '/etc/default/distcc':
-    require => Package['distcc'],
-    ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0777',
-    content  => template('distcc_exec/distcc.erb')
-  }
-}
-````
-One file for ensuring the service starts:
-````
-class distcc_exec::service{
-  service { 'distcc':
-    ensure => running
-  }
-}
-````
-So far this is all typical Puppet.
-
-Finally, we add a module entry point, with the same name as the directory .pp:
-````
-include distcc_exec::install
-include distcc_exec::config
-include distcc_exec::service
-````
-
-To learn more about Puppet and understand the how to write modules check out the SecGen Wiki and also http://puppetlabs.com/
-
-## Output
-By default output is to projects/SecGen_[CurrentTime]/
+## SecGen project output
+By default output is to 'projects/SecGen_*[CurrentTime]*/'
 
 The project output includes:
- - A vagrant configuration for spinning up the boxes.
- - A directory containing all the required puppet modules. A Librarian-Puppet file is created to manage modules, and some required modules may be obtained via PuppetForge, and therefore an Internet connection is required when building the project.
- - A de-randomised scenario XML file. This is a XML scenario file that can be used to replay these systems. Any randomisation that has been applied should be un-randomised in this output (compared to the original scenario file). This can also be used later for grading, scoring, or giving hints. 
+ - A Vagrant configuration for spinning up the boxes.
+ - A directory containing all the required puppet modules for the above. A Librarian-Puppet file is created to manage modules, and some required modules may be obtained via PuppetForge, and therefore an Internet connection is required when building the project.
+ - A de-randomised scenario XML file. Using SecGen you can use this 'scenario.xml' file to recreate the above Vagrant config and puppet files. Any randomisation that has been applied should be un-randomised in this output (compared to the original scenario file). This file contains all the details of the systems created, and can also be used later for grading, scoring, or giving hints.
+ - A 'flag_hints.xml' file, containing all the flags along with multiple hints per flag.
+ - A 'CTFd_importable.zip' file useful for CTF events, for import into the [CTFd scoreboard frontend](https://github.com/CTFd/CTFd).
 
-The VM building process takes the project output and builds the VMs.
+If you start SecGen with the "build-project" (or "p") command it creates the above files and then stops. The "run" (or "r") command creates the project files then uses Vagrant to build the VM(s).
+
+It is possible to copy the project directory to any compatible system with Vagrant, and simply run "vagrant up" to create the VMs.
+
+The default root password for the base-boxes is 'puppet', but this may be modified by SecGen depending on the scenario used.
+
+## Batch Processing with SecGen
+
+Generating multiple VMs in a batch is now possible through the use of batch_secgen, which manages a job queue to mass-create VMs with SecGen. There are helper commands available to add jobs, list jobs in the table, remove jobs, and reset the status of jobs from 'running' or 'error' to 'todo'.
+
+For details please see the **[Batch Creation of VMs guide](README-Batch-VMs.md)**.
+
+## CyBOK Knowledge Area Key
+
+The Cyber Security Body of Knowledge (CyBOK) is a body of knowledge that aims to encapsulate the various knowledge areas present within cyber security.
+Scenarios within SecGen now contain XML elements linking them to CyBOK knowledge areas and specific topics within those knowledge areas.
+Additionally, video content for scenarios are tagged with CyBOK associations.
+
+For an index of lab scenarios in SecGen organised by CyBOK Knowledge Areas please see the **[Lab Scenarios and CyBOK](README-CyBOK-Scenarios-Indexed.md)**.
+
+For a list of lecture and demo videos with CyBOK metadata please see the **[Lecture Videos and CyBOK](README-CyBOK-Lecture-Videos.md)**.
+
+The table below is a key for the abbreviations you will find within the CyBOK XML elements within the scenarios:     
+
+| Abbreviation | Knowledge Area (KA) | Chapter | Knowledge Tree|
+| ----------- | -------------------- | ------- | --------------|
+| IC   |   Introduction to CyBOK | [link](https://www.cybok.org/media/downloads/Introduction_to_CyBOK.pdf)| [link](https://www.cybok.org/media/downloads/CyBOK_introduction.pdf) |
+| FM   | Formal Methods | n/a |  [link](https://www.cybok.org/media/downloads/Formal_Methods_for_Security_VK6XZwO.pdf)|
+| RMG   | Risk Management & Governance | [link](https://www.cybok.org/media/downloads/Risk-Management--Governance-issue-1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Risk_Management__Governancev2.pdf)|
+| LR   | Law & Regulation | [link](https://www.cybok.org/media/downloads/Law__Regulation_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Law__Regulation.pdf)|
+| HF   | Human Factors | [link](https://www.cybok.org/media/downloads/Human_Factors_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Human_Factors.pdf)|
+| POR   | Privacy & Online Rights | [link](https://www.cybok.org/media/downloads/Privacy__Online_Rights_issue_1.0_FNULPeI.pdf)|  [link](https://www.cybok.org/media/downloads/Privacy__Online_Rights.pdf)|
+| MAT   | Malware & Attack Technologies | [link](https://www.cybok.org/media/downloads/Malware__Attack_Technology_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Malware__Attack_Technologies.pdf)|
+| AB   | Adversarial Behaviours | [link](https://www.cybok.org/media/downloads/Malware__Attack_Technology_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Adversarial_Behaviours.pdf)|
+| SOIM   | Security Operations & Incident Management | [link](https://www.cybok.org/media/downloads/Security_Operations__Incident_Management_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Security_Operations__Incident_Management.pdf)|
+| F   | Forensics | [link](https://www.cybok.org/media/downloads/Forensics_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Forensics.pdf)|
+| C   | Cryptography | [link](https://www.cybok.org/media/downloads/Cryptography-issue-1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Cryptography.pdf)|
+| OSV   | Operating Systems & Virtualisation Security | [link](https://www.cybok.org/media/downloads/Operating_Systems__Virtualisation_Security_issue_1.0_xhesi5S.pdf)|  [link](https://www.cybok.org/media/downloads/Operating_Systems__Virtualisation_Security.pdf)|
+| DSS   | Distributed Systems Security | [link](https://www.cybok.org/media/downloads/Distributed_Systems_Security_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Distributed_Systems_Security.pdf)|
+| AAA         |   Authentication, Authorisation and Accountability | [link](https://www.cybok.org/media/downloads/AAA_issue_1.0_q3qspzo.pdf)| [link](https://www.cybok.org/media/downloads/AAA.pdf) |
+| SS   | Software Security | [link](https://www.cybok.org/media/downloads/Software_Security_issue_1.0_1M7Kfk2.pdf)|  [link](https://www.cybok.org/media/downloads/Software_Security.pdf)|
+| WAM   | Web & Mobile Security | [link](https://www.cybok.org/media/downloads/Web__Mobile_Security_issue_1.0_XFpbYNz.pdf)|  [link](https://www.cybok.org/media/downloads/Web__Mobile_Security.pdf)|
+| SSL   | Secure Software Lifecycle | [link](https://www.cybok.org/media/downloads/Secure_Software_Lifecycle_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Secure_Software_Lifecycle.pdf)|
+| NS   | Network Security | [link](https://www.cybok.org/media/downloads/Network_Security_issue_1.0_qsCh0SR.pdf)|  [link](https://www.cybok.org/media/downloads/Network_Security.pdf)|
+| HS   | Hardware Security | [link](https://www.cybok.org/media/downloads/Hardware_Security_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Hardware_Security.pdf)|
+| CPS   | Cyber Physical Systems | [link](https://www.cybok.org/media/downloads/Cyber-Physical_Systems_Security_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Cyber_Physical_Systems_Security.pdf)|
+| PLT  | Physical Layer and Telecommunications Security | [link](https://www.cybok.org/media/downloads/Physical_Layer__Telecommunications_Security_issue_1.0.pdf)|  [link](https://www.cybok.org/media/downloads/Physical_Layer__Telecomms_Security.pdf)|
 
 ## Roadmap
-### Parameterisation of vulnerabilities
-A new feature in development, is the parameterisation of vulnerabilities and services, so that each vulnerability can also be configured various (and randomisable) ways. This enables a number of important enhancements, such as: 
-- the ability to feed content into hosted websites (independant of the vulnerabilities or even CMS in use)
-- specify or randomise aspects of a challenge, such as files or users
-- feed randomly generated CTF flags into hacking challenges
+- **More modules!** Including more CTF-style modules.
+- Windows baseboxes and vulnerabilities.
+- More security labs with worksheets.
+- Further gamification and immersive scenarios.
+
+## Acknowledgments
+*Development team:*
+- Dr Z. Cliffe Schreuders http://z.cliffe.schreuders.org
+- Tom Shaw
+- Jason Keighley
+- Lewis Ardern -- author of the first proof-of-concept release of SecGen
+- Connor Wilson
+
+Many thanks to everyone who has contributed to the project. The above list is not complete or exhaustive, please refer to the [GitHub history](https://github.com/cliffe/SecGen/graphs/contributors).
+
+This project is supported by a Higher Education Academy (HEA) learning and teaching in cyber security grant (2015-2017).
+This project is supported by a Leeds Beckett University Teaching Excellence Fund grant (2018-2019).
+This project is supported by a Cyber Security Body of Knowledge (CyBOK) resources around CyBOK 1.0 grant (2021).
 
 ## Contributing
-We encourage contributions to the project, please see the wiki for guidance on how to contribute.
+We encourage contributions to the project.
 
-Briefly, please fork from github.com/cliffe/SecGen, create a branch, make and commit your changes, then create a pull request.
+Briefly, please fork from http://github.com/cliffe/SecGen/, create a branch, make and commit your changes, then create a pull request.
 
-The SecGen team have prepared a VM located at: https://drive.google.com/open?id=0B6fyxD2qGmUIaXpDZElKczdQYW8 to make 
-contributing for SecGen easier, it includes Ruby, git and RubyMine pre-installed, however, some tweaking may be required.
+## Resources
+Paper: [Z.C. Schreuders, T. Shaw, A. Mac Muireadhaigh, and P. Staniforth, “Hackerbot: Attacker Chatbots for Randomised and Interactive Security Labs, Using SecGen and oVirt,” USENIX Workshop on Advances in Security Education (ASE'18), Baltimore, MD, USA. USENIX Association, 2018.](https://www.usenix.org/conference/ase18/presentation/schreuders) (This paper describes Hackerbot and how we use SecGen with oVirt.)
+
+Paper: [Z.C. Schreuders, T. Shaw, M. Shan-A-Khuda, G. Ravichandran, J. Keighley, and M. Ordean, “Security Scenario Generator (SecGen): A Framework for Generating Randomly Vulnerable Rich-scenario VMs for Learning Computer Security and Hosting CTF Events,” USENIX Workshop on Advances in Security Education (ASE'17), Vancouver, BC, Canada. USENIX Association, 2017.](https://www.usenix.org/conference/ase17/workshop-program/presentation/schreuders) (This paper provides a good overview of SecGen.)
+
+Paper: [Z.C. Schreuders, and L. Ardern, "Generating randomised virtualised scenarios for ethical hacking and computer security education: SecGen implementation and deployment," in The first UK Workshop on Cybersecurity Training & Education (Vibrant Workshop 2015) Liverpool, UK, 2015.](http://z.cliffe.schreuders.org/publications/VibrantWorkshop2015%20-%20Generating%20randomised%20virtualised%20scenarios%20for%20ethical%20hacking%20and%20computer%20security%20education%20%28SecGen%29.pdf) (This paper describes the first prototype.)
+
+Podcast interview: [Purple Squad Security Episode 011 – Security Scenario Generator with Dr. Z. Cliffe Schreuders](https://purplesquadsec.com/podcast/episode-011-security-scenario-generator-dr-z-cliffe-schreuders/)

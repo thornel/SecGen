@@ -1,0 +1,15 @@
+[Unit]
+Description=OWASP WebWolf
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStart=/usr/bin/java -jar /opt/webwolf/webwolf-8.0.0.M26.jar --server.port=<%=@port%> --server.address=<%=@hostname%>
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+WorkingDirectory=/opt/webwolf/
+Restart=always
+User=webgoat
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

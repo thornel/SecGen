@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>MetaCTF Challenge Generator</name>
+  <author>Thomas Shaw</author>
+  <module_license>MIT</module_license>
+  <description>Selects the name of a random MetaCTF challenge.</description>
+
+  <type>metactf_challenge</type>
+  <type>string_generator</type>
+  <type>local_calculation</type>
+  <platform>linux</platform>
+
+  <reference>https://bitbucket.org/wuchangfeng/metactf</reference>
+
+  <!-- If challenge path is not provided, randomise based on difficulty.
+       If group is not provided, generate random hex. -->
+  <read_fact>challenge_path</read_fact>
+  <read_fact>difficulty</read_fact>
+  <read_fact>flag</read_fact>
+  <read_fact>group</read_fact>
+  <!-- optional -->
+<!--  This can take either a string (absolute path to copy to) or an account structure data object (JSON/ruby hash).
+ String copies directly to the path, account copies to the user's home directory. -->
+  <read_fact>copy_directory</read_fact>
+<!--  If provided, will server the challenge over the network on the port-->
+  <read_fact>port</read_fact>
+  <read_fact>include_c</read_fact>
+
+  <!-- Array of challenge hashes. If provided by the scenario, the generator will not provide a duplicate challenge. -->
+  <read_fact>existing_challenges</read_fact>
+
+  <default_input into="difficulty">
+    <generator type="difficulty"/>
+  </default_input>
+  <default_input into="flag">
+    <generator type="flag_generator"/>
+  </default_input>
+  <default_input into="include_c">
+    <value>false</value>
+  </default_input>
+
+  <output_type>generated_strings</output_type>
+</generator>

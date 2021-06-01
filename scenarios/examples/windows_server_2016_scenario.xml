@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<system>
+		<system_name>windows</system_name>
+		<base platform="windows" distro="server 2016"/>
+
+		<utility module_path=".*/parameterised_accounts" platform="windows">
+			<input into="accounts" into_datastore="accounts">
+				<generator type="account">
+					<input into="username">
+						<value>user1</value>
+					</input>
+					<input into="password">
+						<value>password1</value>
+					</input>
+					<input into="super_user">
+						<value>false</value>
+					</input>
+					<input into="strings_to_leak">
+						<value>This is a test</value>
+					</input>
+					<input into="leaked_filenames">
+						<value>test.txt</value>
+					</input>
+				</generator>
+				<generator type="account">
+					<input into="username">
+						<value>admin</value>
+					</input>
+					<input into="password">
+						<value>password2</value>
+					</input>
+					<input into="super_user">
+						<value>true</value>
+					</input>
+					<input into="strings_to_leak">
+						<value>Hello, world!</value>
+					</input>
+					<input into="leaked_filenames">
+						<value>test.txt</value>
+					</input>
+				</generator>
+			</input>
+		</utility>
+
+		<network type="private_network" range="dhcp"/>
+	</system>
+
+</scenario>

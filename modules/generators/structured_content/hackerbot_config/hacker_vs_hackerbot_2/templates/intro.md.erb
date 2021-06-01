@@ -1,0 +1,65 @@
+# Hacker vs Hackerbot 2
+
+## Troubleshooting with oVirt during the test
+
+In the unlikely event you experience technical issues with our infrastructure during the test, which you believe to be outside your control, make sure to record evidence (such as screenshots) and let us know asap the same day.
+
+However, keep in mind we won't give any hints for the actual test challenges while the test is available.
+
+## Getting started
+### VMs in this test
+
+==Start these VMs== (if you haven't already):
+
+- hackerbot_server (leave it running, you don't log into this)
+- ids_server (IP address: <%= $ids_server_ip %>)
+- web_server (IP address: <%= $web_server_ip %>)
+- compromised_server (IP address: <%= $compromised_server_ip %>)
+- desktop
+
+All of these VMs need to be running to complete the test.
+
+### Your login details for the "desktop" and server VMs
+User: <%= $main_user %>
+Password: <%= $main_password %>
+
+You won't login to the hackerbot_server, but all the VMs need to be running to complete the lab.
+
+### For marks in the module
+1. **You need to submit flags**. Note that the flags and the challenges in your VMs are different to other's in the class. Flags will be revealed to you as you complete challenges throughout the module. Flags look like this: ==flag{*somethingrandom*}==. Follow the link on the module page to submit your flags.
+
+## Hackerbot!
+![small-right](images/skullandusb.svg)
+
+This exercise involves interacting with Hackerbot, a chatbot who will task you to complete tasks and will attack your systems. If you satisfy Hackerbot by completing the challenges, she will reveal flags to you.
+
+---
+
+Some commands you may find useful include:
+* `rsync`
+* `chattr`
+* `lsattr`
+* `chmod`
+* `hashdeep`
+* `shasum`
+* `mount`
+* `umount`
+* `diff`
+* `tcpdump`
+* `wireshark`
+* `kdesudo`
+* `ssh`
+* `snort`
+* `sudo service snort stop`
+* `sudo service snort start`
+* `netstat`
+* `ps`
+* `lsof`
+* `top`
+
+Remember you can learn more about the commands by running:
+```bash
+man *command*
+```
+
+### Good luck!

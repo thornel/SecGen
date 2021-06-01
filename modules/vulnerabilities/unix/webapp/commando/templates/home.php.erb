@@ -1,0 +1,43 @@
+<?php include 'connect.php';?>
+
+<%# Note, these pages use multiple bootstap templates chopped up and rebuilt
+and can be found at: https://getbootstrap.com/docs/4.0/getting-started/introduction/%>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<% $page_title = 'Home' %>
+<%= scope.function_template(['commando/subtemplates/header.html.erb']) %>
+
+<body>
+
+  <%= scope.function_template(['commando/subtemplates/nav.html.erb']) %>
+
+  <div class="container">
+    <div class="row" id="r-banner">
+          <div id="title" class="col-6"><p>Our products:</p></div>
+          <div class="col-6"><p id="basket">Basket(0)</p></div>
+    </div>
+
+      <%# Just says nothing is in stock (TODO: basket functionality) %>
+      <?php if($_GET["submit"] === "Add") echo '<div class="error_msg">Sorry, not in stock.</div>';
+      ?>
+
+  		<% @search.each { |search| -%>
+  			<%= search %>
+  		<%} -%>
+
+    </div>
+
+    <%# This is taken from: https://getbootstrap.com/docs/4.0/getting-started/introduction/%>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="js/jquery-3.3.1.slim.min.js"></script>
+    <script src="js/popper.min.js"></script>
+    <script src="css/bootstrap.4.3.1.min.js"></script>
+
+</body>
+
+<%= scope.function_template(['commando/subtemplates/footer.html.erb']) %>
+
+</html>

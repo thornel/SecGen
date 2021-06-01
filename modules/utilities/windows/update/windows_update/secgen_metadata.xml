@@ -16,9 +16,10 @@
   <software_name>windows_update</software_name>
   <software_license>MIT</software_license>
 
-  <!--Cannot co-exist with linux installations-->
+  <!-- for now we just make all windows modules conflict with linux bases -->
   <conflict>
-    <module_path>modules/[^/]*/(unix|linux)/.*</module_path>
+    <module_path>bases/.*</module_path>
+    <platform>linux</platform>
   </conflict>
 
 </utility>

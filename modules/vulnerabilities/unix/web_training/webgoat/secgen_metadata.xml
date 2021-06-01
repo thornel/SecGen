@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+
+  <name>WebGoat 8: A deliberately insecure Web Application</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>WebGoat is a deliberately insecure web application maintained by OWASP designed to teach web application security lessons.
+
+This program is a demonstration of common server-side application flaws. The exercises are intended to be used by people to learn about application security and penetration testing techniques.</description>
+
+  <type>web_training_platform</type>
+  <type>webapp</type>
+  <privilege>info_leak</privilege>
+  <access>remote</access>
+  <platform>linux</platform>
+
+  <read_fact>port</read_fact>
+  <read_fact>hostname</read_fact>
+
+  <default_input into="port">
+    <value>8080</value>
+  </default_input>
+
+  <default_input into="hostname">
+    <value>localhost</value>
+  </default_input>
+
+  <reference>https://github.com/WebGoat/WebGoat</reference>
+
+  <software_name>webgoat</software_name>
+  <software_license>GPLv2</software_license>
+
+  <!-- Probably always makes sense to also install WebWolf, its used in some of the challenges -->
+  <requires>
+    <module_path>.*/webwolf</module_path>
+  </requires>
+</vulnerability>

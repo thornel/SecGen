@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Random 8 Character Hex Generator</name>
+  <author>Jason Zeller</author>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Uses Ruby's SecureRandom to generate a message made up of hex digits (a-f0-9). Then this has been
+    shortened to 8 characters. Designed for ease of use specifically with CTFd, when copy/paste is not available.
+  </description>
+
+  <type>flag_generator</type>
+  <type>flag_ctfd</type>
+  <type>local_calculation</type>
+  <platform>linux</platform>
+  <platform>windows</platform>
+
+  <reference>http://ruby-doc.org/stdlib-2.2.2/libdoc/securerandom/rdoc/SecureRandom.html#method-c-hex</reference>
+
+  <output_type>generated_strings</output_type>
+
+</generator>

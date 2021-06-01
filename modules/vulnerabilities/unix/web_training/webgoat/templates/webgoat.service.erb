@@ -1,0 +1,15 @@
+[Unit]
+Description=OWASP WebGoat
+
+[Service]
+EnvironmentFile=/etc/environment
+ExecStart=/usr/bin/java -jar /opt/webgoat/webgoat-server-8.0.0.M26.jar --server.port=<%=@port%> --server.address=<%=@hostname%>
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+WorkingDirectory=/opt/webgoat/
+Restart=always
+User=webgoat
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target

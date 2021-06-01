@@ -1,0 +1,302 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<name>Induction</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>You will need to find the unlock password somewhere.</description>
+
+  <type>ctf</type>
+  <difficulty>easy</difficulty>
+
+	<system>
+		<system_name>desktop</system_name>
+		<base distro="Debian 10" type="desktop" name="KDE"/>
+
+		<input into_datastore="IP_addresses">
+			<value>172.16.0.2</value>
+			<value>172.16.0.3</value>
+		</input>
+
+		<!--generate two accounts, YOU and someone else-->
+		<input into_datastore="accounts">
+			<generator type="account">
+				<input into="username">
+					<generator type="random_sanitised_word">
+						<input into="wordlist">
+							<value>mythical_creatures</value>
+						</input>
+					</generator>
+				</input>
+				<input into="password">
+					<value>tiaspbiqe2r</value>
+				</input>
+				<input into="super_user">
+					<value>true</value>
+				</input>
+				<input into="leaked_filenames">
+					<value>README</value>
+					<value>SECRETS/accounts</value>
+				</input>
+				<input into="strings_to_leak">
+					<encoder module_path=".*/concatenate">
+						<input into="strings_to_encode">
+							<value>
+Dear Lucy,
+
+I have made a mistake and I am pretty sure the Cyber Security people at Leeds Beckett are onto me now.
+
+The campus is no longer safe, so I have moved all the money to one of my many offshore accounts. You may not hear from me for a while as I have to lay low.
+
+I've left some critical information in an encrypted zip file for you in /var/log/. The password is a number of mine.
+
+Yours, E.
+							</value>
+							<generator type="flag_generator" />
+						</input>
+					</encoder>
+					<encoder module_path=".*/base64">
+						<input into="strings_to_encode">
+							<encoder module_path=".*/concatenate">
+								<input into="strings_to_encode">
+									<generator type="flag_generator" />
+									<value>
+You are getting close. The loot must be one of these accounts, but you will never guess which one.
+Name,daisy.smart@death.edu,Account
+Lee Axford,lee.axford@gmail.com,89973596
+Stacey Badman,stacey.badman@yahoo.com,92206865
+Gareth Bailey,gareth.bailey@hotmail.com,24041898
+Julie Bailey,julie.bailey@virgin.co.uk,74077844
+Stephen Bain,stephen.bain@sky.co.uk,65548883
+Parmajit Bansal,parmajit.bansal@talktalk.co.uk,97649604
+Andrew Barnett,andrew.barnett@btinternet.co.uk,55909637
+Stephen Bayer,stephen.bayer@microsoft.com,89785653
+Jonathan Berridge,jonathan.berridge@ces.com,91187698
+Kathleen Best,kathleen.best@pur.ie,76729807
+Laura Borland,laura.borland@milk.ie,51586123
+Albert Boyes,albert.boyes@live.com,96410021
+Jonathan Bradshaw,jonathan.bradshaw@beds-r-us.co.uk,47240314
+Bobby Brown,bobby.brown@toys-r-us.co.uk,56571321
+Michael Browning,michael.browning@tesco.co.uk,89576381
+Stephen Bull,stephen.bull@cactus.ie,86033343
+Diana Butcher,diana.butcher@goldwalruss.com,35522335
+Beverley Carlin,beverley.carlin@palmbeach.fr,28931012
+Jonas Cater,jonas.cater@light.co.uk,44126992
+Joan Chapman,joan.chapman@smalltalk.co.uk,89093206
+Siobhan Clegg,siobhan.clegg@gossipmongers.org,10031899
+Andrew Colley,andrew.colley@qualitystreet.ie,48686782
+Marina Cook,marina.cook@cadburys.com,78514264
+Christopher Cooper,christopher.cooper@morissons.co.uk,16945203
+Father Corbett,father.corbett@aldi.de,65537398
+Kevin Cosgrove,kevin.cosgrove@finance.no,19611582
+Graham Cowley,graham.cowley@walruss.com,78979637
+Nicola Cutler,nicola.cutler@rhino.co.uk,17977237
+Ian Dack,ian.dack@belly.com,65426661
+Samuel Dexter,samuel.dexter@parkrun.de,27678518
+Tejinder Dhillon,tejinder.dhillon@kunst.de,37669647
+Rose Dodds,rose.dodds@land.com,99014542
+Adrian Dove,adrian.dove@fjord.no,36633952
+Brian Dublin,brian.dublin@pando.co.uk,43428200
+Neil Edmunds,neil.edmunds@ferrari.it,74311671
+Carolyn Edwards,carolyn.edwards@megabus.com,22046349
+Michael Ellis,michael.ellis@gov.co.uk,83793382
+Frank Fairbrother,frank.fairbrother@nhs.co.uk,85826019
+Nicholas Fellows,nicholas.fellows@jamies.co.uk,89670317
+Marisa Fernandez,marisa.fernandez@clarkes.com,22368409
+Rebekka Francis,rebekka.francis@apple.com,23958489
+William Fraser,william.fraser@facebook.com,43674984
+Sean Furey,sean.furey@beetroot.pl,99907363
+Alex Gault,alex.gault@kfc.co.uk,91904626
+Sarah Greenwood,sarah.greenwood@firstbus.com,17075292
+Frederick Grindley,frederick.grindley@landwich.co.uk,90471857
+Kavita Gulati,kavita.gulati@brudenell.co.uk,69205359
+Norman Hall,norman.hall@oneills.com,62035585
+Valerie Hansen,valerie.hansen@honester.com,91721494
+Christopher Hogan,christopher.hogan@whiteroselass.co.uk,62573515
+Hannah Humphries,hannah.humphries@doberman.com,21773424
+Ian Hunt,ian.hunt@earth.co.uk,65566506
+Michael Hurley,michael.hurley@bhs.com,90497687
+Munawar Hussain,munawar.hussain@debenhams.co.uk,28994359
+Quang Huynh,quang.huynh@tsb.com,54459985
+Barry Jackson,barry.jackson@nationwide.co.uk,85397901
+John Kelly,john.kelly@liffey.ie,50696258
+Steven Kennedy,steven.kennedy@scratch.dk,23915101
+Mohammed Khalid,mohammed.khalid@ironfist.th,70070949
+Saqib Khan,saqib.khan@rawhide.co.uk,67778902
+Campbell Kidd,campbell.kidd@talisker.co.uk,22544959
+Em Butterfingers,e.butterfingers@leedsbeckett.ac.uk,82184092
+Wendy Latham,wendy.latham@talisker.com,5025930
+Sara Malek,sara.malek@guiness.ie,21514815
+John Martin,john.martin@liverpool.com,51869254
+Catherine McCallum,catherine.mccallum@mraidan.co.uk,24037034
+Andrew McGuinness,andrew.mcguinness@bearsinthewoods.ie,87751258
+Andrew McInnes,andrew.mcinnes@blacksheep.co.uk,15690074
+Philip Meadows,philip.meadows@security.com,62975314
+Sebastian Merritt,sebastian.merritt@nigerianholdings.ie,92909405
+Claire Millar,claire.millar@loot.com,78801214
+Leonard Morris,leonard.morris@wonga.com,97492675
+Amanda Morrison,amanda.morrison@betfred.com,34207307
+James Mulligan,james.mulligan@downingstreet.com,32566391
+Marion Nairn,marion.nairn@itv.com,75277703
+Gillian Nicholson,gillian.nicholson@bbc.co.uk,44428450
+Aidan Nolan,aidan.nolan@lastsamurai.jp,23849187
+Daniel Norden,daniel.norden@spotify.com,24088661
+Mohamed Omar,mohamed.omar@bjj4life.com.br,29269203
+Jason Peter,jason.peter@muaythai.th,44072142
+Michael Roberts,michael.roberts@kronenburg.fr,84361934
+Matthew Robinson,matthew.robinson@pizzahut.co.uk,86509564
+Jeremy Rollinson,jeremy.rollinson@threthreehorseshoes.co.uk,25968289
+Jolene Ross,jolene.ross@otleyrun.org,91751717
+Barbara Russell,barbara.russell@freshers.co.uk,82860868
+Patricia Scully,patricia.scully@cyberthreats.ru,29615972
+Sandeep Sharma,sandeep.sharma@life.ie,47516106
+Daisy Smart,esther.smart@death.edu,28732912
+Shirley Smith,shirley.smith@manchester.co.uk,84243487
+Lorraine Stamp,lorraine.stamp@marchingontogether.co.uk,59671001
+Claire Stroud,claire.stroud@elland.com,90703657
+Claire Taylor,claire.taylor@premierleague.co.uk,41146553
+Linda Watson,linda.watson@fibonacci.com,14715609
+Jonathan Watt,jonathan.watt@rampage.co.uk,27168168
+Mary Watts,mary.watts@kali.com,53389914
+Michael Weir,michael.weir@securityshepherd.co.uk,79458556
+Neil White,neil.white@hacktivity.com,55541915
+Stephen Williams,stephen.williams@armouredplate.gr,93572645
+Stephen Wood,stephen.wood@pamplona.es,26355914
+Iain Wright,iain.wright@democrats.com,28013651
+								</value>
+							</input>
+						</encoder>
+
+					</input>
+				</encoder>
+
+				</input>
+			</generator>
+			<generator type="account">
+				<input into="username">
+					<generator type="random_sanitised_word">
+						<input into="wordlist">
+							<value>mythical_creatures</value>
+						</input>
+					</generator>
+				</input>
+				<input into="password">
+					<value>test</value>
+				</input>
+				<input into="super_user">
+					<value>false</value>
+				</input>
+				<input into="leaked_filenames">
+					<value></value>
+				</input>
+				<input into="strings_to_leak">
+					<value></value>
+				</input>
+			</generator>
+			<generator type="account">
+				<input into="username">
+					<generator type="random_sanitised_word">
+						<input into="wordlist">
+							<value>mythical_creatures</value>
+						</input>
+					</generator>
+				</input>
+				<input into="password">
+					<value>test</value>
+				</input>
+				<input into="super_user">
+					<value>false</value>
+				</input>
+				<input into="leaked_filenames">
+					<value></value>
+				</input>
+				<input into="strings_to_leak">
+					<value></value>
+				</input>
+			</generator>
+		</input>
+
+		<input into_datastore="desktop_root_password">
+			<generator type="strong_password_generator"/>
+		</input>
+
+		<!--Create the users-->
+		<utility module_path=".*/parameterised_accounts">
+			<input into="accounts">
+				<datastore>accounts</datastore>
+			</input>
+		</utility>
+
+		<utility module_path=".*/kde_minimal">
+			<input into="autologin_user">
+				<datastore access="0" access_json="['username']">accounts</datastore>
+			</input>
+			<input into="accounts">
+				<datastore>accounts</datastore>
+			</input>
+			<input into="autostart_konsole">
+				<value>true</value>
+			</input>
+		</utility>
+		<utility module_path=".*/handy_cli_tools"/>
+		<utility module_path=".*/hash_tools"/>
+
+		<!-- hi there, you can solve this with deduction from the clues! -->
+		<vulnerability type="zip_file">
+			<input into="base64_file">
+				<generator type="zip_file_generator">
+					<input into="password">
+						<value>82184092</value>
+					</input>
+					<input into="strings_to_leak">
+						<generator type="flag_generator"/>
+						<value>
+Well done, hope you enjoyed the challenge. You are now familiar with some of the tools that we will be using during the course. Now, please go to the Discord channel, introduce yourself and tell us the last thing you ate. E.g. Hi, my name is John, sour-cream and onion Pringles :) See you in the labs!.
+						</value>
+					</input>
+				</generator>
+			</input>
+			<input into="leaked_filename">
+				<value>protected.zip</value>
+			</input>
+			<input into="storage_directory">
+				<value>/var/log</value>
+			</input>
+		</vulnerability>
+
+		<vulnerability module_path=".*/ssh_root_login">
+			<input into="root_password">
+				<datastore>desktop_root_password</datastore>
+			</input>
+		</vulnerability>
+
+		<network type="private_network">
+			<input into="IP_address">
+				<datastore access="0">IP_addresses</datastore>
+			</input>
+		</network>
+	</system>
+
+	<system>
+		<system_name>kali</system_name>
+		<base distro="Kali" name="MSF"/>
+
+		<input into_datastore="kali_root_account">
+			<value>{"username":"root","password":"toor","super_user":"","strings_to_leak":[],"leaked_filenames":[]}</value>
+		</input>
+
+		<utility module_path=".*/kali_pwtools"/>
+		<utility module_path=".*/metasploit_framework"/>
+		<utility module_path=".*/handy_cli_tools"/>
+		<utility module_path=".*/nmap"/>
+
+		<network type="private_network" >
+			<input into="IP_address">
+				<datastore access="1">IP_addresses</datastore>
+			</input>
+		</network>
+	</system>
+
+</scenario>

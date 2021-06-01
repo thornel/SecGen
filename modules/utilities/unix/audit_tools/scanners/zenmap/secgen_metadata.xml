@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Zenmap Security Scanner</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Zenmap is the official Nmap Security Scanner GUI.</description>
+
+  <type>utility</type>
+  <platform>linux</platform>
+
+  <!--optional details-->
+  <reference>https://nmap.org/zenmap/</reference>
+
+  <requires>
+    <type>update</type>
+  </requires>
+
+</utility>

@@ -24,4 +24,12 @@
   <software_name>bash</software_name>
   <software_license>GPLv3+</software_license>
 
+  <conflict>
+    <name>.*Debian.*Stretch.*</name>
+  </conflict>
+
+  <requires>
+    <type>update</type>
+  </requires>
+
 </vulnerability>

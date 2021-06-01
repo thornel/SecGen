@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  <name>Bash path environment setuid access</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>A setuid program tells a user the details of a flag file from it's home directory. The contents are available via control of the ENV.
+  </description>
+
+  <type>system</type>
+  <type>ctf_challenge</type>
+  <privilege>none</privilege>
+  <access>local</access>
+  <platform>linux</platform>
+
+  <challenge_type>pwn</challenge_type>
+  <challenge_subtype>access_controls</challenge_subtype>
+  <difficulty>medium</difficulty>
+
+  <read_fact>accounts</read_fact>
+  <read_fact>bash_command</read_fact>
+
+  <default_input into="accounts">
+
+    <generator type="account">
+      <input into="password">
+        <generator type="strong_password_generator"/>
+      </input>
+      <input into="leaked_filenames">
+        <value>flag</value>
+      </input>
+      <input into="strings_to_leak">
+        <generator type="flag_generator"/>
+      </input>
+    </generator>
+
+  </default_input>
+
+  <default_input into="bash_command">
+    <encoder type="string_selector">
+      <input into="strings_to_encode">
+        <value>ls -la</value>
+        <value>ls</value>
+        <value>stat</value>
+        <value>lsattr</value>
+        <value>getfacl</value>
+        <value>dir -l</value>
+      </input>
+    </encoder>
+  </default_input>
+
+  <!--optional details-->
+  <hint>There is a security problem caused by not using an absolute filename when executing a command on a sensitive file.</hint>
+  <solution>Set your PATH env to a directory where you have a cat command named the command being executed.</solution>
+
+  <requires>
+    <type>update</type>
+  </requires>
+
+  <requires>
+    <module_path>utilities/unix/system/accounts</module_path>
+  </requires>
+
+  <requires>
+    <module_path>.*gcc</module_path>
+  </requires>
+
+  <!-- Need a way on to the box. -->
+  <!-- <requires>
+    <privilege>user_rwx</privilege>
+  </requires> -->
+
+</vulnerability>

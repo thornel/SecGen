@@ -1,0 +1,180 @@
+## Special File Permissions and Set UID (SUID)
+
+Sometimes a user needs to be able to do things that require permissions that they should not always have. For example, the passwd command is used to change your password. When it runs it needs read and write access to /etc/shadow. Clearly not every user should have that kind of access! Also, the ping command needs raw network access... Again not something that every user can do. The Unix solution is *set UID (SUID)*.
+
+Using SUID, processes can be given permission to run as another user. For example, when you run passwd, the program actually runs as root (on most Unix systems).
+
+In fact, every process actually has multiple identities, including:
+
+-   The real UID (RUID): the user who is running the command
+-   The effective UID (EUID): the way the process is treated
+
+==List all processes real and effective UIDs/users:==
+
+```bash
+ps -eo ruser,euser,comm
+```
+
+Look through the list of running processes. Most of the time the RUID and EUID matches. Are there any cases in the output where they do not?
+
+Take a look at how the effective UID is specified. ==Run:==
+
+```bash
+ls -l /usr/bin/passwd
+```
+
+`-rwsr-xr-x 1 root shadow 81792 Oct 29 18:26 /usr/bin/passwd`
+
+The `s` in the file permissions (where you would normally see an x for execute permission) means that when this program is started the file UID will be used as the effective UID.
+
+The SUID bit is stored in the first permission octet in the inode. ==Run:==
+
+```bash
+stat /usr/bin/passwd
+```
+`Access: (4755/-rwsr-xr-x)  Uid: (    0/    root)   Gid: (    0/    root)`
+
+Note the octet representation of the file permissions: 4755. Make sure you understand how this results in the permissions "rwsr-xr-x".
+
+In your terminal console, ==open multiple tabs==.
+
+==In one tab run:==
+
+```bash
+passwd
+```
+
+> (dont type anything, instead leave the prompt open)
+
+==Switch to another tab and run:==
+
+```bash
+ps -o ruser,euser,comm -C passwd
+```
+
+Or you can list all processes (-e) and use awk to filter it down to *any* lines where the first two entries (ruid and euid) don't match:
+
+```bash
+ps -eo ruser,euser,comm | awk '$1 != $2'
+```
+
+Make sure you understand the significance of the ruser and euser outputs not matching.
+
+==Run this== command to find all SUID programs on the system:
+
+```bash
+sudo find / -type f -perm -4000 -exec ls -ldb {} \;
+```
+
+==Log Book Question: Document why each SUID program on your desktop requires SUID permissions.==
+
+> Hint: look up each command using man.
+
+## Set GID (SUID)
+
+Set GID (SUID) is similar to SUID, except it is the effective group (EGID) that is changed. The EGID is changed to the group assigned to the executable file.
+
+==Run:==
+```bash
+ls -la /usr/bin/wall
+```
+`-rwxr-sr-x 1 root tty 27448 Mar  7  2018 /usr/bin/wall`
+
+==Start wall in a separate tab, and run:==
+
+```bash
+ps -o ruser,euser,rgroup,egroup,comm -C wall
+```
+
+==Log Book Question: Document why the `wall` program requires SGID permissions.==
+
+
+==Search for all programs on your system that have SGID set.==
+
+> Hint: try modifying the above command.
+
+## Trust boundaries and SUID risks
+
+Every time SUID/SGID is used it respresents a security risk, because that program acts as a **trust boundary** (where execution changes its level of "trust") because the process attains an increased privilege level. A vulnerability in a SUID/SGID program could result in the user gaining escalated privileges.
+
+## Writing a SUID program in C
+
+You are going to compile a SUID program, to grant access to the contents of your "mysecret" file to anyone who runs the program, without sharing direct access to the file.
+
+Use file permissions to ==make "~/mysecret" only accessible by the owner==: ls -la should show `rw-------` for that file.
+
+Create a SUID program by compiling "access_my_secrets.c". ==View the program code, and take a minute to read through it:==
+
+```bash
+vi access_my_secrets.c
+```
+
+==Save any changes and quit== (Esc, ":wq").
+
+==Compile the program== (which uses the C code to create an executable):
+
+```bash
+gcc access_my_secrets.c -o access_my_secrets
+```
+
+==Run the program, and make sure it prints the contents of mysecret:==
+
+```bash
+./access_my_secrets
+```
+
+==Set the permissions for the file== (using chmod) to setuid:
+
+```bash
+chmod u+s access_my_secrets
+```
+
+Check the permissions include SUID:
+
+```bash
+ls -l access_my_secrets
+```
+
+Run the program again:
+
+```bash
+./access_my_secrets
+```
+
+Note that the program outputs its real and effective identity.
+
+==Change the permissions for your home directory== to enable other users to change to this directory.
+
+Change to another <%= $second_user %>, and execute the program:
+
+```bash
+su <%= $second_user %> -
+cd /home/<%= $main_user %>
+./access_my_secrets
+```
+
+> If you get a permission error, you may need to ==change the permissions on your home directory to enable other users to list your files==.
+
+Note that the effective ID is that of the owner of the program. You should also see the contents of the mysecret file, even though <%= $second_user %> doesn't have access to the secrets file directly.
+
+Think about the security of this solution. How secure is it? Would it be safe for root to be the owner of this program? Why not? (You will come back to this.)
+
+> Hint: the system will be particularly vulnerable when fs.protected_hardlinks = 0 (you can run `echo 0 | sudo tee /proc/sys/fs/protected_hardlinks` to disable hardlink protection, as is the case on some Unix/Linux systems).
+
+==**Recommended AFTER completing all the flags:**==
+
+==Log Book Question:== It is possible to use this SUID program to get read access to **any** one of the owner user's files! Modify the program to correct the above vulnerability.
+
+==Log Book Question:== Modify the program so that the script checks the UID and only continues for a specific user (for example, if the user is root).
+
+> Hint: `man getuid`
+
+
+## Conclusion
+
+At this point you have:
+
+-   Learned about Set UID (SUID), become more familiar with C, and compiled a SUID C program
+-   Working with C code to compile, edit, and correct security vulnerabilities
+
+Well done!

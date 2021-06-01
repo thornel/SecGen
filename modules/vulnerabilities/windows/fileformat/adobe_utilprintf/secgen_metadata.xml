@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  <name>Adobe Reader Client Side Vulns 8.1.2</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Installs an old version of Adobe Reader that is vulnerable to a number of client side vulnerabilities, including Adobe util.printf() Buffer Overflow CVE-2008-2992 (although msf exploits may not be available for different versions of Windows), and Adobe PDF Escape EXE Social Engineering (No JavaScript) CVE-2010-1240 (which requires some user input). </description>
+
+  <type>client-side</type>
+  <privilege>user_rwx</privilege>
+  <access>user_action</access>
+  <platform>windows</platform>
+  <difficulty>medium</difficulty>
+
+
+  <!--optional vulnerability details-->
+  <cve>CVE-2008-2992</cve>
+  <cve>CVE-2010-1240</cve>
+  <cvss_base_score>6.8</cvss_base_score>
+  <cvss_vector>AV:N/AC:M/Au:N/C:P/I:P/A:P</cvss_vector>
+  <reference>https://nvd.nist.gov/vuln/detail/CVE-2008-2992</reference>
+  <software_name>adobereader</software_name>
+
+  <!--optional hints-->
+  <msf_module>exploit/windows/fileformat/adobe_pdf_embedded_exe</msf_module>
+  <hint>Vulnerable client side software</hint>
+  <solution>The victim has a vulnerable version of Adobe Reader, a malicious PDF could cause remote access (potentially with some user interaction).</solution>
+
+  <!-- for now we just make all windows modules conflict with linux bases -->
+  <conflict>
+    <module_path>bases/.*</module_path>
+    <platform>linux</platform>
+  </conflict>
+
+</vulnerability>

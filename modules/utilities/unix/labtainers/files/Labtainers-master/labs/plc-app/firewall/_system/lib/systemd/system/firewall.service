@@ -1,0 +1,15 @@
+[Unit]
+Description=PLC Firewall Service
+After=waitparam.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/firewall
+StandardOutput=null
+WorkingDirectory=/home/admin
+User=admin
+
+[Install]
+WantedBy=multi-user.target
+Alias=firewall.service
+

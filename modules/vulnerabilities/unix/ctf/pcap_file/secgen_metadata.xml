@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  <name>pcap file</name>
+  <author>Jason Zeller</author>
+  <module_license>MIT</module_license>
+  <description>Release a pcap file with a flag, into storage_directory.
+    Can specify an account file is owned by or defaults to root.
+  </description>
+
+  <type>pcap</type>
+  <type>system</type>
+  <privilege>none</privilege>
+  <access>local</access>
+  <platform>linux</platform>
+
+
+  <read_fact>base64_file</read_fact>
+  <read_fact>leaked_filename</read_fact>
+  <read_fact>account</read_fact>
+  <read_fact>storage_directory</read_fact>
+
+  <default_input into="base64_file">
+    <generator type="pcap_generator"/>
+  </default_input>
+
+  <default_input into="leaked_filename">
+    <value>capture.pcap</value>
+  </default_input>
+
+  <default_input into="storage_directory">
+    <value>/var/log</value>
+  </default_input>
+
+  <hint>A pcap file has been leaked with a message inside a packet.</hint>
+  <solution>Use sftp to copy file to Kali. Then, use Wireshark to find message/flag.</solution>
+
+  <requires>
+    <module_path>utilities/unix/system/leak_to_file</module_path>
+  </requires>
+
+</vulnerability>

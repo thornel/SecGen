@@ -1,0 +1,207 @@
+# Authentication: Pluggable Authentication Modules (PAM) and Secure Shell (SSH)
+
+## Getting started
+### VMs in this lab
+
+==Start these VMs== (if you haven't already):
+- hackerbot_server (leave it running, you don't log into this)
+- desktop (you can sudo to get superuser access)
+- server (<%= $server_ip %>, you can ssh to this machine, but you don't have superuser access)
+
+### Your login details for the "desktop" and "server" VMs
+User: <%= $main_user %>
+Password: tiaspbiqe2r (**t**his **i**s **a** **s**ecure **p**assword **b**ut **i**s **q**uite **e**asy **2** **r**emember)
+
+You won't login to the hackerbot_server, but the VM needs to be running to complete the lab.
+
+### For marks in the module
+1. **You need to submit flags**. Note that the flags and the challenges in your VMs are different to other's in the class. Flags will be revealed to you as you complete challenges throughout the module. Flags look like this: ==flag{*somethingrandom*}==. Follow the link on the module page to submit your flags.
+2. **You need to document answers to Log Book questions**. The Log Book will be submitted later in the semester.
+
+## Meet Hackerbot!
+![small-right](images/skullandusb.svg)
+
+This exercise involves interacting with Hackerbot, a chatbot who will attack your system. If you satisfy Hackerbot by completing the challenges she will reveal flags to you.
+
+> If Hackerbot seems to be waiting or halted, simply say 'hi'
+
+Work through the below exercises, completing the Hackerbot challenges as noted.
+
+---
+
+## Pluggable Authentication Modules (PAM)
+
+In the past all Linux/Unix programs that required the user to enter a password for authentication (such as su, sudo, and login) would access and interpret /etc/passwd using its own code. However, it was hard to maintain all this code, since any change in the way the passwords were stored (such as using a shadow file, or using new hash functions) would mean all the software that provides authentication needed to be changed. The solution to the problem was PAM.
+
+*Pluggable Authentication Modules (PAM)* enables applications that make use of authentication to be independent of the specific authentication schemes in use. For example, a program such as a login screen that uses PAM can be configured to authenticate using a password, smartcard, and/or biometrics, simply by changing PAM configuration files.
+
+PAM is supported in most distributions of Linux, Mac OS X, FreeBSD, and many other Unix-like systems.
+
+==View which PAM modules are available on the desktop system...==
+
+The .so files are typically in /lib/x86_64-linux-gnu/security/ (or similar). List them:
+
+```bash
+ls /lib/*/security/
+```
+
+As you can see, there are lots of different features and authentication schemes, and these can be used with *any* PAM compatible program. This includes not only typical authentication schemes, such as pam\_unix.so, which does the usual password comparison with /etc/passwd and /etc/shadow, but also can impose time limits (pam\_time.so) or simply display messages to the user (pam\_motd.so).
+
+It is possible to determine whether a specific program is compiled to use PAM, by checking what dynamic libraries it uses. (On Linux .so shared objects are similar to DLL files on Windows, they contain library code that programs can reuse). ==Check what shared objects the passwd program uses:==
+
+```bash
+ldd `which passwd`
+```
+
+> which identifies the absolute path to a program. `which passwd` typically resolves to "/usr/bin/passwd", and so is equvilant to running `ldd /usr/bin/passwd`.
+
+Note that the output will include a line starting with "libpam.so", such as:
+
+```
+libpam.so.0 => /lib/x86_64-linux-gnu/libpam.so.0 (0x00007fe211554000)
+```
+
+This would indicate that the program loads code from "/lib/x86_64-linux-gnu/libpam.so.0", and does indeed make use of PAM.
+
+PAM configuration is located in /etc/pam.d. ==Take a look at which programs currently have pam configuration files:==
+
+```bash
+ls /etc/pam.d
+```
+
+Depending on what is installed on the system, there will be a few configuration files. Each file contains a PAM configuration for the program it is named after. If a PAM-aware program does not have a configuration file the "other" file is used.
+
+==View the "other" file:==
+
+```bash
+less /etc/pam.d/other
+```
+
+On Debian the default behaviour is to use the common authentication behaviour defined in common-auth, account access rules defined in "common-account", password rules in "common-password", and "common-session" rules for sessions.
+
+```bash
+less /etc/pam.d/common-auth
+```
+
+The syntax of the configuration file is that each line starts with is typically:
+
+> *type control module-path module-arguments*
+
+The *type* is auth, password, account or session. The control (such as "required" or "optional") defines whether the module needs to pass or not before moving on to the next module, then the module name is defined. It is not shown in this example, but the module-path can be followed with some settings for the module.
+
+All the modules for a type (such as auth) are called a module stack. When the program requests PAM perform authentication each of the auth modules in the module stack are run in the order they appear. If a "required" module fails, the authentication process tries the next module to see if it passes, if no required modules pass, then the authentication fails.
+
+Possible control values include:
+
+> **required**
+>
+> failure of such a PAM will ultimately lead to the PAM-API returning failure but only after the remaining stacked modules (for this service and type) have been invoked.
+>
+> **requisite**
+>
+> like required, however, in the case that such a module returns a failure, control is directly returned to the application.
+>
+> **sufficient**
+>
+> success of such a module is enough to satisfy the authentication requirements of the stack of modules (if a prior required module has failed the success of this one is ignored). A failure of this module is not deemed as fatal to satisfying the application that this type has succeeded. If the module succeeds the PAM framework returns success to the application immediately without trying any other modules.
+>
+> **optional**
+>
+> the success or failure of this module is only important if it is the only module in the stack associated with this service+type.
+>
+> **include**
+>
+> include all lines of given type from the configuration file specified as an argument to this control.
+>
+> -- from the man page for pam.conf
+
+There is also a more complex rule syntax available, described in the man page.
+
+Information about each module is available in The Linux-PAM System Administrators' Guide:
+
+> [*http://linux-pam.org/Linux-PAM-html/Linux-PAM\_SAG.html*](http://linux-pam.org/Linux-PAM-html/Linux-PAM_SAG.html)
+
+==Look at which authentication methods are used by passwd:==
+
+```bash
+less /etc/pam.d/passwd
+```
+
+Note that this indicates that PAM will apply the password rules in "common-password" for the passwd program.
+
+==Edit the rules in common-password:==
+
+```bash
+sudo vi /etc/pam.d/common-password
+```
+
+==Edit the pam_pwquality line, so it reads:==
+
+```
+password requisite pam_pwquality.so minlen=7
+```
+
+> **Reminder**: Vi is 'modal': it has an insert mode, where you can type text into the file, and normal mode, where what you type is interpreted as commands. Press the "i" key to enter "insert mode". Type your changes to the file, then exit back to "normal mode" by pressing the Esc key. Now to exit and save the file press the ":" key, followed by "wq" (write quit), and press Enter.
+
+==Change a normal user's password using passwd.==
+
+==Confirm that normal users can no longer use a password that is less than 7 characters long.==
+
+==View the man page== for this PAM module[^1]:
+
+```bash
+man pam_pwquality
+```
+
+Based on the options described in the man page, ==configure the pam\_pwquality module to require at least one non-alphanumeric character.==
+
+==Confirm that normal users can no longer use passwords that contain only alphanumeric characters.==
+
+==Log Book Question:==
+Document how you can **configure PAM to only allow:**
+
+-   **The user "dropbear" to login between 9am and 5pm**
+
+-   **And only on a Tuesday**
+
+For testing purposes add another rule that allows a user to log in only 10 minutes from the current time
+
+> Hint: use pam\_time.so and edit /etc/security/time.conf (and read the documentation in the configuration file to figure out how to set the correct limits)
+>
+> Another hint: try the "account" type.
+
+==Configure a cron job to force the user to logout at the end of their allowed time==
+
+> Hint: as root, "crontab -e" and add a job to run at 5pm on Tuesday killing all of their processes
+>
+> For example, to disconnect dropbear on Wednesday at 4pm, add this line to cron (run "crontab -e", then press "i" to add):
+>
+> 00 16 \* root \* wed skill-KILL-u dropbear
+>
+> Try to figure out how to also send a warning to the user 10 minutes before they are kicked off (Hint: add another cron job, you could send a message via "wall", etc)
+
+==Log Book Question:==
+Document how you can **lock a user out after 5 failed login attempts.**
+
+
+## Secure Shell (SSH) Password-less Authentication
+
+Public-key cryptography (AKA asymmetric) uses a pair of keys: a *public key* which can be shared freely, and *private keys* which are kept secret in order for the security to be effective.
+
+SSH can be configured to enable access without a password, granting access to whoever holds the private key.
+
+==Run:==
+```bash
+ssh-keygen
+```
+
+The keypair will be created in /home/<%= $main_user %>/.ssh/
+
+==Copy the contents of the public key== (ends in .pub) to .ssh/authorized_keys on the server.
+
+You can now ==ssh to the server== without providing your password.
+```bash
+ssh <%= $server_ip %>
+```
+
+==Lab Book Question: what access does someone with the private key get?== ==How does a pass phrase help?==

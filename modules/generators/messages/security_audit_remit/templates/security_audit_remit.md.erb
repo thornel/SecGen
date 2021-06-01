@@ -1,0 +1,46 @@
+# Security Audit Remit of <%= self.business_name %>
+
+## Background
+On 25 May 2018, the General Data Protection Regulations 2016/679 (GDPR) came into force in the UK. The regulations have tightened up the rules on data protection and govern how Companies should handle sensitive personal data on behalf of its clients and employees. This legislation also gives the Information Commissioner's Office (a non-governmental organisation) the power to fine Companies who are in breach of the regulations. Financial penalties can now be enforced up to as much as 20 million Euros (or equivalent in sterling), or 4 percent of the total annual worldwide turnover in the preceding financial year (whichever is higher).
+
+## About us
+We are <%= self.business_name %>, an SME business.  We handle sensitive personal information on a daily basis and process this information under the new GDPR. We have a fairly high risk threshold, and a restricted budget.  We are aiming to get a new product to market in the next 6 months. 
+
+## Our security policy
+Complete copies of our security policy documents are available via the Intranet server.  We do not have any other formal security policies.
+
+## Backups
+We backup all our data (including code and documents) via <%= self.local_backup %>.  We also do a weekly backup to <%= self.remote_backup %>.
+
+## Office location
+We have leased <%= self.business_location %> for our operations (including employees and server rooms) for the last 4 years.  The other areas of the building are used by third parties.  We have <%= self.physical_security %> to control access to our rooms.
+
+## IT infrastructure
+Our IT team developed the servers that are currently deployed.
+
+Our network design is to have a web server connected to an Internet accessible IP address (DMZ).  All other servers and end user desktops will be connected to an intranet with any connections out to the Internet via NAT.
+
+Our systems include:
+
+* A web server with network services
+
+* An intranet server, hosting our security policy documents for internal access
+
+* Desktop systems
+
+The Web host will eventually be processing credit card transactions; hopefully thousands of transactions every month.
+
+## Your remit
+Our organisation has recently come under scrutiny from the ICO for failing to comply with GDPR. They are threatening to fine us. If we are fined, the Company is likely to be unable to launch our new product, which could delay payments to creditors and potentially cause us to go into liquidation! The ICO has asked us to carry out an internal investigation into the potential breach. Due to the serious effect upon our reputation, the IT Manager has now been suspended for 2 weeks and will remain on suspension whilst we carry out an internal audit.
+
+We would like your team to provide a grey-box security audit of our business to inform those investigations. It is your remit to produce a Security Assessment Report which will in turn be shared with the ICO. This security assessment must take into account any relevant security issues, including management and policy, physical and (of particular importance) digital security. The report should also include the results of a detailed security audit, highlighting priority issues and security vulnerabilities and risks, with recommended mitigations. The outcome of the investigation will also determine whether or not we should take disciplinary action against our IT Manager, who is now threatening legal action if we don't reinstate him immediately. Please therefore consider our organisation profile when making your recommendations.
+
+## Initial Steps 
+
+Please undertake the following steps in preparation for your report:
+
+* Decide on a security testing methodology and report structure that meets our security needs  
+
+* Make use of any software tools of your choosing to carry out the technical analysis
+
+* Copy your report into an expert report template suitable for court (in case of any pending litigation)

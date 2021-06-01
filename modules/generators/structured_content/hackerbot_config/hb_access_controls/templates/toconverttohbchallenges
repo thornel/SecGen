@@ -1,0 +1,35 @@
+
+# CONVERT THESE INTO HB CHALLENGES
+==Create a file "~/myshare", and grant everyone read-write access.==
+
+> Test whether you have correctly set permissions.
+
+==Create "mygroupshare", grant only read access to everyone in your group.==
+
+> Test whether you have correctly set permissions.
+
+Create a new group called "staff", and create a file that you and the other user can collaborate on (both edit).
+
+> Hint, you should both be added to the group. You may require root access for this task. Your classmate may want to ssh to your system.
+>
+> Test whether you have correctly set permissions. Both users should be able to edit the file, yet other users should not have write access.
+
+Read and write to the shared files created by others, for example:
+
+```bash
+cat /home/*dropbear*/myshare
+```
+
+**Challenge**:
+
+```bash
+mkdir test
+```
+
+```bash
+touch test/test1 test/test2 test/test3
+```
+
+> Use a single chmod command to recursively set the permissions for all files contained in the new "test" directory.
+>
+> Hint: `man chmod`

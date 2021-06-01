@@ -1,0 +1,317 @@
+## Introduction to access control
+
+*Access control* enforces *authorisation* by determining and enforcing which actions are allowed. Some terminology: a *subject* is an active entity taking actions, such as a user or program, and an *object* is the (often passive) resource that can be accessed, such as a file or network resource. Access control mediates all subjects' access to objects by enforcing a security policy, limiting which actions are and are not allowed. The *policy* expresses what is allowed, either formally or informally as a set of rules.
+
+An access control *mechanism* is the code or thing that enforces a policy. An access control *model* is a way of representing and reasoning about a policy or types of policy.
+
+## Unix file permissions and inodes
+
+The traditional Unix security model is based on the *discretionary access control (DAC)* model, which enables users to configure who can access the resources that they "own". Each user can control which other users can access the files that they create. This enables users to grant permissions, without involving a system admin. This is the type of security that has traditionally been built into most consumer OSs such as Windows and Unix.
+
+Unix file permissions uses an abbreviated (simplified) form of access control list (ACL). A (full) ACL involves attaching a list of every subject and what they can do to each file (this is how Windows manages file access). For example, a file may have this ACL: "Joe can read, Frank can write, Alice can read, and Eve can read".
+
+Unix simplifies permissions by only defining rules for these three kinds of subjects:
+-   **u**: The **u**ser that owns the file
+-   **g**: The file's **g**roup
+-   **o**: All **o**ther users
+
+Open a terminal console.
+
+Use the `ls` [^1] command to ==display the permissions for a file== (the details of the `ls` executable program itself):
+
+```bash
+ls -l /bin/ls
+```
+
+`
+-rwxr-xr-x 1 root root 130736 Feb 22  2017 /bin/ls
+`
+
+The `-l` flag instructs `ls` to provide this detailed output.
+
+The first part of the output contains the Unix file permissions for the file: what access the user (rwx), group (r-x), and other (r-x) are authorised.
+
+The meaning of these letters is fairly self evident, but does change meaning slightly depending on whether it refers to a normal file or a directory (which is really just a special kind of file).
+
+The meaning for a regular file (as is the case for /bin/ls):
+-   **r**: Read the contents of the file
+-   **w**: Change the contents of the file
+-   **x**: Execute the file as a process (The first few bytes describe what type of executable it is, a program or a script)
+
+For a directory:
+-   **r**: See what files are in the directory
+-   **w**: Add, rename, or delete names from the directory
+-   **x**: 'stat' the file (view the file owners and sizes, cd into the directory, and access files within)
+-   **t** (in place of x), AKA the "sticky bit": write is not enough to delete a file from the directory, in this case you also need to own the file
+
+The rest of the output from ls describes how many names/hard links the file has (1), who owns the file: the user (root) and group (root) associated with the file, the file size in bytes (130736 bytes in the example above), the last access date, and finally the path and name of the file.
+
+The permissions for each file are stored in the file's inode. An inode is a data structure in Unix filesystems that defines a file. An inode includes an inode number, and defines the location of the file on disk, along with attributes including the Unix file permissions, and access times for the file.
+
+==View the **inode number** for this file:==
+
+```bash
+ls -i /bin/ls
+```
+
+Note that the inode does **not** contain the file's name, rather a directory can contain names that point to inodes. It is therefore possible to create two names (aka hard links) that point to the same file.
+
+==Create a hard link to the `ls` program:==
+
+```bash
+sudo ln /bin/ls /tmp/ls
+```
+
+Now ==view the details== for your new filename, /tmp/ls:
+
+```bash
+ls -l /tmp/ls
+```
+
+==How many hard links does this report?== ==What are the file ownership and permissions associated with the new name?==
+
+View the inode number for this file:
+
+```bash
+ls -i /tmp/ls
+```
+
+*The inode matches.*
+
+There is *only one file*, but that data can now be accessed using two different names /tmp/ls and /bin/ls. If the /tmp/ls file was edited, the /bin/ls command would also change.
+
+Deleting one of the names simply decrements the link counter. Only when that reaches 0 is the inode actually removed. ==Run:==
+
+```bash
+sudo rm /tmp/ls
+```
+
+In addition to hard links, there are also symbolic or soft links. ==Let's create a symlink now.==
+
+```bash
+ln -s /bin/ls /tmp/ls
+```
+
+Unlike hard links, symbolic links do not contain the information of the file they are linked to; a symbolic link is similar to a Windows shortcut, it simply points to another file on the system - this allows them to link to directories and remote files, in a way that hard links cannot. If the original file is deleted, the symlink becomes unusable, whereas the data of the target file is preserved in the case of a hard link.
+
+==View the details== for this file:
+
+```bash
+ls -l /tmp/ls
+```
+
+The first letter is an `l` where it hand been an `-` before, representing the fact that this file is a symbolic link file. The very last part indicates what this file is linked to (in this case, /bin/ls)
+
+Now, ==try to remove this symlink as another user.==
+
+```bash
+sudo -u <%= $second_user %> rm /tmp/ls
+```
+
+Permission denied! Interestingly, in this case as a normal user we can create the symlink to /bin/ls in the shared directory, but other user cannot then delete that link since the sticky bit is set for the /tmp/ directory. ==Run:==
+
+```bash
+ls -ld /tmp/
+```
+
+Note the `t` in the permissions, and refer to the meaning described above.
+
+==Log Book Questions: What is this directory used for? Why do you think the /tmp/ directory has the sticky bit set -- what does this stop users from doing to each other? How is this related to security?==
+
+You can ==delete the link as root:==
+
+```bash
+sudo rm /tmp/ls
+```
+
+The stat command can be used to display further information from the inode. ==Run:==
+
+```bash
+stat /bin/ls
+```
+
+==Look through this information==. Note that the output includes the access rights, along with the last time the file was accessed, modified, and when the inode was last changed.
+
+The output from stat includes the format that the information is stored as, along with a more "human readable" output. As we know, user accounts are referred to by UIDs by the system, in this case the UID is 0, as the file is owned by the root user. Similarly, groups are identified by GID, in this case also 0. The actual permissions are stored as four octets (digits 0-7), in this case `0755`. This translates to the (now familiar) human-friendly output, `-rwxr-xr-x`. For now we will ignore the first octet, this is normally 0, we will come back to the special meaning of this later.
+
+Each of the other three octets simply represents the binary for rwx, each represented as a 0 or a 1. The first of the three represents the **u**ser, then the **g**roup, then the **o**ther permission.
+
+An easy and quick way to do the conversion is to simply remember:
+
+-   r = 4
+-   w = 2
+-   x = 1
+
+And add them together to produce each of the three octets.
+
+So for example, rwx = binary 111 = (4 + 2 + 1) = 7.
+
+Likewise, r-x = binary 101 = (4 + 1) = 5.
+
+Therefore, `-rwxr-xr-x` = 755.
+
+## Changing file permissions on a Linux system
+
+==Open a second console/Tab.==
+> In Konsole, press Ctrl+Shift+T to open another tab
+
+==Switch to your second user account:==
+
+```bash
+su - <%= $second_user %>
+```
+
+> Do not login as root, instead use sudo or su as required.
+
+Create a file named "mysecrets" in your <%= $second_user %>'s home directory:[^2]
+
+```bash
+cat > ~/mysecrets
+```
+
+Enter a number of lines of content. Press Ctrl-D when finished entering a "secret".
+
+Your first aim is to ensure your "mysecrets" file is not visible to other users on the same system.
+
+First ==view the permissions== of your newly created file:
+
+```bash
+ls -l ~/mysecrets
+```
+
+Oh no! It's not so secret!
+
+What kind of access do other users on the system have to this file?
+
+The chmod command can be used to set permissions on a file. chmod can set permissions based on absolute octal values, or relative changes.
+
+So for example, you could use chmod to set permissions on a file based on octet:
+
+> 770 would give the owner and group rwx, and others no permissions
+>
+> Example: chmod 770 /home/tmp/somefile
+
+Or you can make relative changes:
+
+> u+x would add the owner (user) the ability to execute the file
+>
+> Example: `chmod u+x /home/tmp/somefile`
+>
+> Likewise, o-w would removes *other*'s ability to write to the file
+>
+> Example: chmod o-w /home/tmp/somefile
+
+==Use chmod to grant yourself read-write permission to your mysecrets file, and everyone else no permissions to the file==:
+
+```bash
+chmod *XXX* ~/mysecrets
+```
+
+> Where *XXX* is three octets that grants the appropriate access.
+
+> Test whether you have correctly set permissions. Switch back to the <%= $main_user %> console and test that <%= $main_user %> cannot access the file:
+
+```bash
+less /home/<%= $second_user %>/mysecrets
+```
+
+Permission denied.
+
+==Create a file that should be readable by all users on the system==:
+
+```bash
+echo "Readable!" > ~/readable
+chmod 0644 ~/readable
+```
+
+```bash
+less /home/<%= $second_user %>/readable
+```
+
+Permission denied.
+
+Why is the readable file, which has read permissions for all users, inaccessible by <%= $main_user %>?
+
+> Investigate the directory level permissions.
+
+```bash
+ls -la /home/ | grep <%= $second_user %>
+```
+
+Other users do not have permission to interact with files within at the directory level. The permissions of a directory determine what a subject can do with the files within the directory.
+
+==Grant permissions on the /home/<%= $second_user %>/ directory to other users==:
+
+> Switch back to your <%= $second_user %> console and modify their home directory permissions to grant all other users read and execute access
+
+```bash
+chmod *XXX* ~
+```
+
+> Where *XXX* is three octets that grants the appropriate access. Alternatively use the relative change syntax described above.
+
+```bash
+cat /home/<%= $second_user %>/readable
+```
+
+You should see the string "Readable!"
+
+```bash
+cat /home/<%= $second_user %>/mysecrets
+```
+
+Permission denied, as expected.
+
+## `umask`
+
+Remember that our newly created file started with permissions that meant that everyone could read the file. This can be avoided by setting the **u**ser file-creation mode **mask** (**umask**). Every process has a umask: an octal that determines the permissions of newly created files. It works by removing permissions from the default `666` for files and `777` for new executables (based on a logical NOT). That is, a umask of `000` would result in new files with permissions `666`. A umask of `022` (which is the default value) gives `644`, that is `rw- r-- r--`.
+
+The umask Bash built in (or system call) can be used to set the umask for the current process.
+
+Check the current umask value:
+
+```bash
+umask
+```
+
+Using the umask builtin command, set your umask so that new files are only rw accessible by you (but not to your group or others):
+
+```bash
+umask *XXX*
+```
+
+> Where XXX is the new umask to use.
+
+Test your new umask value by creating a new file and checking its permissions:
+
+```bash
+touch *newfilename*
+
+ls -l *newfilename*
+```
+
+> Do the permissions read `rw-------`? If not, change the umask and try again.
+
+Figure out how to (and do) make that setting apply every time you login.
+
+> Hint: try Googling bash login or startup config
+
+What would be a safe umask for a shared Linux system? Justify your decision.
+
+## Conclusion
+
+At this point you have:
+
+-   Learned about file permissions, hard links, and inodes
+
+-   Learned about octal representations of permissions
+
+-   Changed Unix file permissions to grant access to specific users and groups, using chmod
+
+-   Used umask to change the permissions applied to new files
+
+Well done!
+
+[^1]: The name `ls` is from the old Multix command which was named after "list segments", although it can be thought of as "list" (since the term "segment" is no longer meaningful for Unix), it is similar in use to the dir command on Windows.
+
+[^2]: The `~` character is interpreted by Bash as the location of your own home directory, such as /home/*dropbear*/

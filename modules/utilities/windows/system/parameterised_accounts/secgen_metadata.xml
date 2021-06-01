@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Parameterised Accounts Module</name>
+  <author>Thomas Shaw</author>
+  <author>Puppet Labs</author>
+  <module_license>Apache v2</module_license>
+  <description>Parameterised user account creation and modification. Adds an account with a strong randomly generated password
+    by default.
+  </description>
+
+  <type>system</type>
+  <platform>windows</platform>
+
+  <!--optional details-->
+  <reference>https://forge.puppet.com/puppetlabs/accounts</reference>
+
+  <read_fact>accounts</read_fact>
+
+  <!-- for now we just make all windows modules conflict with linux bases -->
+  <conflict>
+    <module_path>bases/.*</module_path>
+    <platform>linux</platform>
+  </conflict>
+
+  <requires>
+    <module_path>.*local_security_policy</module_path>
+  </requires>
+
+
+
+</utility>

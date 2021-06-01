@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<name>Kali base box</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>Kali base box.</description>
+
+
+	<system>
+		<system_name>kali</system_name>
+		<base distro="Kali" name="MSF"/>
+
+		<utility module_path=".*/metasploit_framework"/>
+		<utility module_path=".*/nmap"/>
+		<utility module_path=".*/handy_cli_tools"/>
+
+
+	</system>
+
+</scenario>

@@ -1,0 +1,188 @@
+## Introducing Full Access Control List (ACL) File Permissions
+
+An *access control list (ACL)* is attached to an object (resource) and lists all the subjects (users / active entities) that are allowed access, along with the kind of access that is authorised.
+
+We have explored standard Unix file permissions, which is an abbreviated (simplified) form of ACL. With standard Unix file permissions all authorisation is defined in terms of the owning user (u), groups (g), and others (o), and the type of access that can be granted are read (r), write (w), and execute (x) -- along with some special permission flags, SUID, SGID, and stickybit, which change the meaning of these.
+
+The Unix file permissions (0664) `-rw-rw-r-- 1 <%= $main_user %> group1 5 Feb 5 test` can be thought of as a simplified ACL with:
+
+Subject | Permission
+--- | ---
+<%= $main_user %> | read, write
+members of group1 | read, write
+everyone else | read
+
+While this is an effective way of representing permissions, and is often adequate, using these traditional Unix file permissions there is no way of representing more complicated rules, such as also granting specific users access to write the file without making them members of group1.
+
+Modern systems (Windows, Linux, and some other Unix-based systems) now have more complete (and complicated) ACL support, enabling more fine-grained control over authorisation.
+
+A more expressive ACL for a file can represent a state such as:
+
+Subject | Permission
+--- | ---
+<%= $main_user %> | read, write
+<%= $second_user %> | read, write
+members of group1 | read, write
+members of group2 | read
+everyone else | nothing
+
+## Linux Extended ACLs
+
+Linux now has support for full ACLs (known as Linux ACLs or POSIX ACLs). Linux ACLs can include entries for named users and named groups.
+
+ACLs require compatible filesystems so that they can be stored. Linux ACLs are saved as extended attributes (EA), which are used to associate metadata with files.
+
+Linux ACLs that are equivalent with Unix file permissions are known as **minimal ACLs**. Linux ACLs with more than these three entries (owner user, owner group, and others) are known as **extended ACLs**. Below is a table showing the types of subjects present in Linux ACLs.
+
+Subject type | Text representation
+--- | ---
+Owner | user::rwx
+Named user | user:name:rwx
+Owning group | group::rwx
+Named group | group:name:rwx
+Mask | mask::rwx
+Other | other::rwx
+
+The Owner (user::xxx) and Other (other:xxx) permissions are automatically synced to the matching Unix file permission bits.
+
+==Set a file ACL on your mysecret file==, using the setfacl command:
+
+```bash
+setfacl -m u:<%= $second_user %>:r ~/mysecret
+```
+
+> The `-m` flag specifies that the ACL is to be modified
+> `u:` or `user:` specifies a rule for a named user
+> `g:` or `group:` could be used for a named group
+> This is followed by the name of the user or group
+> Finally read (r), write (w), and/or execute (x) can be specified using letters (rwx) or a number (7, which is the octet representing wrx)
+
+This grants <%= $second_user %> read access to the file (without requiring access granted to any other groups or users).
+
+==Confirm you can access the file from <%= $second_user %>:==
+
+```bash
+su - <%= $second_user %>
+cat /home/<%= $main_user %>/mysecret
+exit
+```
+
+Tip: You'll need to ensure that the user has permission to enter the directory.
+
+Note that the stat program is not usually ACL aware, so won't report anything out of the usual. ==Run:==
+
+```bash
+stat ~/mysecret
+```
+
+The ls program can be used to detect File ACLs. ==Run:==
+
+```bash
+ls -la ~/mysecret
+```
+
+`-rw-r-----+ 1 <%= $main_user %> <%= $main_user %> 22 Feb 28 11:47 mysecret`
+
+Note that the output includes a `+`. This indicates an ACL is in place.
+
+==Use getfacl to display the permissions:==
+
+```bash
+getfacl ~/mysecret
+```
+
+## Mask
+
+Extended ACLs contain a mask entry that defines the upper bound (maximum permissions) that can be assigned by the ACL rules that apply to any named users or groups. This mask (mask::xxx) is typically automatically updated to the union (maximum) of all permissions granted, and automatically synced with the value of the group Unix file permission bits.
+
+==Grant full rwx permission to <%= $second_user %>:==
+
+```bash
+setfacl -m u:<%= $second_user %>:rwx ~/mysecret
+```
+
+==View the updated permissions visible via `ls`:==
+
+```bash
+ls -la ~/mysecret
+```
+
+Note that the group file permission has changed (in addition to the `+`, this helps to show the level of permission that can result from the new ACL rule.
+
+Again ==use getfacl to display the ACL rules:==
+
+```bash
+getfacl ~/mysecret
+```
+
+Note that the mask has changed.
+
+==Change the mask value to "r"==
+> Hint: see the table above that describes the text representation.
+
+==Confirm <%= $second_user %> can no longer access the file due to the mask, even though they have rwx permission.==
+
+## Understanding the access check behaviour
+
+The decision making logic has been described as follows:
+
+>If
+>>the user ID of the process is the owner, the owner entry determines access
+
+>else if
+>>the user ID of the process matches the qualifier in one of the named user entries, this entry determines access
+
+>else if
+>>one of the group IDs of the process matches the owning group and the owning group entry contains the requested permissions, this entry determines access
+
+>else if
+>>one of the group IDs of the process matches the qualifier of one of the named group entries and this entry contains the requested permissions, this entry determines access
+
+>else if
+>>one of the group IDs of the process matches the owning group or any of the named group entries, but neither the owning group entry nor any of the matching named group entries contains the requested permissions, this determines that access is denied
+
+>else
+>>the other entry determines access.
+
+>If
+>>the matching entry resulting from this selection is the owner or other entry and it contains the requested permissions, access is granted
+
+>else if
+>>the matching entry is a named user, owning group, or named group entry and this entry contains the requested permissions and the mask entry also contains the requested permissions (or there is no mask entry), access is granted
+
+>else
+>>access is denied.
+
+Quoted from (Grünbacher, 2003) [^1]
+
+## Default ACLs
+
+Directories can have two kinds of ACLs: **access ACLs** (which define the actual rules applied -- this is what we have been using so far), and **default ACLs**.
+
+Default ACLs set the ACL rules that are applied to any new files created in the directory. Directories created inherit the default ACL, as the new access ACL and default ACL.
+
+When a default ACL is specified on the parent directory, `umask` has no effect on the permissions of new files.
+
+==Create a directory to share with <%= $second_user %>:==
+
+```bash
+mkdir shared
+setfacl -m u:<%= $second_user %>:rw -d -m u:<%= $second_user %>:rw shared
+```
+
+==Create a new file in the shared directory.==
+
+==View the ACL created on the new file.==
+
+
+## Comparison with Windows ACLs
+Windows file permissions are similar to Linux ACLs, although they are slightly more complicated.
+
+On Windows permissions are dynamically inherited and checked at access time. Changing permissions on a directory can change the permissions applied to the files within (or even changing the permissions of a directory's parent directory!). Linux ACLs only inherit permissions from default ACLs when they are created, and there is no complicated checking of all the parent directories to calculate access permissions.
+
+Windows has lots more kinds of access that can be assigned (including append and delete permissions, and ACLs can contain rules about inheritance logic, and deny permissions), compared to Linux ACLs that define rules in terms of read, write, and execute (rwx).
+
+Linux ACLs use local UIDs and GIDs to assign identity to all subjects (even when authenticating against remote servers, local UIDs are generated). Windows uses global security identifers (SIDs) that can be local or for domain users (authenticated against a domain controller, the global SID is used on ACLs).
+
+==Log Book Question: Describe an example of how the results would differ between how Linux ACLs and Windows ACLs grant permissions.==
+> Consider how permissions work for files inside nested directories that have inherited ACLs, and whether Linux ACLs include deny rules.==

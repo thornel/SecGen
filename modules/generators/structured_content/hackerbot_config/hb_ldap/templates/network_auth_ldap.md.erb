@@ -1,0 +1,47 @@
+## Introduction to managing identity and authentication across a network of computers
+
+It is not unusual for an organisation's network to include a mix of many Unix and/or Windows computers. An organisation also often maintains a database of users or employees, with details such as email addresses and phone numbers. Many organisations prefer to have a system where users have user accounts centrally managed, so that users can log in to various systems using the same login details.
+
+Due to the long history of technical solutions to these goals, there are many ways these can be achieved. Each solution has security and usability advantages and disadvantages.
+
+In this lab you will implement centralised network-based authentication using LDAP, and you will investigate the security consequences. To save time, you will be making use of automated/graphical configuration tools, although if you end up specialising in this in the future, you will want to familiarise yourself further with the command line tools and relevant configuration files.
+
+## Introducing Lightweight Directory Access Protocol (LDAP)
+
+Lightweight Directory Access Protocol (LDAP) is a network protocol for accessing a hierarchical (tree-structured) database of information over TCP/IP. Technically, LDAP is not the term for the database, but the protocol that is used to talk to one; in practice LDAP server software tend to implement a database. Typically an organisation would use LDAP to share "phonebook" information about employees, such as their email addresses, job titles, office numbers, and so on. LDAP can also be used to centrally store credentials, so that people can use the same username and password on any computer that authenticates against the LDAP server. Other common uses includes configuration of DNS, DHCP, and email servers.
+
+By default LDAP uses TCP port and UDP port 389. LDAP commands include searching, adding, modifying or deleting entries in the database. LDAP is a binary protocol (meaning it does not send ASCII human-readable instructions), and is by default not encrypted (information is plain text), which means that an eavesdropper (using a sniffer such as Wireshark) can view any information sent via LDAP.
+
+LDAP has since been updated to include encryption add-ons, such as Transport Layer Security (TLS)/SSL, and can also be tunnelled through SSH. Note that some LDAP clients do not check the server's domain, but only provide encryption (meaning MITM attacks may be possible).
+
+LDAP has some access control features, so that a client may be restricted to certain operations or data.
+
+## Storing and retrieving in LDAP
+
+The hierarchy (tree) of information stored via LDAP is known as the *directory information tree* (DIT). The structure of the database is defined via a *schema*. For example, a schema may define the fact that the database stores information about people, and what kinds of data is valid.
+
+The root (main) node is commonly a set of "**dc**" values, which is short for *domainComponent*. For example, for leedsbeckett.ac.uk, "dc=leedsbeckett, dc=ac, dc=uk". In the database you created earlier, the dc="site".
+
+Other common values are the "**ou**" or *organizationalUnit*, which defines the department within an organisation, such as "it" or "academic", and also the "**cn**" or "**sn**" (common name / surname) is used to describe the way an item is described, for example "Cliffe Schreuders" / "Schreuders".
+
+A complete path that locates a node is a distinguished name (DN). For example, "cn=Cliffe Schreuders,ou=academic,dc=leedsbeckett,dc=ac,dc=uk" could be the DN for retrieving further information about that member of staff.
+
+LDAP example database structure
+
+## Using centralised network-based authentication via LDAP
+
+Note that you have learned about *local authentication and user management*; for example, the use of /etc/passwd and /etc/shadow. However, in larger organisations it is often preferable to provide *network-based authentication and user management*.
+
+*Centralised identity* schemes enable administrators to manage user accounts, which can be used to log into multiple networked systems within the organisation by using the same login details. This is the approach used by most medium to large organisations.
+
+*Federated identity* is where user accounts from multiple organisations can be used in a connected way. For example, logging into Yahoo! with a Google account. *Single sign on (SSO)* is a related (but distinct) concept, where a user that has logged in to a service can access that service along with others, without having to log in again.
+
+## Other network-based identity management solutions
+
+LDAP is primarily a directory for storing and accessing information, and one use of LDAP is a central store of user account details. An older method of centrally storing account information is Network Information Service (NIS), which was created by Sun Microsystems. However, NIS has many security limitations (no encryption, verification, and password hashes are typically public). An enhanced version, NIS+, has been developed, but it is not very popular.
+
+Kerberos is a network authentication protocol, which uses a trusted third party to enable clients and servers to verify each others identity, without sending passwords to each other directly. Tickets are distributed by a Key Distribution Center (KDC), which gives the authenticated client a time-limited access to the server.
+
+Remote Authentication Dial In User Service (RADIUS) is a related protocol, which can also be used to manage authentication over a network, and is typically used to manage Wi-Fi connections and accounts.
+
+Active Directory (AD) is Microsoft's amalgamation of LDAP and Kerberos. Windows computers are typically managed as part of a *domain*, which is implemented using a modified version of Kerberos for computers to authenticate and grant permissions to each other, and LDAP as a access protocol to retrieve information about accounts. Group policy automates specifying the security controls for Windows systems. Group policy is distributed to computers via AD automatically to any computers that are part of the same domain.

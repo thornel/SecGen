@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  <name>Zip File</name>
+  <author>Jason Zeller</author>
+  <module_license>MIT</module_license>
+  <description>Release a zip file with a flag. Password optional.
+  Can specify an account file is owned by or defaults to root.
+  </description>
+
+  <type>zip_file</type>
+  <type>system</type>
+  <privilege>none</privilege>
+  <access>local</access>
+  <platform>linux</platform>
+
+
+  <read_fact>base64_file</read_fact>
+  <read_fact>leaked_filename</read_fact>
+  <read_fact>account</read_fact>
+  <read_fact>storage_directory</read_fact>
+
+  <default_input into="base64_file">
+    <generator type="zip_file_generator">
+      <input into="password">
+        <generator type="custom_list_password">
+          <input into="list_name">
+            <value>jtrpassword.lst</value>
+          </input>
+        </generator>
+      </input>
+    </generator>
+  </default_input>
+
+  <default_input into="leaked_filename">
+    <value>protected.zip</value>
+  </default_input>
+
+  <default_input into="storage_directory">
+    <value>/var/log</value>
+  </default_input>
+
+  <hint>A zip file has been leaked with a flag.</hint>
+  <hint>If using a password, use the default dictionary from '/usr/share/john/password.lst'.</hint>
+  <solution>Use the following command: fcrackzip -u -D -p /usr/share/john/password.lst filename.zip</solution>
+
+  <requires>
+    <module_path>utilities/unix/system/leak_to_file</module_path>
+  </requires>
+
+</vulnerability>

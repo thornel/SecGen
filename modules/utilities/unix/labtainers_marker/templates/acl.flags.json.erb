@@ -1,0 +1,30 @@
+<%
+  require 'json'
+  require 'securerandom'
+  require 'erb'
+
+  # TODO: flags for multiple labs? (Check we have labs.size *10?)
+  $flags = @flags
+  REQUIRED_FLAGS = 10
+  while $flags.length < REQUIRED_FLAGS
+    $flags << "flag{#{SecureRandom.hex}}"
+    Print.err "Warning: Not enough flags provided to hackerbot_config generator, some flags won't be tracked/marked!"
+  end
+
+  def get_binding
+    binding
+  end
+%>
+{
+ "email_at_addre.ss.acl": {
+  "require_matching_watermarks": true,
+   "flags": {
+     "did_trojan": "<%= $flags.pop %> <%= $flags.pop %>",
+     "bob_stuff_acl": "<%= $flags.pop %> <%= $flags.pop %> <%= $flags.pop %>",
+     "alice_default": "<%= $flags.pop %> <%= $flags.pop %>",
+     "_account_alice": "<%= $flags.pop %>",
+     "_account_read": "<%= $flags.pop %>",
+     "_fun_alice": "<%= $flags.pop %>"
+    }
+  }
+}

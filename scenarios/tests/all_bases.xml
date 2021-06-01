@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+  <system>
+    <system_name>wheezy_server</system_name>
+    <base name="Debian 7 Wheezy Server"/>
+  </system>
+  <system>
+    <system_name>stretch_server</system_name>
+    <base name="Debian 9 Stretch Server"/>
+  </system>
+  <system>
+    <system_name>wheezy_desktop</system_name>
+    <base name="Debian 7 Wheezy Desktop KDE"/>
+  </system>
+  <system>
+    <system_name>stretch_desktop</system_name>
+    <base name="Debian 9 Stretch Desktop KDE"/>
+  </system>
+  <system>
+    <system_name>kali_light</system_name>
+    <base name="Kali Light and Puppet"/>
+  </system>
+  <system>
+    <system_name>kali_msf</system_name>
+    <base name="Kali Light, MSF, XFCE and Puppet"/>
+  </system>
+</scenario>

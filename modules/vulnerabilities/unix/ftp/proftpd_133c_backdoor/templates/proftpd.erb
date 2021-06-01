@@ -1,3 +1,13 @@
+<%  $port = @secgen_parameters['port'].first
+
+    if @organisation and @organisation != ''
+      $welcome_msg = "Welcome to the #{@organisation['business_name']} FTP server!"
+      $server_name = @organisation['domain']
+    else
+      $server_name = @secgen_parameters['server_name'].first
+      $welcome_msg = @secgen_parameters['welcome_msg'].first
+    end
+-%>
 #
 # /etc/proftpd/proftpd.conf -- This is a basic ProFTPD configuration file.
 # To really apply changes, reload proftpd after modifications, if
@@ -12,7 +22,7 @@ UseIPv6				off
 # If set on you can experience a longer connection delay in many cases.
 IdentLookups			off
 
-ServerName			"Debian"
+ServerName			"<%=$server_name%>"
 ServerType			standalone
 DeferWelcome			off
 
@@ -30,6 +40,8 @@ ListOptions                	"-l"
 
 DenyFilter			\*.*/
 
+AccessGrantMsg			"<%=$welcome_msg.gsub("\n", '\n')%>"
+
 # Use this to jail all users in their homes
 # DefaultRoot			~
 
@@ -38,7 +50,7 @@ DenyFilter			\*.*/
 # RequireValidShell		off
 
 # Port 21 is the standard FTP port.
-Port				21
+Port				<%=$port%>
 
 # In some cases you have to specify passive ports range to by-pass
 # firewall limitations. Ephemeral ports can be used for that, but

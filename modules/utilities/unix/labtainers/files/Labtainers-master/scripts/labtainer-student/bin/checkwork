@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+'''
+This software was created by United States Government employees at 
+The Center for the Information Systems Studies and Research (CISR) 
+at the Naval Postgraduate School NPS.  Please note that within the 
+United States, copyright protection is not available for any works 
+created  by United States Government employees, pursuant to Title 17 
+United States Code Section 105.   This software is in the public 
+domain and is not subject to copyright. 
+'''
+
+'''
+Check work on (automated assessment) on the currently running lab, or
+a given lab name.
+'''
+
+import sys
+import os
+import labutils
+import logging
+import LabtainerLogging
+import CurrentLab
+import argparse
+import imp
+here = os.path.dirname(os.path.abspath(__file__))
+lab_bin_dir = os.path.join(here, '../lab_bin')
+sys.path.append(here)
+sys.path.append(lab_bin_dir)
+student_dir = os.path.dirname(here)
+scripts_dir = os.path.dirname(os.path.dirname(here))
+assess_bin_path = os.path.join(scripts_dir, 'labtainer-instructor', 'assess_bin')
+instruct_bin_path = os.path.join(scripts_dir, 'labtainer-instructor', 'bin')
+sys.path.append(assess_bin_path)
+sys.path.append(instruct_bin_path)
+grade_lab_path = os.path.join(scripts_dir, 'labtainer-instructor', 'bin', 'gradelab')
+orig_dir=os.getcwd()
+os.chdir(student_dir)
+gradelab = imp.load_source('gradelab', grade_lab_path)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Check your work for a lab.  If no lab name is given, the currently running lab is checked')
+    parser.add_argument('lab', nargs='?')
+    args = parser.parse_args()
+    labname = None 
+    lablist = []
+    labutils.logger = LabtainerLogging.LabtainerLogging("/tmp/checkwork.log", 'checkwork', "../../config/labtainer.config")
+    lablist = labutils.GetListRunningLab()
+    if args.lab is not None:
+        labname = args.lab
+        if labname not in lablist:
+            print('%s lab is not running, looking for previous results...' % args.lab)
+            os.chdir('../labtainer-instructor')
+            gradelab.doGrade(labname, False, False, True, False)
+            os.chdir(orig_dir)
+            sys.exit(0)
+    else:
+        if len(lablist) > 1:
+            print('multiple labs running, specify the name of the lab you want to check:\n\t checkwork <lab>') 
+            sys.exit(0)
+        elif len(lablist) == 0:
+            print('No labs are currently running.')
+            sys.exit(0)
+        else:
+            labname = lablist[0]
+
+    labutils.logger.debug("Begin logging checkwork for %s lab" % labname)
+    
+    lab_path = os.path.join(os.path.abspath('../../labs'), labname)
+    labtainer_config, start_config = labutils.GetBothConfigs(lab_path, labutils.logger)
+    if labtainer_config.checkwork != 'yes':
+        print('Checking own work not supported for this deployment of Labtainers')
+        sys.exit(0)
+    if start_config.checkwork != 'yes':
+        print('Checking own work not supported for Lab')
+        sys.exit(0)
+    has_running_containers, running_containers_list = labutils.GetRunningContainersList()
+    if has_running_containers:
+        has_lab_role, labnamelist = labutils.GetRunningLabNames(running_containers_list)
+        if has_lab_role:
+            if labname not in labnamelist:
+                labutils.logger.debug("No lab named %s in currently running labs!" % labname)
+                sys.exit(1)
+        else:
+            labutils.logger.debug("Student is not running any labs")
+            sys.exit(1)
+    else:
+        print("No labs are running")
+        labutils.logger.debug("No labs are running")
+        sys.exit(1)
+    current_lab = CurrentLab.CurrentLab()
+    clone_count = current_lab.get('clone_count')        
+    servers = current_lab.get('servers')        
+    labutils.StopLab(lab_path, False, servers=servers, clone_count=clone_count, keep_running=True)
+    os.chdir('../labtainer-instructor')
+    print('cwd is %s' % os.getcwd())
+    gradelab.doGrade(labname, False, False, True, False, copy_json = False)
+    os.chdir(orig_dir)
+
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
+

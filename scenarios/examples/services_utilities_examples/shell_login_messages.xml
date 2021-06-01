@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+		  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		  xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+	<system>
+		<system_name>system</system_name>
+		<base platform="linux" type="server"/>
+
+    <utility module_path=".*/before_login_message">
+      <input into="strings_to_leak">
+        <encoder type="string_format_encoder">
+          <input into="strings_to_encode">
+            <value>Hacktivity</value>
+          </input>
+        </encoder>
+        <value>You are logged out</value>
+      </input>
+    </utility>
+    <utility module_path=".*/after_login_message">
+      <input into="strings_to_leak">
+        <encoder type="string_format_encoder">
+          <input into="strings_to_encode">
+            <value>SecGen</value>
+          </input>
+        </encoder>
+        <generator type="ascii_art_generator"/>
+        <value>Welcome! You are logged in.</value>
+      </input>
+    </utility>
+  </system>
+</scenario>
