@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>chroot and debootstrap</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>Installs a debian system into a directory</description>
+
+  <type>containers</type>
+  <platform>linux</platform>
+
+  <read_fact>chroot_dir</read_fact>
+
+  <default_input into="chroot_dir">
+    <value>/opt/chroot</value>
+  </default_input>
+
+  <conflict>
+    <!-- On Wheezy: Could not find init script for 'chroot' -->
+    <name>.*Debian.*Wheezy.*</name>
+  </conflict>
+
+  <requires>
+    <type>update</type>
+  </requires>
+</utility>

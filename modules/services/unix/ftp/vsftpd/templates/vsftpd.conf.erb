@@ -1,3 +1,6 @@
+<%  require 'json'
+    $port = @secgen_parameters['port'].first
+%>
 # This file is managed by puppet
 #
 # The default compiled in settings are fairly paranoid. This sample file
@@ -32,6 +35,8 @@ listen_ipv6=<%= scope.lookupvar('vsftpd::real_listen_ipv6') %>
 # Listen only on following IP address
 listen_address=<%= scope.lookupvar('vsftpd::listen_address') %>
 <% end-%>
+# Listen port
+listen_port=<%=$port%>
 #
 ftpd_banner=<%= scope.lookupvar('vsftpd::ftpd_banner') %>
 write_enable=<%= scope.lookupvar('vsftpd::real_write_enable') %>
@@ -72,7 +77,7 @@ banned_email_file=<%= scope.lookupvar('vsftpd::banned_email_file') %>
 chroot_local_user=<%= scope.lookupvar('vsftpd::real_chroot_local_user') %>
 <% if scope.lookupvar('vsftpd::real_chroot_list_enable') != '' -%>
 chroot_list_enable=<%= scope.lookupvar('vsftpd::real_chroot_list_enable') %>
-chroot_list_file=<%= scope.lookupvar('vsftpd::chroot_list_file') -%>
+chroot_list_file=<%= scope.lookupvar('vsftpd::chroot_list_file') %>
 <% end -%>
 
 ##### Other parameters

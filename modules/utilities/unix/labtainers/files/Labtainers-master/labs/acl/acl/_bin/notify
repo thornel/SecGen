@@ -1,0 +1,3 @@
+/shared_data/alice CREATE precheck
+/shared_data/bob/bobstuff.txt ACCESS precheck
+/shared_data/accounting.txt ACCESS precheck

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Amap Security Scanner</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Service identification scanner.</description>
+
+  <type>utility</type>
+  <platform>linux</platform>
+
+  <!--optional details-->
+  <reference>https://tools.kali.org/information-gathering/amap</reference>
+  <reference>https://github.com/vanhauser-thc/THC-Archive/tree/master/Tools</reference>
+
+  <requires>
+    <type>update</type>
+  </requires>
+
+</utility>

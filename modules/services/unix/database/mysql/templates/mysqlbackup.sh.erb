@@ -16,12 +16,26 @@
 
 USER=<%= @backupuser %>
 PASS='<%= @backuppassword %>'
+MAX_ALLOWED_PACKET=<%= @maxallowedpacket %>
 DIR=<%= @backupdir %>
 ROTATE=<%= [ Integer(@backuprotate) - 1, 0 ].max %>
 
 # Create temporary mysql cnf file.
 TMPFILE=`mktemp /tmp/backup.XXXXXX` || exit 1
-echo -e "[client]\npassword=$PASS\nuser=$USER" > $TMPFILE
+<%- if @kernel == 'SunOS' -%>
+echo "[client]\npassword=$PASS\nuser=$USER\nmax_allowed_packet=$MAX_ALLOWED_PACKET" > $TMPFILE
+<%- else -%>
+echo -e "[client]\npassword=$PASS\nuser=$USER\nmax_allowed_packet=$MAX_ALLOWED_PACKET" > $TMPFILE
+<%- end -%>
+
+<% if @prescript -%>
+<%- [@prescript].flatten.compact.each do |script|%>
+<%= script %>
+<%- end -%>
+<% end -%>
+
+# Ensure backup directory exist.
+mkdir -p $DIR
 
 PREFIX=mysql_backup_
 <% if @ignore_events %>
@@ -45,6 +59,12 @@ ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS --skip-routines"
 <% end -%>
 <% end -%>
 
+<%- if @optional_args and @optional_args.is_a?(Array) -%>
+<%- @optional_args.each do |arg| -%>
+ADDITIONAL_OPTIONS="$ADDITIONAL_OPTIONS <%= arg %>"
+<%- end -%>
+<%- end -%>
+
 ##### STOP CONFIG ####################################################
 PATH=<%= @execpath %>
 
@@ -56,7 +76,11 @@ set -o pipefail
 
 cleanup()
 {
-    find "${DIR}/" -maxdepth 1 -type f -name "${PREFIX}*.sql*" -mtime +${ROTATE} -print0 | xargs -0 -r rm -f
+<%- if @kernel == 'SunOS' -%>
+	gfind "${DIR}/" -maxdepth 1 -type f -name "${PREFIX}*.sql*" -mtime +${ROTATE} -print0 | gxargs -0 -r rm -f
+<%- else -%>
+	find "${DIR}/" -maxdepth 1 -type f -name "${PREFIX}*.sql*" -mtime +${ROTATE} -print0 | xargs -0 -r rm -f
+<%- end -%>
 }
 
 <% if @delete_before_dump -%>
@@ -65,20 +89,20 @@ cleanup
 <% end -%>
 <% if @backupdatabases.empty? -%>
 <% if @file_per_database -%>
-mysql --defaults-file=$TMPFILE -s -r -N -e 'SHOW DATABASES' | while read dbname
+mysql --defaults-extra-file=$TMPFILE -s -r -N -e 'SHOW DATABASES' | while read dbname
 do
-  mysqldump --defaults-file=$TMPFILE --opt --flush-logs --single-transaction \
+  mysqldump --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
     ${ADDITIONAL_OPTIONS} \
     ${dbname} <% if @backupcompress %>| bzcat -zc <% end %>> ${DIR}/${PREFIX}${dbname}_`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %>.bz2<% end  %>
 done
 <% else -%>
-mysqldump --defaults-file=$TMPFILE --opt --flush-logs --single-transaction \
+mysqldump --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
  ${ADDITIONAL_OPTIONS} \
  --all-databases <% if @backupcompress %>| bzcat -zc <% end %>> ${DIR}/${PREFIX}`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %>.bz2<% end  %>
 <% end -%>
 <% else -%>
 <% @backupdatabases.each do |db| -%>
-mysqldump --defaults-file=$TMPFILE --opt --flush-logs --single-transaction \
+mysqldump --defaults-extra-file=$TMPFILE --opt --flush-logs --single-transaction \
     ${ADDITIONAL_OPTIONS} \
  <%= db %><% if @backupcompress %>| bzcat -zc <% end %>> ${DIR}/${PREFIX}<%= db %>_`date +%Y%m%d-%H%M%S`.sql<% if @backupcompress %>.bz2<% end  %>
 <% end -%>
@@ -87,6 +111,7 @@ mysqldump --defaults-file=$TMPFILE --opt --flush-logs --single-transaction \
 <% unless @delete_before_dump -%>
 if [ $? -eq 0 ] ; then
     cleanup
+    touch /tmp/mysqlbackup_success
 fi
 <% end -%>
 

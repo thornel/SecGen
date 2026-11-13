@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+  <system>
+    <system_name>bookworm</system_name>
+    <base name="Debian 12 Bookworm Desktop KDE"/>
+  </system>
+  <system>
+    <system_name>buster</system_name>
+    <base name="Debian 10 Buster Desktop KDE"/>
+  </system>
+  <system>
+    <system_name>kali_light</system_name>
+    <base distro="Kali" name="MSF"/>
+  </system>
+  <system>
+    <system_name>kali_msf</system_name>
+    <base name="Kali Light, MSF, XFCE and Puppet"/>
+  </system>
+</scenario>

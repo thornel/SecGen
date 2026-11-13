@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Vulnerable webapp</name>
+  <author>Joshua Hickling</author>
+  <description>
+    A custom web application for a small organisation - complete with a product
+    catalogue and a customer feedback page - hides a grab-bag of classic web flaws:
+    an injectable search or feedback form, a script-injection bug, and object
+    references that don't check who's asking. A weak, predictable session cookie
+    also guards an area worth breaking into. Flags are scattered across the
+    vulnerable pages, and both the site and its flaws are randomised on every
+    build, so recon each feature carefully before you start crafting payloads.
+  </description>
+
+  <type>ctf</type>
+  <type>attack-ctf</type>
+  <difficulty>easy</difficulty>
+
+  <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+    <keyword>Broken Access Control / Insecure Direct Object References</keyword>
+  </CyBOK>
+  <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+    <keyword>injection vulnerabilities</keyword>
+    <keyword>server-side misconfiguration and vulnerable components</keyword>
+    <keyword>CROSS-SITE SCRIPTING (XSS)</keyword>
+    <keyword>SQL-INJECTION</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+    <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>web_server</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <network_ip system="web_server"/>
+      <network_ip system="kali"/>
+    </input>
+
+    <vulnerability module_path=".*commando">
+
+      <input into_datastore="customer_feedback_table_headings">
+        <generator module_path=".*customer_feedback_table_headings" />
+      </input>
+
+      <input into_datastore="product_table_headings">
+        <generator module_path=".*product_table_headings" />
+      </input>
+
+      <input into_datastore="user_table_name">
+        <generator module_path=".*users_table_name" />
+      </input>
+
+      <input into="database">
+        <generator module_path=".*sql_table_setup">
+          <input into="customer_feedback_table_headings">
+            <datastore>customer_feedback_table_headings</datastore>
+          </input>
+          <input into="product_table_headings">
+            <datastore>product_table_headings</datastore>
+          </input>
+          <input into="field_to_leak">
+            <generator type="flag_generator" />
+          </input>
+        </generator>
+      </input>
+
+      <input into="sqli">
+        <generator module_path=".*sqli_template">
+          <input into="difficulty">
+            <encoder type="string_selector">
+              <input into="strings_to_encode">
+                <value>easy</value>
+                <value>medium</value>
+              </input>
+            </encoder>
+          </input>
+          <input into="table_headings">
+            <datastore>customer_feedback_table_headings</datastore>
+          </input>
+        </generator>
+      </input>
+
+      <input into="search">
+        <generator module_path=".*xss_search_template">
+          <input into="difficulty">
+            <encoder type="string_selector">
+              <input into="strings_to_encode">
+                <value>easy</value>
+              </input>
+            </encoder>
+          </input>
+          <input into="blacklist">
+            <generator module_path=".*xss_blacklist" />
+          </input>
+          <input into="table_headings">
+            <datastore>product_table_headings</datastore>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="flag_generator" />
+          </input>
+        </generator>
+      </input>
+
+      <input into="idor">
+        <generator module_path=".*idor_product_template">
+          <input into="table_headings">
+            <datastore>product_table_headings</datastore>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="flag_generator" />
+          </input>
+        </generator>
+      </input>
+
+      <input into="insecure_cookie">
+        <generator module_path=".*insecure_cookie_template">
+          <input into="default_superuser_role">
+            <generator module_path=".*default_superuser_role"/>
+          </input>
+          <input into="default_user_role">
+            <generator module_path=".*default_user_role"/>
+          </input>
+          <input into="difficulty">
+            <encoder type="string_selector">
+              <input into="strings_to_encode">
+                <value>easy</value>
+                <value>medium</value>
+                <value>hard</value>
+              </input>
+            </encoder>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="flag_generator" />
+          </input>
+        </generator>
+      </input>
+
+    </vulnerability>
+
+    <network type="private_network"/>
+
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>kali</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_web"/>
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+</scenario>

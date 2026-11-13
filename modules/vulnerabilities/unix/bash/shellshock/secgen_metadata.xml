@@ -24,4 +24,15 @@
   <software_name>bash</software_name>
   <software_license>GPLv3+</software_license>
 
+  <conflict>
+    <name>.*Debian.*Stretch.*</name>
+  </conflict>
+  <conflict>
+    <name>.*Debian.*Buster.*</name>
+  </conflict>
+  <requires>
+    <type>update</type>
+  </requires>
+<!-- TODO: set metadata on this module as a local privilege escalation attack -->
+<!-- TODO: strings_to_leak to /root -->
 </vulnerability>

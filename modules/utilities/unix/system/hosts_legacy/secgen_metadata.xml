@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Hosts Hostnames</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>Populates the hosts file with associations.
+  </description>
+
+  <type>system</type>
+  <platform>linux</platform>
+  <!-- <platform>windows</platform> -->
+
+  <!--optional details-->
+
+  <read_fact>IP_addresses</read_fact>
+  <read_fact>hostnames</read_fact>
+
+  <conflict>
+    <!-- only use this version with older distros -->
+    <module_path>.*bases/(?!debian_(stretch|buster|wheezy)).*$</module_path>
+  </conflict>
+  
+  <requires>
+    <module_path>utilities/unix/system/.*/accounts</module_path>
+  </requires>
+
+</utility>

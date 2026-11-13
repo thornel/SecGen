@@ -1,0 +1,12 @@
+{
+  "name": "dcoxall-golang",
+  "version": "1.2.0",
+  "author": "Darren Coxall",
+  "summary": "A barebones Go installation",
+  "license": "MIT",
+  "source": "https://github.com/dcoxall/dcoxall-golang",
+  "project_page": "https://github.com/dcoxall/dcoxall-golang",
+  "issues_url": "https://github.com/dcoxall/dcoxall-golang/issues",
+  "dependencies": [],
+  "data_provider": null
+}

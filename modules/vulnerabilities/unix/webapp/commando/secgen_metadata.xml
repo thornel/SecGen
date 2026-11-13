@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+
+<name>Commando: Random vulnerable website generator</name>
+<author>Joshua Hickling</author>
+<author>Laura Reid</author> <!-- based on a related project by Laura -->
+<module_license>MIT</module_license>
+<description>Randomised website designed for website security training.
+WARNING: This module needs some further testing, and may not work without input as per example scenarios.</description>
+
+<type>www_rand</type>
+<type>webapp</type>
+<privilege>info_leak</privilege>
+<access>remote</access>
+<platform>linux</platform>
+
+<read_fact>sqli</read_fact>
+<read_fact>question_table</read_fact>
+<read_fact>search</read_fact>
+<read_fact>database</read_fact>
+<read_fact>organisation</read_fact>
+<read_fact>idor</read_fact>
+<read_fact>insecure_cookie</read_fact>
+<read_fact>default_admin_string_to_leak</read_fact>
+<read_fact>default_admin_deactivation</read_fact>
+<read_fact>strong_password</read_fact>
+<read_fact>alternate_username</read_fact>
+<read_fact>verbose_error_deactivation</read_fact>
+<read_fact>user</read_fact>
+<read_fact>theme</read_fact>
+<read_fact>user_table_name</read_fact>
+
+  <read_fact>db_password</read_fact>
+  <read_fact>admin_account</read_fact>
+  <read_fact>port</read_fact>
+
+
+
+  <default_input into="port">
+	<value>80</value>
+</default_input>
+
+<default_input into="db_password">
+  <generator type="strong_password_generator" />
+</default_input>
+
+<default_input into="organisation">
+  <generator type="realistic_organisation" />
+</default_input>
+
+<default_input into="admin_account">
+  <generator module_path=".*vulnerable_php_admin_account" />
+</default_input>
+
+<default_input into="default_admin_string_to_leak">
+  <generator type="flag_generator" />
+</default_input>
+
+<default_input into="default_admin_deactivation">
+  <value>false</value>
+</default_input>
+
+<default_input into="strong_password">
+  <generator type="strong_password_generator" />
+</default_input>
+
+<default_input into="alternate_username">
+  <generator type="username_generator" />
+</default_input>
+
+<default_input into="verbose_error_deactivation">
+  <value>false</value>
+</default_input>
+
+<default_input into="user">
+  <generator type="person" />
+</default_input>
+
+<default_input into="theme">
+  <generator module_path=".*css_theme" />
+</default_input>
+
+<default_input into="user_table_name">
+  <generator module_path=".*users_table_name" />
+</default_input>
+
+<requires>
+  <software_name>apache</software_name>
+</requires>
+
+<requires>
+  <module_path>.*/php_5/php</module_path>
+</requires>
+<requires>
+  <software_name>mysql</software_name>
+</requires>
+
+<CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+  <keyword>Broken Access Control / Insecure Direct Object References</keyword>
+</CyBOK>
+<CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+  <keyword>injection vulnerabilities</keyword>
+  <keyword>server-side misconfiguration and vulnerable components</keyword>
+  <keyword>CROSS-SITE SCRIPTING (XSS)</keyword>
+  <keyword>SQL-INJECTION</keyword>
+</CyBOK>
+<CyBOK KA="SS" topic="Categories of Vulnerabilities">
+  <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+</CyBOK>
+<CyBOK KA="SOIM" topic="PENETRATION TESTING">
+  <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+</CyBOK>
+
+<!-- TODO: more development and testing on this one -->
+</vulnerability>

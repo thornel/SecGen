@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Nikto Web Scanner</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Nikto is an Open Source (GPL) web server scanner which performs comprehensive tests against web servers for multiple items, including over 6700 potentially dangerous files/programs, checks for outdated versions of over 1250 servers, and version specific problems on over 270 servers. It also checks for server configuration items such as the presence of multiple index files, HTTP server options, and will attempt to identify installed web servers and software. Scan items and plugins are frequently updated and can be automatically updated.</description>
+
+  <type>utility</type>
+  <platform>linux</platform>
+
+  <!--optional details-->
+  <reference>https://www.cirt.net/Nikto2</reference>
+
+  <requires>
+    <type>update</type>
+  </requires>
+
+</utility>

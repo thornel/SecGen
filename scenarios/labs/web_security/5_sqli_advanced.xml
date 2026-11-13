@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+    <name>Advanced SQL injection</name>
+    <author>James Davis</author>
+    <description>
+# Introduction
+In this web security lab you will delve into the intricacies of injection attacks, focusing on OS command injection and automated SQL injection. The lab begins by simulating OS command injection in a simple C application, demonstrating how unvalidated user input can lead to potential system shell exploitation. Subsequently, you will explore OS command injection in a PHP application, uncovering the risks associated with unfiltered user input in web environments. The lab sheet then introduces automated SQL injection using sqlmap, a penetration testing tool designed to detect and exploit SQL vulnerabilities efficiently.
+
+Throughout the lab, you will engage with various vulnerable environments, including Damn Vulnerable Web App (DVWA), OWASP WebGoat, and OWASP Security Shepherd. Practical tasks include exploiting SQL injection in DVWA with different security levels, automating SQL injection attacks using sqlmap, and tackling blind SQL injection scenarios. Additionally, you will apply your knowledge to WebGoat, a web application specifically designed for learning security concepts, and complete CTF challenges in Security Shepherd. By the end of the lab, you will have gained hands-on experience in identifying, exploiting, and mitigating OS command injection and SQL injection vulnerabilities, crucial skills for securing web applications in real-world scenarios.
+    </description>
+    <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/web_security/5-sqli-advanced/</lab_sheet_url>
+
+    <type>lab-environment</type>
+    <type>ctf-lab</type>
+
+    <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+        <keyword>HYPERTEXT MARKUP LANGUAGE (HTML)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP) - PROXYING</keyword>
+        <keyword>DATABASE</keyword>
+        <keyword>SESSION HIJACKING</keyword>
+        <keyword>CLIENT-SERVER MODELS</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+        <keyword>injection vulnerabilities</keyword>
+        <keyword>server-side misconfiguration and vulnerable components</keyword>
+        <keyword>COMMAND INJECTION</keyword>
+        <keyword>SQL-INJECTION</keyword>
+        <keyword>BACK-END</keyword>
+        <keyword>BLIND ATTACKS</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+        <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Prevention of Vulnerabilities">
+        <keyword>coding practices</keyword>
+        <keyword>Protecting against session management attacks, XSS, SQLi, CSRF</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+        <keyword>dynamic detection</keyword>
+    </CyBOK>
+
+    <video>
+        <title>Injection Attacks: OS Command Injection</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=tgIBOIY2L4c</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+            <keyword>injection vulnerabilities</keyword>
+            <keyword>server-side misconfiguration and vulnerable components</keyword>
+        </CyBOK>
+        <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+            <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Hints: Failure to Restrict URL Access Hints (optional)</title>
+        <by>Thalita Vergilio</by>
+        <url>https://www.youtube.com/watch?v=1D5dHtQ_7_Y</url>
+        <type>lecture-prerecorded</type>
+    </video>
+
+    <system>
+        <system_name>web_server</system_name>
+        <base distro="Debian 10" type="desktop" name="KDE"/>
+
+        <input into_datastore="IP_addresses">
+            <!-- 0 web_server -->
+            <network_ip system="web_server"/>
+            <!-- 1 kali -->
+            <network_ip system="kali"/>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <generator type="account">
+                    <input into="username">
+                        <value>shepherd</value>
+                    </input>
+                    <input into="password">
+                        <value>tiaspbiqe2r</value>
+                    </input>
+                    <input into="super_user">
+                        <value>false</value>
+                    </input>
+                </generator>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/security_shepherd">
+            <input into="modules">
+                <generator type="ss_modules">
+                    <input into="filter">
+                        <value>Failure</value>
+                    </input>
+                </generator>
+            </input>
+            <input into="unix_username">
+                <value>shepherd</value>
+            </input>
+            <input into="flag_store" into_datastore="flag_store">
+                <generator type="flag_generator" module_path=".*base64">
+                    <input into="iterations">
+                        <value>4</value>
+                    </input>
+                </generator>
+            </input>
+        </vulnerability>
+
+        <input into_datastore="spoiler_admin_pass">
+            <generator type="strong_password_generator"/>
+        </input>
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+
+        <utility module_path=".*/hosts_legacy">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <network type="private_network"/>
+    </system>
+
+    <system>
+        <system_name>kali</system_name>
+        <base distro="Kali" name="MSF" />
+
+        <input into_datastore="kali_account">
+            <value>
+                {"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/dvwa" />
+
+        <vulnerability module_path=".*/webgoat">
+            <input into="port">
+                <value>8085</value>
+            </input>
+        </vulnerability>
+
+        <utility module_path=".*/kali_web" />
+
+        <utility module_path=".*/iceweasel">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+            <input into="autostart">
+                <value>true</value>
+            </input>
+            <input into="start_page">
+                <value>http://localhost:8085/WebGoat|http://localhost/|webserver</value>
+            </input>
+        </utility>
+
+        <utility module_path=".*/hosts">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+        <network type="private_network"/>
+    </system>
+
+</scenario>

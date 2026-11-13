@@ -8,10 +8,23 @@
 
 forge "https://forgeapi.puppetlabs.com"
 
+# unfortunately we can't hard code local copies of libraries any longer
+# because we have different needs depending on the distro
+# we used to be able to do this for faster build times:
+#mod 'puppetlabs-stdlib', :path => '<%= LOCAL_PUPPET_DIR %>/stdlib'  # '4.25.1', stdlib enables parsejson() in manifests and other useful functions
+#mod 'puppetlabs-apt' #, '7.4.0'  # pin apt to 7.4.0 as current version is incompatible with our base boxes
+# from local copy, for faster build times
+### mod 'translate', :path => '<%= LOCAL_PUPPET_DIR %>'
+
+# secgen helpers
+mod 'SecGen-secgen_functions', :path => '<%= SECGEN_FUNCTIONS_PUPPET_DIR %>'
 
 <% @currently_processing_system.module_selections.each do |selected_module| -%>
 <%   case selected_module.module_type
-       when 'vulnerability', 'service', 'utility' -%>
+       when 'vulnerability', 'service', 'utility', 'build' -%>
 mod 'SecGen-<%= selected_module.module_path_name %>/<%= selected_module.module_path_end %>', :path => '<%="#{ROOT_DIR}/#{selected_module.module_path}"%>'
 <%   end -%>
 <%  end -%>
+
+# stdlib is used throughout (ensure_packages, parsejson, etc), placing it last ensures a compatible version is selected
+mod 'puppetlabs-stdlib'

@@ -1,0 +1,27 @@
+<?php include 'connect.php';?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<% $page_title = 'Product' %>
+<%= scope.function_template(['commando/subtemplates/header.html.erb']) %>
+
+<body>
+
+<%= scope.function_template(['commando/subtemplates/nav.html.erb']) %>
+
+<div class="container container-fluid">
+
+  <% @idor.each { |idor| -%>
+    <%= idor %>
+  <% } -%>
+
+</div>
+
+<%= scope.function_template(['commando/subtemplates/libraries.html.erb']) %>
+
+</body>
+
+<%= scope.function_template(['commando/subtemplates/footer.html.erb']) %>
+
+</html>

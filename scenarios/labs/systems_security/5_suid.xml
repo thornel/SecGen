@@ -1,0 +1,411 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Set User ID lab</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    # Introduction
+    Special file permissions, such as Set UID (SUID) and Set GID (SGID) play a crucial role in Unix-based operating systems by enabling certain processes to run with elevated privileges. Understanding SUID and SGID provides insights into access controls and how Unix systems handle privilege escalation while maintaining control over who can execute specific operations. This lab will empower you with practical knowledge on the use and implications of SUID and SGID.
+
+    Throughout this lab, you will learn about the concepts of Real UID (RUID) and Effective UID (EUID), explore SUID and SGID permissions in detail, and analyze their significance in managing system security. You will inspect processes to identify cases where RUID and EUID differ, discover SUID and SGID programs on your system, and understand why they require these special permissions. Additionally, you will compile a SUID C program, assess its security implications, and modify it to rectify vulnerabilities. By the end of this lab, you will have a comprehensive understanding of SUID and SGID, their importance in Unix system security, and practical experience in working with SUID programs.
+
+    # Hackerbot and CTF challenges
+    This is a Hackerbot lab. The labsheet is hosted on Hacktivity. Work through the labsheet, then when prompted interact with Hackerbot.
+
+    In the Hackerbot tasks, you'll use SUID to mediate access to a file (accessible exclusively by a specific user through a SUID executable). There are also some problem-based challenges involving hardlinks, relative paths, and combining shell programs with SGID and SUID permissions.
+
+    # Lecture
+    [Slides continued here](http://z.cliffe.schreuders.org/presentations/slides/1718/ADS_slides_out_week_7/ADS_PDS_Lectures_7_Access_Control.html)
+
+    # Reading
+    [Chapter 6 "Filesystems and Security": Garfinkel, S. Spafford, G. and Schwartz, A. (2003), Practical Unix and Internet Security, O'Reilly. (ISBN-10: 0596003234)](https://www-dawsonera-com.ezproxy.leedsbeckett.ac.uk/abstract/9781449310325)
+  </description>
+
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/systems_security/5-suid/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>hackerbot-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>intermediate</difficulty>
+
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>access control</keyword>
+    <keyword>Elevated privileges</keyword>
+    <keyword>Real and effective identity</keyword>
+    <keyword>Vulnerabilities and attacks on access control misconfigurations</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+    <keyword>Access controls and operating systems</keyword>
+    <keyword>Linux security model</keyword>
+    <keyword>Unix File Permissions</keyword>
+    <keyword>setuid/setgid</keyword>
+    <keyword>Hardlink protections</keyword>
+  </CyBOK>
+
+  <video>
+    <title>Access Control Models</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/viSkkNB777k</url>
+    <type>lecture-prerecorded</type>
+    <CyBOK KA="AAA" topic="Authorisation">
+      <keyword>access control</keyword>
+      <keyword>theory</keyword>
+      <keyword>ACCESS CONTROL - DAC (DISCRETIONARY ACCESS CONTROL)</keyword>
+      <keyword>ACCESS CONTROL - MAC (MANDATORY ACCESS CONTROL)</keyword>
+      <keyword>ACCESS CONTROL - NDAC (NON-DISCRETIONARY ACCESS CONTROL)</keyword>
+      <keyword>ACCESS CONTROL - ROLE-BASED</keyword>
+    </CyBOK>
+    <CyBOK KA="OSV" topic="OS Security Principles">
+      <keyword>security models</keyword>
+    </CyBOK>
+  </video>
+  <video>
+    <title>Special File Permissions SetUID, SetGUI</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/PGHsb3bg_h4</url>
+    <type>lecture-prerecorded</type>
+    <CyBOK KA="AAA" topic="Authorisation">
+      <keyword>access control</keyword>
+      <keyword>Elevated privileges</keyword>
+      <keyword>Real and effective identity</keyword>
+      <keyword>Vulnerabilities and attacks on access control misconfigurations</keyword>
+    </CyBOK>
+    <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+      <keyword>Access controls and operating systems</keyword>
+      <keyword>Linux security model</keyword>
+      <keyword>Unix File Permissions</keyword>
+      <keyword>setuid/setgid</keyword>
+    </CyBOK>
+  </video>
+
+  <system>
+    <system_name>shared_desktop</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 desktop -->
+      <network_ip system="shared_desktop"/>
+      <!-- 1 server -->
+      <network_ip system="server"/>
+      <!-- 2 hackerbot_server -->
+      <network_ip system="hackerbot_server"/>
+    </input>
+
+    <!-- generate some usernames to use -->
+    <input into_datastore="usernames">
+      <!-- main user -->
+      <generator type="random_sanitised_word">
+        <input into="wordlist">
+          <value>mythical_creatures</value>
+        </input>
+      </generator>
+      <!-- other user -->
+      <generator type="random_sanitised_word">
+        <input into="wordlist">
+          <value>mythical_creatures</value>
+        </input>
+      </generator>
+    </input>
+
+    <!-- generate some passwords to use -->
+    <input into_datastore="passwords">
+      <generator type="medium_password_generator"/>
+    </input>
+
+    <input into_datastore="groups">
+      <value>staff</value>
+      <value>team_one</value>
+      <value>team_two</value>
+    </input>
+
+    <!-- accounts on the desktop, with the main user as a sudoer -->
+    <input into_datastore="user_accounts_desktop">
+      <!-- main user, sudoer -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="0">usernames</datastore>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="leaked_filenames">
+          <value>access_my_secrets.c</value>
+          <value>mysecret</value>
+        </input>
+        <input into="strings_to_leak">
+          <value>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+
+int main()
+{
+  printf(&quot;        UID           GID \n&quot;
+       &quot;Real    %d  Real    %d \n&quot;
+       &quot;Effective %d  Effective %d \n&quot;,
+       getuid (),   getgid (),
+       geteuid(),   getegid());
+
+  FILE *fp = fopen(&quot;mysecret&quot;, &quot;r&quot;);
+  if (fp == NULL) {
+    printf(&quot;Error: Could not open file&quot;);
+    exit(EXIT_FAILURE);
+  }
+  char c;
+  while ((c=getc(fp)) != EOF) {
+    putchar(c);
+  }
+  putchar(&apos;\n&apos;);
+  return EXIT_SUCCESS;
+}
+          </value>
+          <generator type="random_line_generator">
+            <input into="linelist">
+              <value>secrets</value>
+            </input>
+          </generator>
+
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+      </generator>
+      <!-- other user, no flags -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="next">usernames</datastore>
+        </input>
+        <input into="password">
+          <datastore access="0">passwords</datastore>
+        </input>
+      </generator>
+
+    </input>
+
+    <!-- an admin account used for hackerbot access to the desktop and also spoilers/administration of the challenge -->
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <input into_datastore="hackerbot_key">
+      <generator type="ssh_key_pair"/>
+    </input>
+
+    <!--Create the groups-->
+    <utility module_path=".*/groups">
+      <input into="groups">
+        <datastore>groups</datastore>
+      </input>
+    </utility>
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>user_accounts_desktop</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0">usernames</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>user_accounts_desktop</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/gcc"/>
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>hackerbot</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="2">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <datastore access="0">user_accounts_desktop</datastore>
+      </input>
+      <input into="start_page">
+        <value>hackerbot:8080</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>server</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <!-- user accounts on the server, with matching usernames and passwords, but with flags to find -->
+    <input into_datastore="user_accounts_server">
+      <!-- main user, NOT sudoer -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="0">usernames</datastore>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="groups">
+          <value>staff</value>
+          <value>team_one</value>
+        </input>
+      </generator>
+      <!-- other users, with the SAME passwords -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="next">usernames</datastore>
+        </input>
+        <input into="password">
+          <datastore access="0">passwords</datastore>
+        </input>
+        <input into="groups">
+          <value>staff</value>
+          <value>team_one</value>
+          <value>team_two</value>
+        </input>
+      </generator>
+
+    </input>
+
+    <!--Create the groups-->
+    <utility module_path=".*/groups">
+      <input into="groups">
+        <datastore>groups</datastore>
+      </input>
+    </utility>
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>user_accounts_server</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/handy_cli_tools"/>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <vulnerability module_path=".*/relative_path_suid_hardlinks"/>
+    <vulnerability module_path=".*/two_shell_calls"/>
+      <!-- <input into="accounts">
+        <generator type="account">
+          <input into="username">
+            <value>jakkinkade</value>
+          </input>
+          <input into="password">
+            <generator module_path="modules/generators/random/random_base64"/>
+          </input>
+          <input into="leaked_filenames">
+            <value>flag.txt</value>
+          </input>
+            <input into="strings_to_leak">
+              <generator module_path="modules/generators/random/random_base64"/>
+            </input>
+        </generator>
+        <generator type="account">
+          <input into="username">
+            <value>nickadler</value>
+          </input>
+          <input into="password">
+            <generator module_path="modules/generators/random/random_base64"/>
+          </input>
+          <input into="strings_to_leak">
+            <value>none</value>
+          </input>
+          <input into="leaked_filenames">
+            <value></value>
+          </input>
+        </generator>
+      </input>
+    </vulnerability> -->
+
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>hackerbot_server</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <service module_path=".*/ergochat"/>
+
+    <utility module_path=".*/hackerbot_webclient">
+      <input into="username">
+        <datastore access="0">usernames</datastore>
+      </input>
+      <input into="irc_server_ip">
+        <value>hackerbot</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/nmap"/>
+    <utility module_path=".*/handy_cli_tools"/>
+
+    <service type="httpd"/>
+
+    <utility module_path=".*/hackerbot">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+      <input into="hackerbot_configs">
+        <generator module_path=".*/hb_suid_acls">
+          <input into="accounts">
+            <datastore>user_accounts_desktop</datastore>
+          </input>
+          <input into="server_ip">
+            <datastore access="1">IP_addresses</datastore>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+
+    <build type="cleanup">
+      <input into="root_password">
+        <generator type="strong_password_generator"/>
+      </input>
+    </build>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

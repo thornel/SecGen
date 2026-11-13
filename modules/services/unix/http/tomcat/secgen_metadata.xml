@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<service xmlns="http://www.github/cliffe/SecGen/service"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/service">
+  <name>Apache Tomcat Server</name>
+  <author>Thomas Shaw</author>
+  <author>Puppetlabs</author>
+  <module_license>Apache v2</module_license>
+  <description>Puppetlabs Apache Tomcat module</description>
+
+  <type>servlet</type>
+  <type>tomcat</type>
+  <platform>linux</platform>
+
+  <!--optional details-->
+  <reference>https://forge.puppet.com/puppetlabs/tomcat</reference>
+  <software_name>tomcat</software_name>
+  <software_license>Apache v2</software_license>
+
+  <conflict>
+    <type>httpd</type>
+  </conflict>
+  <conflict>
+    <name>Stretch</name>
+  </conflict>
+  <!-- TODO: should this also conflict with buster?-->
+
+  <requires>
+    <type>update</type>
+  </requires>
+  <!-- utilities/unix/languages/java (formerly java_buster_compatible) handles Debian 12 -->
+  <requires>
+    <module_path>utilities/unix/languages/java</module_path>
+  </requires>
+</service>

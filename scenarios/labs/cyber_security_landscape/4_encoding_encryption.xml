@@ -1,0 +1,291 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Encoding and Encryption Lab</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    # Introduction
+    Cryptography is a fundamental aspect of information security, enabling us to secure data from prying eyes and malicious actors. This hands-on lab will equip you with essential knowledge and skills related to encoding schemes, hash algorithms, and the use of tools like OpenSSL and Gnu Privacy Guard (GPG). You'll explore concepts like encoding data into different formats, encrypting and decrypting information, and managing keys. These skills are crucial for anyone interested in the field of cybersecurity, data protection, or simply understanding how secure communication works in the digital age.
+
+    Throughout the lab, you'll learn to encode strings into various formats, including hexadecimal and Base64. You'll experiment with symmetric key encryption using the Data Encryption Standard (DES) and the Advanced Encryption Standard (AES). Additionally, you'll explore public-key cryptography with GPG, creating and managing keys, encrypting and decrypting data, and understanding the importance of key pairs.
+
+    In the home directory of your VM there are a series of encoding and encryption CTF challenges for you to complete, to put your knowledge into practice.
+  </description>
+
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/cyber_security_landscape/4-encoding-encryption/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>hackerbot-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>intermediate</difficulty>
+
+  <CyBOK KA="AC" topic="Algorithms, Schemes and Protocols">
+    <keyword>Encoding vs Cryptography</keyword>
+    <keyword>Caesar cipher</keyword>
+    <keyword>Vigenere cipher</keyword>
+    <keyword>SYMMETRIC CRYPTOGRAPHY - AES (ADVANCED ENCRYPTION STANDARD)</keyword>
+  </CyBOK>
+  <CyBOK KA="F" topic="Artifact Analysis">
+    <keyword>Encoding and alternative data formats</keyword>
+  </CyBOK>
+  <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+    <keyword>ENCODING</keyword>
+    <keyword>BASE64</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>desktop</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <network_ip system="desktop"/>
+    </input>
+
+    <input into_datastore="zip_password">
+      <generator type="weak_password_generator"/>
+    </input>
+
+    <!--generate two accounts, YOU and someone else-->
+    <input into_datastore="accounts">
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+        <input into="leaked_filenames">
+          <value>encoded/hex</value>
+          <value>encoded/base64</value>
+          <value>encoded/morse</value>
+          <value>encoded/braille</value>
+          <value>encoded/binary</value>
+          <value>encoded/decimal</value>
+          <value>encoded/oct</value>
+          <value>encoded/rot13</value>
+          <value>encrypted/caesar</value>
+          <value>encrypted/shift</value>
+          <value>encrypted/vigenere</value>
+          <value>secrets/something1</value>
+          <value>secrets/something2</value>
+          <value>encrypted/encypted_zip_in_srv_directory.password</value>
+          <!-- TODO: fixme -->
+          <!-- <value>encrypted/private_key_gpg</value> -->
+        </input>
+        <input into="strings_to_leak">
+          <encoder module_path=".*/hex">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/base64">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/morse_code">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/braille">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/binary">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/dec">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/oct">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/rot13">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/caesar_shift">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/ascii_value_shift">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder module_path=".*/vigenere">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+          <encoder type="^(ascii|alpha)_reversible$" difficulty="low">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+
+          <encoder type="^(ascii|alpha)_reversible$" difficulty="medium">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder>
+
+          <encoder type="^(ascii|alpha)_reversible$" difficulty="low">
+            <input into="strings_to_encode">
+              <datastore>zip_password</datastore>
+            </input>
+          </encoder>
+          <!-- TODO: fixme -->
+          <!-- <encoder module_path=".*/simple_gpg">
+            <input into="strings_to_encode">
+              <generator type="flag_generator" module_path=".*/flag_words"/>
+            </input>
+          </encoder> -->
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>test</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>test</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+    </input>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/hash_tools"/>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart">
+        <value>true</value>
+      </input>
+      <input into="start_page">
+        <value>file:///opt/cyberchef/CyberChef.html</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/cyberchef"/>
+
+
+    <!-- this is password protected by the same password as the crackme user -->
+    <vulnerability type="zip_file">
+      <input into="base64_file">
+        <generator type="zip_file_generator">
+          <input into="password">
+            <datastore>zip_password</datastore>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="flag_generator" module_path=".*/flag_words"/>
+            <value>
+              Congratulations you have cracked our protected zip file. Here is a flag for your troubles, plus something more.
+            </value>
+            <encoder type="^(ascii|alpha)_reversible$" difficulty="low">
+              <input into="strings_to_encode">
+                <value>Something more:</value>
+                <encoder type="^(ascii|alpha)_reversible$" difficulty="low">
+                  <input into="strings_to_encode">
+                    <generator type="flag_generator" module_path=".*/flag_words"/>
+                  </input>
+                </encoder>
+              </input>
+            </encoder>
+
+          </input>
+        </generator>
+      </input>
+      <input into="leaked_filename">
+        <value>protected.zip</value>
+      </input>
+      <input into="storage_directory">
+        <value>/srv</value>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

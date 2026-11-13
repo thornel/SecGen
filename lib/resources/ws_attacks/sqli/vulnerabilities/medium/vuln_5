@@ -1,0 +1,3 @@
+$blacklist = array('SELECT', 'UNION', 'FROM', 'DROP', 'SLEEP', 'TABLE');
+  $name = str_replace($blacklist, " ", $_GET['name']);
+  $question = htmlspecialchars(mysqli_real_escape_string($conn2, $_GET['question']));

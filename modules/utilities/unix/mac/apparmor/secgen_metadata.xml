@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>AppArmor</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>Installs and enables AppArmor mandatory access control (MAC)</description>
+
+  <type>mac</type>
+  <platform>linux</platform>
+
+  <!-- <read_fact>chroot_dir</read_fact>
+
+  <default_input into="chroot_dir">
+    <value>/srv/chroot</value>
+  </default_input> -->
+
+  <requires>
+    <type>update</type>
+  </requires>
+</utility>

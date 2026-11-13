@@ -12,7 +12,7 @@ class unrealirc::install {
   group { $unrealirc::group:
     ensure  => present,
   }
-  user { $unrealirc::group:
+  user { $unrealirc::user:
     ensure  => present,
     gid     => $unrealirc::group,
     require => Group[$unrealirc::group],
@@ -37,22 +37,37 @@ class unrealirc::install {
 
   # Move extracted directory to install path
   exec { 'unrealirc-dir':
-    command => "mv `ls -d /tmp/*/ | grep -i unreal | awk '{ print $1 }'` ${unrealirc::install_path}",
+    command => "mv `ls -d /tmp/*/ | grep -i unreal | awk '{ print \$1 }'` ${unrealirc::install_path}",
     creates => "${unrealirc::install_path}",
     require => Exec['extract-unrealirc'],
   }
 
+  ensure_packages([
+    'build-essential',
+    'pkg-config',
+    'gdb',
+    'gcc-multilib',
+    'zlib1g-dev',
+    'libssl-dev',
+    'libpcre2-dev',
+    'libargon2-dev',
+    'libsodium-dev',
+    'libc-ares-dev',
+    'libcurl4-openssl-dev'
+  ])
+
   # Configure and make unrealircd, with or without ssl enabled
   if $unrealirc::use_ssl {
-    package { 'libssl-dev': 
-      ensure => present,
-    }
+
     exec { 'make-unrealirc':
       command => "${configure} --enable-ssl && make",
       timeout => 0,
       cwd     => "${unrealirc::install_path}",
       creates => "${unrealirc::install_path}/unreal",
-      require => [ Package['libssl-dev'], Exec['unrealirc-dir'] ],
+      environment => [
+        'CFLAGS=-fno-strict-aliasing -fno-strict-overflow -std=gnu89 -Wno-pointer-sign -fcommon'
+      ],
+      require => [ Package['build-essential','gcc-multilib','libssl-dev'], Exec['unrealirc-dir'] ],
     }
   } else {
     exec { 'make-unrealirc':
@@ -60,7 +75,12 @@ class unrealirc::install {
       timeout => 0,
       cwd     => "${unrealirc::install_path}",
       creates => "${unrealirc::install_path}/unreal",
-      require => Exec['unrealirc-dir'],
+      environment => [
+        # these flags are required to get it compiled on newer systems (after Debian Buster)
+        'CFLAGS=-fno-strict-aliasing -fno-strict-overflow -std=gnu89 -Wno-pointer-sign -fcommon'
+      ],
+      require => [Package['build-essential', 'gcc-multilib'],Exec['unrealirc-dir']],
+      logoutput => true,
     }
   }
 
@@ -70,7 +90,9 @@ class unrealirc::install {
   }
 
   exec { 'remove-archive':
-    command => "rm /tmp/${archive}"
+    command => "rm -f /tmp/${archive}",
+    onlyif  => "test -f /tmp/${archive}",
+    require => Exec['make-unrealirc'],
   }
 
 }

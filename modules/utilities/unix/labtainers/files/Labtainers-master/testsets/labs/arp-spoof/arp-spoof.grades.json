@@ -1,0 +1,12 @@
+{
+    "frank_at_beans.com.arp-spoof": {
+        "actualwatermark": "c4af44382e17a56903b0d6e3ec06c775", 
+        "parameter": {}, 
+        "expectedwatermark": "c4af44382e17a56903b0d6e3ec06c775", 
+        "grades": {
+            "did_spoof": true
+        }, 
+        "firstlevelzip": {}, 
+        "secondlevelzip": {}
+    }
+}

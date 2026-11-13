@@ -1,10 +1,7 @@
 class apache::mod::ext_filter(
-  $ext_filter_define = undef
+  Optional[Hash] $ext_filter_define = undef
 ) {
-
-  if $ext_filter_define {
-    validate_hash($ext_filter_define)
-  }
+  include ::apache
 
   ::apache::mod { 'ext_filter': }
 
@@ -15,6 +12,7 @@ class apache::mod::ext_filter(
     file { 'ext_filter.conf':
       ensure  => file,
       path    => "${::apache::mod_dir}/ext_filter.conf",
+      mode    => $::apache::file_mode,
       content => template('apache/mod/ext_filter.conf.erb'),
       require => [ Exec["mkdir ${::apache::mod_dir}"], ],
       before  => File[$::apache::mod_dir],

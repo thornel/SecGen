@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<base xmlns="http://www.github/cliffe/SecGen/base"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/base">
+  <name>Debian 10 Buster Desktop KDE: OVIRT ONLY</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>GPLv3</module_license>
+  <description>Debian 10 Buster Desktop KDE amd64 -- dist-upgrade from stretch box. Use stretch on VirtualBox. For testing purposes, the default root password is puppet.
+  I need to build this for VirtualBox, in the meantime you can switch out the base for Stretch.</description>
+  <cpu_word_size>64-bit</cpu_word_size>
+  <type>desktop</type>
+
+  <platform>linux</platform>
+  <platform>unix</platform>
+  <distro>Debian 10 Buster amd64</distro>
+  <url>https://hacktivity.co.uk/files/vagrant_boxes/debian_stretch_desktop_kde-1.2-virtualbox.box</url>
+  <virtualbox_warning>There is no Buster box for VirtualBox: this uses the Debian 9 (Stretch) desktop box, which has not been tested with current SecGen, and modules that need Buster may fail. Bookworm (Debian 12) and Kali are the maintained VirtualBox bases.</virtualbox_warning>
+  <esxi_url>https://app.vagrantup.com/redwiz666/boxes/debian_stretch_desktop_kde/versions/1.0.0/providers/vmware.box</esxi_url>
+  <ovirt_template>buster_desktop_kde_20230615</ovirt_template>
+  <proxmox_template>buster-desktop-kde-20240703</proxmox_template>
+
+  <reference>https://atlas.hashicorp.com/puppetlabs</reference>
+  <software_license>various</software_license>
+
+  <!-- another base should not be added to this base -->
+  <conflict>
+    <module_path>bases/.*</module_path>
+  </conflict>
+</base>

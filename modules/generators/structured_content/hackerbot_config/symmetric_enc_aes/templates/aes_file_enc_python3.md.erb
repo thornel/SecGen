@@ -1,0 +1,70 @@
+<% $first_account = JSON.parse(self.accounts.first)
+
+	$main_user = $first_account['username'].to_s %>
+## File encryption using AES and python3
+
+We will encrypt /etc/hosts file using python3 and the Cryptodome module. Feel free to use any other file.
+
+Open the python3 REPL in your terminal.
+
+`python3`
+
+Import the required modules[^8]
+
+```python3
+>>> from Cryptodome.Cipher import AES
+>>> from Cryptodome.Util.Padding import pad, unpad
+```
+
+Open and read from the /etc/hosts file
+
+```python3
+>>> with open("/etc/hosts", "rb") as f:
+...   file = f.read()
+...
+>>>
+```
+
+You can generate random key using this command in a bash shell:
+
+`head -c16 /dev/random | xxd -ps`
+
+where -c16 is the number of bytes we're reading from /dev/random, the kernel's random number generator, using the head command. The raw data is passed to xxd which represents it in hexadecimal.
+
+Now let's encrypt the /etc/hosts file, using the key generated above. `bytes.fromhex()` turns the 32 hex characters into the 16 raw bytes of an AES-128 key. CBC mode picks a random IV (initialisation vector); keep a copy, as you need the same IV to decrypt.
+
+
+```python3
+>>> key = bytes.fromhex("71830edfe47b1b808af76fb62114b349")
+>>> e = AES.new(key, AES.MODE_CBC)
+>>> iv = e.iv
+>>> c = e.encrypt(pad(file,16))
+```
+
+You can inspect the contents of the ciphertext
+
+`>>> print(c)`
+
+To write data to a file, open the file in *w*rite *b*inary mode
+```python3
+>>> with open("/home/<%= $main_user %>/hosts.enc", "wb") as f:
+...   f.write(c)
+...
+>>>
+```
+
+To decrypt...
+
+
+```python3
+>>> d = AES.new(key, AES.MODE_CBC, iv=iv)
+>>> getMsg = d.decrypt(c)
+>>> print(unpad(getMsg,16))
+```
+
+For Hackerbot's challenge, use `AES.MODE_ECB` (no IV) with the key Hackerbot gives you exactly as given (a `b"..."` byte string), pad() the file, and write the raw ciphertext bytes.
+
+---
+
+[^8]: ECB and CBC only work on whole 16-byte blocks, so always pad() before encrypting and unpad() after decrypting.
+

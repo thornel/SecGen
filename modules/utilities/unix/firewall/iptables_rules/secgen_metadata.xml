@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>iptables_rules</name>
+  <author>Tom Shaw</author>
+  <module_license>GPLv3</module_license>
+  <description>Writes iptables rules (iptables command arguments, e.g. from the iptables_rule generators) to /etc/iptables/rules.v4, restored at boot by netfilter-persistent. Optionally enables IP forwarding.</description>
+
+  <type>iptables_rule</type>
+  <platform>linux</platform>
+
+  <software_license>GPLv3</software_license>
+
+  <read_fact>ip_forwarding</read_fact>
+  <read_fact>rules</read_fact>
+
+  <default_input into="ip_forwarding">
+    <value>false</value>
+  </default_input>
+
+  <!-- default so a bare module (no rules supplied by the scenario) still builds -->
+  <default_input into="rules">
+    <value>-A INPUT -i lo -j ACCEPT</value>
+  </default_input>
+
+  <requires>
+    <type>update</type>
+  </requires>
+</utility>

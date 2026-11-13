@@ -1,0 +1,30 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+
+void get_shell() {
+    execve("/bin/sh", NULL, NULL);
+}
+
+void vuln() {
+  char buff[AAAAAA];
+  gets(buff);
+  printf("input:%s\n", buff);
+  fflush(stdout);
+}
+
+int main(int argc, char* argv[]) {
+  printf("This challenge has no password -- you need to exploit a weakness to access the flag\n");
+  printf("Spawn a shell using this program, then read the flag file.\n\n");
+  fflush(stdout);
+  
+  setregid(getegid(), getegid());
+
+  vuln();
+
+  return 0;
+}

@@ -1,11 +1,12 @@
 class apache::mod::wsgi (
-  $wsgi_socket_prefix = $::apache::params::wsgi_socket_prefix,
-  $wsgi_python_path   = undef,
-  $wsgi_python_home   = undef,
-  $package_name       = undef,
-  $mod_path           = undef,
-){
-
+  $wsgi_restrict_embedded = undef,
+  $wsgi_socket_prefix     = $::apache::params::wsgi_socket_prefix,
+  $wsgi_python_path       = undef,
+  $wsgi_python_home       = undef,
+  $package_name           = undef,
+  $mod_path               = undef,
+) inherits ::apache::params {
+  include ::apache
   if ($package_name != undef and $mod_path == undef) or ($package_name == undef and $mod_path != undef) {
     fail('apache::mod::wsgi - both package_name and mod_path must be specified!')
   }
@@ -26,12 +27,14 @@ class apache::mod::wsgi (
   }
 
   # Template uses:
+  # - $wsgi_restrict_embedded
   # - $wsgi_socket_prefix
   # - $wsgi_python_path
   # - $wsgi_python_home
   file {'wsgi.conf':
     ensure  => file,
     path    => "${::apache::mod_dir}/wsgi.conf",
+    mode    => $::apache::file_mode,
     content => template('apache/mod/wsgi.conf.erb'),
     require => Exec["mkdir ${::apache::mod_dir}"],
     before  => File[$::apache::mod_dir],

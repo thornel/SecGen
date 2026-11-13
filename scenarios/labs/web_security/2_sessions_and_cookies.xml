@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+    <name>Session Management</name>
+    <author>James Davis</author>
+    <description>
+In this web security lab you will delve into sessions and cookies. The relevance of this lies in the critical role cookies play in web interactions, enabling websites to remember user states and enhance user experiences. The lab employs practical exercises and open-ended challenges, utilizing tools such as Damn Vulnerable Web App (DVWA), OWASP WebGoat, and OWASP Security Shepherd. As you navigate through the labs, you will gain hands-on experience in understanding cookies, creating a basic PHP page to set cookies, using a local web proxy (OWASP Zap) to inspect cookie interactions, and exploring session cookies. This practical approach provides a foundation for subsequent topics like cross-site scripting and cross-site request forgery.
+
+Throughout the lab, you will learn to self-host PHP pages, use OWASP Zap to analyze and manipulate cookies, and comprehend the nuances of session cookies. The DVWA challenges offer a real-world application of your knowledge, requiring you to assess and exploit vulnerabilities at different security levels. For instance, you will investigate weaknesses in session ID generation, analyze source code for session IDs, and assess the security implications of various approaches. Additionally, CTF tasks in Security Shepherd will provide hands-on experiences in session management, poor data validation, and security misconfigurations. By completing these challenges, you will develop practical skills addressing complex security scenarios mirroring the challenges faced by penetration testers and ethical hackers in real-world scenarios.
+    </description>
+    <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/web_security/2-sessions-and-cookies/</lab_sheet_url>
+
+    <type>lab-environment</type>
+    <type>ctf-lab</type>
+
+    <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+        <keyword>cookies</keyword>
+        <keyword>HYPERTEXT MARKUP LANGUAGE (HTML)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP) - PROXYING</keyword>
+        <keyword>Broken Access Control / Insecure Direct Object References</keyword>
+        <keyword>SESSION HIJACKING</keyword>
+        <keyword>CLIENT-SERVER MODELS</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Client-Side Vulnerabilities and Mitigations">
+        <keyword>client-side storage</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+        <keyword>server-side misconfiguration and vulnerable components</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+        <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+        <keyword>dynamic detection</keyword>
+    </CyBOK>
+
+    <video>
+        <title>Cookies, Sessions, and Security Part 1: Cookies</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=tmVObMBDzFE</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+            <keyword>cookies</keyword>
+            <keyword>CLIENT-SERVER MODELS</keyword>
+        </CyBOK>
+        <CyBOK KA="WAM" topic="Client-Side Vulnerabilities and Mitigations">
+            <keyword>client-side storage</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Cookies, Sessions, and Security Part 2: Sessions and Attacks on Session Management</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=HM5Ww74Fu4Q</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+            <keyword>cookies</keyword>
+            <keyword>CLIENT-SERVER MODELS</keyword>
+        </CyBOK>
+        <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+            <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Cookies, Sessions, and Security Part 3: Defences</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=nDOriryvaI0</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+            <keyword>cookies</keyword>
+            <keyword>CLIENT-SERVER MODELS</keyword>
+        </CyBOK>
+    </video>
+
+    <system>
+        <system_name>web_server</system_name>
+        <base distro="Debian 10" type="desktop" name="KDE"/>
+
+        <input into_datastore="IP_addresses">
+            <!-- 0 web_server -->
+            <network_ip system="web_server"/>
+            <!-- 1 kali -->
+            <network_ip system="kali"/>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <generator type="account">
+                    <input into="username">
+                        <value>shepherd</value>
+                    </input>
+                    <input into="password">
+                        <value>tiaspbiqe2r</value>
+                    </input>
+                    <input into="super_user">
+                        <value>false</value>
+                    </input>
+                </generator>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/security_shepherd">
+            <input into="modules">
+                <generator type="ss_modules">
+                    <input into="filter">
+                        <value>Session Management 1 2 3 4 5,Valid</value>
+                    </input>
+                </generator>
+            </input>
+            <input into="unix_username">
+                <value>shepherd</value>
+            </input>
+            <input into="flag_store" into_datastore="flag_store">
+                <generator type="flag_generator" module_path=".*base64">
+                    <input into="iterations">
+                        <value>8</value>
+                    </input>
+                </generator>
+            </input>
+        </vulnerability>
+
+        <input into_datastore="spoiler_admin_pass">
+            <generator type="strong_password_generator"/>
+        </input>
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+
+        <utility module_path=".*/hosts_legacy">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <network type="private_network"/>
+    </system>
+
+    <system>
+        <system_name>kali</system_name>
+        <base distro="Kali Linux Rolling" />
+
+        <input into_datastore="kali_account">
+            <value>
+                {"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/dvwa" />
+
+        <vulnerability module_path=".*/webgoat">
+            <input into="port">
+                <value>8085</value>
+            </input>
+        </vulnerability>
+
+        <utility module_path=".*/kali_web" />
+
+        <utility module_path=".*/iceweasel">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+            <input into="autostart">
+                <value>true</value>
+            </input>
+            <input into="start_page">
+                <value>http://localhost:8085/WebGoat|http://localhost/|webserver</value>
+            </input>
+        </utility>
+
+        <utility module_path=".*/hosts">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+        <network type="private_network"/>
+    </system>
+
+</scenario>

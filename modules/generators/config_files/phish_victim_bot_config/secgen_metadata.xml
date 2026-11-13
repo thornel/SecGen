@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Phish Victim Bot</name>
+  <author>Z. Cliffe Schreuders</author>
+  <author>Michael Oultram</author>
+  <author>Stefan Paiu</author>
+  <module_license>Apache v2</module_license>
+  <description>Config for a bot that replies to emails, and can be the victim of spear phishing and malicious attachments.
+  </description>
+
+  <type>phish_victim_bot_config_generator</type>
+  <platform>linux</platform>
+
+  <read_fact>user</read_fact>
+  <read_fact>pass</read_fact>
+  <read_fact>server</read_fact>
+  <read_fact>recipients_name</read_fact>
+  <read_fact>trusted_sender</read_fact>
+  <read_fact>senders_name</read_fact>
+  <read_fact>relevant_keyword</read_fact>
+  <read_fact>num_keywords</read_fact>
+  <read_fact>accepted_file_extension</read_fact>
+  <read_fact>suspicious_of_file_name</read_fact>
+  <read_fact>reject_all</read_fact>
+
+
+  <output_type>config_file</output_type>
+</generator>

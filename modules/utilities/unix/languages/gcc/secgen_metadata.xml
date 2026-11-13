@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>GCC build tools</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>Installs gcc (multilib) for compiling C code, amongst others.</description>
+
+  <type>build_tools</type>
+  <platform>linux</platform>
+
+  <requires>
+    <type>update</type>
+  </requires>
+</utility>

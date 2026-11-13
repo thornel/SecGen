@@ -1,0 +1,387 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>IDS rules lab</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    # Introduction
+    In this lab on Intrusion Detection and Prevention Systems, you will delve into the world of network security, learning how to configure and monitor a network using Snort, a popular open-source intrusion detection system. This lab will guide you through the process of setting up Snort, and creating custom intrusion detection rules.
+
+    Throughout this lab, you will gain hands-on experience in configuring Snort to monitor network traffic. You will learn how to create custom Snort rules to detect specific network activities, and use Wireshark to capture and analyze network packets. The lab will also present you with a series of Hackerbot challenges, where you will apply your knowledge to detect and respond to various network attacks. For example, you will create Snort rules to detect attempts to access specific ports, monitor unencrypted email authentication, and more. By the end of this lab, you will have a solid understanding of intrusion detection and prevention systems, as well as practical experience in configuring and monitoring them to safeguard your network from potential threats.
+
+    This is a Hackerbot lab. Work through the lab sheet, then when prompted interact with Hackerbot.
+  </description>
+
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/response_and_investigation/5-ids-rules/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>hackerbot-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>intermediate</difficulty>
+
+  <CyBOK KA="SOIM" topic="Monitor: Data Sources">
+    <keyword>network traffic</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="Analyse: Analysis Methods">
+    <keyword>misuse detection</keyword>
+    <keyword>anomaly detection</keyword>
+  </CyBOK>
+  <CyBOK KA="NS" topic="Network Defence Tools">
+    <keyword>packet filters</keyword>
+    <keyword>intrusion detection systems</keyword>
+    <keyword>IDS rules creation</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malware Detection">
+    <keyword>attack detection</keyword>
+  </CyBOK>
+
+  <video>
+    <title>IDS accuracy</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/ZUMBsMppsLo</url>
+    <type>lecture-prerecorded</type>
+    <CyBOK KA="SOIM" topic="Analyse: Analysis Methods">
+      <keyword>the base-rate fallacy</keyword>
+    </CyBOK>
+    <CyBOK KA="SOIM" topic="Analyse: Analysis Methods">
+      <keyword>misuse detection</keyword>
+      <keyword>anomaly detection</keyword>
+    </CyBOK>
+    <CyBOK KA="SOIM" topic="Execute: Mitigation and Countermeasures">
+      <keyword>intrusion prevention systems</keyword>
+    </CyBOK>
+    <CyBOK KA="NS" topic="Network Defence Tools">
+      <keyword>intrusion detection systems</keyword>
+    </CyBOK>
+  </video>
+  <video>
+    <title>Snort IDS</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/nuUm4NO_S1s</url>
+    <type>lecture-prerecorded</type>
+    <CyBOK KA="SOIM" topic="Monitor: Data Sources">
+      <keyword>network traffic</keyword>
+    </CyBOK>
+    <CyBOK KA="SOIM" topic="Analyse: Analysis Methods">
+      <keyword>misuse detection</keyword>
+      <keyword>anomaly detection</keyword>
+    </CyBOK>
+    <CyBOK KA="SOIM" topic="Execute: Mitigation and Countermeasures">
+      <keyword>intrusion prevention systems</keyword>
+    </CyBOK>
+    <CyBOK KA="NS" topic="Network Defence Tools">
+      <keyword>packet filters</keyword>
+      <keyword>intrusion detection systems</keyword>
+      <keyword>IDS rules creation</keyword>
+    </CyBOK>
+    <CyBOK KA="MAT" topic="Malware Detection">
+      <keyword>attack detection</keyword>
+    </CyBOK>
+  </video>
+
+  <system>
+    <system_name>desktop</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <network_ip system="desktop"/>
+      <network_ip system="ids_monitor"/>
+      <network_ip system="web_server"/>
+      <network_ip system="hackerbot_server"/>
+    </input>
+
+    <input into_datastore="organisation">
+      <generator type="realistic_organisation"/>
+    </input>
+
+    <!--generate two accounts, YOU and someone else-->
+    <input into_datastore="accounts">
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>test</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>test</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+    </input>
+
+    <!-- an admin account used for hackerbot access to the desktop and also spoilers/administration of the challenge -->
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <input into_datastore="hackerbot_key">
+      <generator type="ssh_key_pair"/>
+    </input>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="strings_to_leak">
+        <value></value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>hackerbot</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="3">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart">
+        <value>true</value>
+      </input>
+      <input into="start_page">
+        <datastore access="2">IP_addresses</datastore>
+      </input>
+      <input into="start_page">
+        <value>hackerbot:8080</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/mirror_traffic_to_ids_iptables">
+      <input into="ids_IP_address">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- system_name must be 'ids_monitor': mirror_traffic_to_ids_iptables secgen_test
+       cross-VM checks (Snort installed, TEE target IP match) rely on this name. -->
+  <system>
+    <system_name>ids_monitor</system_name>
+    <base distro="Debian 10" type="desktop" name="KDE"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/snort"/>
+    <utility module_path=".*/wireshark"/>
+    <utility module_path=".*/nmap"/>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>web_server</system_name>
+    <!-- FIXME: server base was not receiving an IP address (right network?) -->
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+    </utility>
+
+    <vulnerability module_path=".*/distcc_exec"/>
+
+    <!--TODO: FIXME ftp modules are currently broken-->
+    <service module_path=".*/vsftpd"/>
+
+    <service type="pop3"/>
+
+    <service module_path="services/unix/http/parameterised_website">
+      <input into="organisation">
+        <datastore>organisation</datastore>
+      </input>
+    </service>
+
+    <utility module_path=".*/mirror_traffic_to_ids_iptables">
+      <input into="ids_IP_address">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>hackerbot_server</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <service module_path=".*/ergochat"/>
+
+    <utility module_path=".*/hackerbot_webclient">
+      <input into="username">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="irc_server_ip">
+        <value>hackerbot</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <service type="httpd"/>
+
+    <utility module_path=".*/hackerbot">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+      <input into="hackerbot_configs">
+        <generator module_path=".*/ids_rules">
+          <input into="accounts">
+            <datastore>accounts</datastore>
+          </input>
+          <input into="ids_server_ip">
+            <datastore access="1">IP_addresses</datastore>
+          </input>
+          <input into="web_server_ip">
+            <datastore access="2">IP_addresses</datastore>
+          </input>
+          <input into="hackerbot_server_ip">
+            <datastore access="3">IP_addresses</datastore>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <utility module_path=".*/mirror_traffic_to_ids_iptables">
+      <input into="ids_IP_address">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

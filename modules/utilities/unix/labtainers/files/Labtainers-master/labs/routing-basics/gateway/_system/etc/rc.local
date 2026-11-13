@@ -1,0 +1,38 @@
+#!/bin/bash
+route delete default
+route add default gw 203.0.113.1
+#
+# get ethernet device names for the three interfaces
+# Note this allows us to not know the mapping of addresses to interfaces and can be skipped if the
+# interfaces are known and constant.
+#
+lan1=$(ifconfig | grep -B1 "inet.*192.168.1.10" | awk '$1!="inet" && $1!="--" {print substr($1,1,length($1)-1)}')
+lan2=$(ifconfig | grep -B1 "inet.*192.168.2.10" | awk '$1!="inet" && $1!="--" {print substr($1,1,length($1)-1)}')
+wan=$(ifconfig | grep -B1 "inet.*203.0.113.10" | awk '$1!="inet" && $1!="--" {print substr($1,1,length($1)-1)}')
+#
+# Delete all IPTABLE chains
+iptables --flush
+iptables -t nat --flush
+iptables --delete-chain
+iptables -t nat --delete-chain
+#
+# Define NAT for the traffic exiting to the Internet
+#
+iptables --table nat -I POSTROUTING 1 --out-interface $wan -j MASQUERADE
+#
+# Set the destination address of web traffic (port 80) to the web server address
+#
+sudo iptables -t nat -A PREROUTING -i $wan -p tcp --dport 80 -j DNAT --to-destination 192.168.1.2
+#
+# Set the source address of web traffic (port 80) to the gateway 
+#
+sudo iptables -t nat -A POSTROUTING -o $lan1 -p tcp --dport 80 -d 192.168.1.2 -j SNAT --to-source 192.168.1.10
+
+#
+# restart the DNS forwarder (rely on DNS provided by ISP)
+#
+
+echo "nameserver 203.0.113.1" > /etc/resolv.conf
+route del -host 172.17.0.1
+systemctl restart dnsmasq
+

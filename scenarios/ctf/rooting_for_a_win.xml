@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Rooting for a win</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    A server exposes an old-school FTP service that turns out to hide a backdoor
+    slipped into a past release - a classic unauthenticated network exploit that
+    hands you a root shell outright once triggered. Along the way you'll spot a
+    short snippet of text scrambled with a simple reversible cipher: decode it to
+    pick up an early flag before finishing the job and rooting the box for the
+    rest.
+  </description>
+
+  <type>ctf</type>
+  <type>attack-ctf</type>
+  <type>pwn-ctf</type>
+  <difficulty>medium</difficulty>
+
+  <!-- ftp root -->
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+    <keyword>BACKDOOR TROJANS</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+    <keyword>CVEs and CWEs</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+  <CyBOK KA="NS" topic="PENETRATION TESTING">
+    <keyword>FILE - TRANSFER PROTOCOL (FTP)</keyword>
+  </CyBOK>
+
+  <!-- encoding challenges -->
+  <CyBOK KA="F" topic="Artifact Analysis">
+    <keyword>Encoding and alternative data formats</keyword>
+  </CyBOK>
+  <CyBOK KA="AC" topic="Symmetric Cryptography">
+    <keyword>symmetric encryption and authentication</keyword>
+  </CyBOK>
+
+
+  <system>
+    <system_name>attack_vm</system_name>
+    <base distro="Kali" name="MSF"/>
+
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 attack_vm -->
+      <network_ip system="attack_vm"/>
+      <!-- 1 hackme_server -->
+      <network_ip system="server"/>
+    </input>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+      <input into="autostart">
+        <value>false</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_top10"/>
+    <utility module_path=".*/kali_web"/>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>server</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+
+    <vulnerability module_path="vulnerabilities/unix/ftp/proftpd_133c_backdoor">
+      <input into="strings_to_leak">
+        <generator type="flag_generator"/>
+      </input>
+      <input into="strings_to_pre_leak">
+        <generator type="flag_generator"/>
+
+        <encoder type="^(ascii|alpha)_reversible$" difficulty="low">
+          <input into="strings_to_encode">
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

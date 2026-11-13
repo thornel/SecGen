@@ -1,0 +1,210 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Post-it note-xploitation</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    Hack and escalate.
+  </description>
+
+  <type>ctf</type>
+  <type>attack-ctf</type>
+  <type>pwn-ctf</type>
+  <difficulty>easy</difficulty>
+
+  <!-- local privilege escalation / distcc -->
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+    <keyword>CVEs and CWEs</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+
+  <!-- escalate to root -->
+  <CyBOK KA="AB" topic="Models">
+    <keyword>kill chains</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malicious Activities by Malware">
+    <keyword>cyber kill chain</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>Post-exploitation: pivoting attacks, information gathering</keyword>
+  </CyBOK>
+  <!-- decrypt zip file -->
+  <CyBOK KA="AC" topic="Symmetric Cryptography">
+    <keyword>symmetric encryption and authentication</keyword>
+  </CyBOK>
+  <CyBOK KA="AAA" topic="Authentication">
+    <keyword>BRUTEFORCE</keyword>
+  </CyBOK>
+
+
+  <system>
+    <system_name>windows_server</system_name>
+    <base platform="windows" distro="7"/>
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 windows desktop -->
+      <network_ip system="windows_server"/>
+      <!-- 1 linux server -->
+      <network_ip system="linux_server"/>
+      <!-- 1 kali -->
+      <network_ip system="kali"/>
+    </input>
+
+    <utility module_path=".*/parameterised_accounts" platform="windows">
+      <input into="accounts" into_datastore="accounts">
+        <generator type="account">
+          <input into="username">
+            <generator type="random_sanitised_word">
+              <input into="wordlist">
+                <value>mythical_creatures</value>
+              </input>
+            </generator>
+          </input>
+          <input into="password">
+            <value>tiaspbiqe2r</value>
+          </input>
+          <input into="super_user">
+            <value>true</value>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="flag_generator" />
+          </input>
+          <input into="leaked_filenames">
+            <value>flag.txt</value>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <!-- vulnerable ftp server -->
+    <vulnerability module_path=".*/easyftp_rce"/>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>linux_server</system_name>
+
+    <base platform="linux" type="server"/>
+
+    <input into_datastore="user_accounts_server">
+      <generator type="account">
+        <input into="username">
+          <value>crackme</value>
+        </input>
+        <input into="password" into_datastore="server_crackme_password">
+          <generator type="weak_password_generator"/>
+        </input>
+        <!-- this flag is available to root -->
+        <input into="leaked_filenames">
+          <value>flag</value>
+        </input>
+        <input into="strings_to_leak">
+          <generator type="flag_generator" />
+        </input>
+      </generator>
+    </input>
+
+    <!-- this is password protected by the same password as the crackme user -->
+    <vulnerability type="zip_file">
+      <input into="base64_file">
+        <generator type="zip_file_generator">
+          <input into="password">
+            <datastore>server_crackme_password</datastore>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="flag_generator"/>
+            <value>
+              Congratulations you have cracked our protected zip file. Here is a flag for your troubles.
+            </value>
+          </input>
+        </generator>
+      </input>
+      <input into="leaked_filename">
+        <value>protected.zip</value>
+      </input>
+      <input into="storage_directory">
+        <value>/root</value>
+      </input>
+    </vulnerability>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>user_accounts_server</datastore>
+      </input>
+    </utility>
+
+
+    <!-- local privilege escalation to root (was DirtyCOW, removed with the Debian 7 bases) -->
+    <vulnerability access="local" privilege="root_rwx">
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+      </input>
+      <input into="leaked_filenames">
+        <value>flag</value>
+      </input>
+    </vulnerability>
+
+    <!-- vulnerable distcc server -->
+    <vulnerability cve="CVE-2004-2687">
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+      </input>
+      <input into="leaked_filenames">
+        <value>flag</value>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>kali</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/armitage"/>
+    <utility module_path=".*/exploitdb"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+    <utility module_path=".*/kali_pwtools"/>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

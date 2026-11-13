@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Default User Role Generator</name>
+  <author>Thalita Vergilio</author>
+  <module_license>MIT</module_license>
+  <description>Selects a random role for a non-privileged user</description>
+
+  <type>user_role_generator</type>
+  <platform>linux</platform>
+  <platform>windows</platform>
+
+  <output_type>user_generated_role</output_type>
+
+</generator>

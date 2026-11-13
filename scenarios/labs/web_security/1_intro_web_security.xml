@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+    <name>Introducing Web security</name>
+    <author>James Davis</author>
+    <description>
+# Introduction
+In this lab you will delve into concepts and practical exercises that will equip you with a foundational understanding of web security. This hands-on lab explores various aspects of web security, starting with an introduction to client-server interactions using HTTP (HyperText Transfer Protocol). The lab guides you through simulating a web server from scratch using tools like netcat, creating dynamic web pages with PHP, and understanding the intricacies of client-server architecture. The importance of local web proxies, illustrated through the use of Zed Attack Proxy (ZAP), is emphasized as a means to intercept and modify web traffic for security testing purposes. The lab further introduces fuzzing techniques in ZAP and encourages practical application through tasks such as intercepting and altering HTTP requests.
+
+Throughout this lab, you will learn by doing, actively engaging in activities. As part of the hands-on experience, you will also work through scored flag-based tasks, such as completing challenges related to Insecure Direct Object References. By the end of the lab, you will have acquired a solid foundation in web security fundamentals, simulation of web server activities, and practical skills in using tools like ZAP for security testing and assessment. This sets the stage for deeper exploration and learning in subsequent topics, contributing to the development of your web security expertise.
+    </description>
+    <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/web_security/1-intro-web-security/</lab_sheet_url>
+
+    <type>ctf-lab</type>
+    <type>lab-sheet</type>
+    <difficulty>intermediate</difficulty>
+
+    <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+        <keyword>JAVASCRIPT</keyword>
+        <keyword>HYPERTEXT MARKUP LANGUAGE (HTML)</keyword>
+        <keyword>CASCADING STYLE SHEETS (CSS)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP) - PROXYING</keyword>
+        <keyword>Broken Access Control / Insecure Direct Object References</keyword>
+        <keyword>CLIENT-SERVER MODELS</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+        <keyword>server-side misconfiguration and vulnerable components</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+        <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+        <keyword>dynamic detection</keyword>
+    </CyBOK>
+
+    <video>
+        <title>Introduction to Web Security</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=tmVObMBDzFE</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+            <keyword>JAVASCRIPT</keyword>
+            <keyword>HYPERTEXT MARKUP LANGUAGE (HTML)</keyword>
+            <keyword>CASCADING STYLE SHEETS (CSS)</keyword>
+            <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP)</keyword>
+            <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP) - PROXYING</keyword>
+            <keyword>CLIENT-SERVER MODELS</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>How to Use the Built-in PHP Web Server</title>
+        <by>Thalita Vergilio</by>
+        <url>https://www.youtube.com/watch?v=8GsFBGqnDXM</url>
+        <type>lecture-prerecorded</type>
+    </video>
+
+    <system>
+        <system_name>web_server</system_name>
+        <base distro="Debian 10" type="desktop" name="KDE"/>
+
+        <input into_datastore="IP_addresses">
+            <!-- 0 web_server -->
+            <network_ip system="web_server"/>
+            <!-- 1 kali -->
+            <network_ip system="kali"/>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <generator type="account">
+                    <input into="username">
+                        <value>shepherd</value>
+                    </input>
+                    <input into="password">
+                        <value>tiaspbiqe2r</value>
+                    </input>
+                    <input into="super_user">
+                        <value>false</value>
+                    </input>
+                </generator>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/security_shepherd">
+            <input into="modules">
+                <generator type="ss_modules">
+                    <input into="filter">
+                        <value>Insecure Direct Object References</value>
+                    </input>
+                </generator>
+            </input>
+            <input into="unix_username">
+                <value>shepherd</value>
+            </input>
+            <input into="flag_store" into_datastore="flag_store">
+                <generator type="flag_generator" module_path=".*base64">
+                    <input into="iterations">
+                        <value>1</value>
+                    </input>
+                </generator>
+            </input>
+        </vulnerability>
+
+        <input into_datastore="spoiler_admin_pass">
+            <generator type="strong_password_generator"/>
+        </input>
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+
+        <utility module_path=".*/hosts_legacy">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <network type="private_network"/>
+    </system>
+
+    <system>
+        <system_name>kali</system_name>
+        <base distro="Kali" name="MSF" />
+
+        <input into_datastore="kali_account">
+            <value>
+                {"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/webgoat">
+            <input into="port">
+                <value>8085</value>
+            </input>
+        </vulnerability>
+
+        <utility module_path=".*/kali_web" />
+
+        <utility module_path=".*/iceweasel">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+            <input into="autostart">
+                <value>true</value>
+            </input>
+            <input into="start_page">
+                <value>http://localhost:8085/WebGoat|webserver</value>
+            </input>
+        </utility>
+
+        <utility module_path=".*/hosts">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+        <network type="private_network"/>
+    </system>
+
+</scenario>

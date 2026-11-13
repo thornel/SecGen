@@ -1,5 +1,237 @@
+# Change log
+
+All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
+
+## [6.2.0](https://github.com/puppetlabs/puppetlabs-mysql/tree/6.2.0) (2018-09-27)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-mysql/compare/6.1.0...6.2.0)
+
+### Added
+
+- pdksync - \(MODULES-6805\) metadata.json shows support for puppet 6 [\#1127](https://github.com/puppetlabs/puppetlabs-mysql/pull/1127) ([tphoney](https://github.com/tphoney))
+
+### Fixed
+
+- \(maint\) - Change versioning comparison [\#1123](https://github.com/puppetlabs/puppetlabs-mysql/pull/1123) ([eimlav](https://github.com/eimlav))
+
+## [6.1.0](https://github.com/puppetlabs/puppetlabs-mysql/tree/6.1.0) (2018-09-13)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-mysql/compare/6.0.0...6.1.0)
+
+### Fixed
+
+- pdksync - \(MODULES-7705\) - Bumping stdlib dependency from \< 5.0.0 to \< 6.0.0 [\#1114](https://github.com/puppetlabs/puppetlabs-mysql/pull/1114) ([pmcmaw](https://github.com/pmcmaw))
+- \(MODULES-6981\) Do not try to read ~root/.my.cnf when calling "mysqld -V" [\#1063](https://github.com/puppetlabs/puppetlabs-mysql/pull/1063) ([simondeziel](https://github.com/simondeziel))
+
+## [6.0.0](https://github.com/puppetlabs/puppetlabs-mysql/tree/6.0.0) (2018-08-01)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-mysql/compare/5.4.0...6.0.0)
+
+### Changed
+
+- \[FM-6962\] Removal of unsupported OS from mysql [\#1086](https://github.com/puppetlabs/puppetlabs-mysql/pull/1086) ([david22swan](https://github.com/david22swan))
+
+### Added
+
+- \(FM-5985\) - Addition of support for Ubuntu 18.04 to mysql [\#1104](https://github.com/puppetlabs/puppetlabs-mysql/pull/1104) ([david22swan](https://github.com/david22swan))
+- \(MODULES-7439\) - Implementing beaker-testmode\_switcher [\#1095](https://github.com/puppetlabs/puppetlabs-mysql/pull/1095) ([pmcmaw](https://github.com/pmcmaw))
+- Support for optional\_\_args and prescript to mysqldump backup provider [\#1083](https://github.com/puppetlabs/puppetlabs-mysql/pull/1083) ([eputnam](https://github.com/eputnam))
+- Allow empty user passwords [\#1075](https://github.com/puppetlabs/puppetlabs-mysql/pull/1075) ([disappear89](https://github.com/disappear89))
+- Add user tls\_options and grant options to mysql::db [\#1065](https://github.com/puppetlabs/puppetlabs-mysql/pull/1065) ([edestecd](https://github.com/edestecd))
+- Use puppet4 functions-api [\#1044](https://github.com/puppetlabs/puppetlabs-mysql/pull/1044) ([juliantodt](https://github.com/juliantodt))
+- Replaced 'DROP USER' with 'DROP USER IF EXISTS' [\#942](https://github.com/puppetlabs/puppetlabs-mysql/pull/942) ([libertamohamed](https://github.com/libertamohamed))
+
+### Fixed
+
+- \(MODULES-7353\) Enable service for Debian 9  [\#1094](https://github.com/puppetlabs/puppetlabs-mysql/pull/1094) ([david22swan](https://github.com/david22swan))
+- Update locales test for Debian 9 [\#1091](https://github.com/puppetlabs/puppetlabs-mysql/pull/1091) ([HelenCampbell](https://github.com/HelenCampbell))
+- \[FM-7045\] Fix to allow Debian 9 test's to run clean [\#1088](https://github.com/puppetlabs/puppetlabs-mysql/pull/1088) ([david22swan](https://github.com/david22swan))
+- \(MODULES-7198\) Fix DROP USER IF EXISTS on mariadb [\#1082](https://github.com/puppetlabs/puppetlabs-mysql/pull/1082) ([hunner](https://github.com/hunner))
+
+## 5.4.0
+
+### Added
+
+- \(PDOC-210\) Puppet Strings documentation [\#1068](https://github.com/puppetlabs/puppetlabs-mysql/pull/1068) ([hunner](https://github.com/hunner))
+- Compatibility for Alpine linux [\#1049](https://github.com/puppetlabs/puppetlabs-mysql/pull/1049) ([cisco87](https://github.com/cisco87))
+
+### Fixed
+
+- \(MODULES-6627\) Removed unused --host flag from mysqlcaller [\#1064](https://github.com/puppetlabs/puppetlabs-mysql/pull/1064) ([HelenCampbell](https://github.com/HelenCampbell))
+- Fixed archlinux compatibility [\#1057](https://github.com/puppetlabs/puppetlabs-mysql/pull/1057) ([bastelfreak](https://github.com/bastelfreak))
+- Changed input param option in export.json from sql to file [\#1054](https://github.com/puppetlabs/puppetlabs-mysql/pull/1054) ([cgoswami](https://github.com/cgoswami))
+
+## Supported Release [5.3.0]
+### Summary
+This release uses the PDK convert functionality which in return makes the module PDK compliant. It also includes a roll up of maintenance changes, a new task and support for `GRANTS FUNCTION`.
+
+### Added
+- Add support for `GRANTS FUNCTION` ([MODULES-2075](https://tickets.puppet.com/browse/MODULES-2075)).
+- Add Export database task.
+- PDK Convert mysql ([MODULES-6454](https://tickets.puppet.com/browse/MODULES-6454)).
+
+### Changed
+- Allow authentication plugin to be changed.
+- Update mysql_user provider.
+- Plugins don't exist before 5.5; password field name changed
+- Fix helpful rubocops and disable hurtful cops.
+- Addressing puppet-lint and rubocop errors
+- Remove update bundler and add ignore .DS_Store
+- Skip rubocop warning in task.
+- Fix a typo in a classname in the changelog.
+
+## Supported Release [5.2.1]
+### Summary
+This release fixes CVE-2018-6508 which is a potential arbitrary code execution via tasks.
+
+### Fixed
+- Fix export and mysql tasks for arbitrary remote code
+
+## Supported Release [5.2.0]
+
+### Added
+- Compatibility for puppet-staging 3.0.0
+
+### Fixed
+- Centralize all mysql command calls for providers
+- Add paths to `mysql_datadir` provider for RedHat Software Collections
+
+## Supported Release [5.1.0]
+### Summary
+This release adds Tasks to the Mysql module.
+
+#### Added
+- Adds the execute sql task.
+
+## Supported Release [5.0.0]
+### Summary
+This is a major release that adds support for string translation. Currently the only supported language besides
+English is Japanese.
+
+#### Added
+- Several gem dependencies required for translation.
+- Wrapping of strings that require translation. Strings in ruby code are now wrapped with `_()` and strings in puppet code with `translate()`.
+- Debian 9 support
+
+#### Changed
+- The default php_package_name for Debian and Ubuntu to `php-mysql`
+
+## Supported Release 4.0.1
+### Summary
+This is a small bugfix release that makes `mysql_install_db` optional and fixes some regular expression issues.
+
+#### Bugfixes
+- ([MODULES-5528](https://tickets.puppet.com/browse/MODULES-5528)) Fixes the `mysql_install_db` command so that it is optional
+- ([MODULES-5602](https://tickets.puppet.com/browse/MODULES-5602)) Removes superfluous backslashes in some regular expressions that were causing instability
+
+## Supported Release 4.0.0
+### Summary
+This release sees the enablement of rubocop, also an update to the lib directory with rubocop fixes and several other changes and fixes. Also a bump to the Puppet version compatibility and several Puppet language updates.
+
+#### Added
+- Updated README.md with example how to install MySQL Community Server 5.6 on Centos 7.3
+- Enabled Rubocop and addition of Rubocop fixes for /lib directory.
+
+#### Removed
+- Dropped legacy tests for db.pp.
+
+#### Changed
+- Replaced validate function calls with datatypes in db.pp.
+- Bumped recommended puppet version to between 4.7.0 and 6.0.0.
+- Conditionalize name validation in mysql_grant type. ([MODULES-4604](https://tickets.puppet.com/browse/MODULES-4604))
+
+#### Fixed
+- Removal of invalid parameter provider on Mysql_user[user@localhost] in mysql::db ([MODULES-4115](https://tickets.puppet.com/browse/MODULES-4115))
+- Fixed server_service_name for Debian/stretch.
+- Spec fixes for Puppet 5.
+- Test update for fix:create procedure, then grant ([MODULES-5390](https://tickets.puppet.com/browse/MODULES-5390))
+- Fixing empty user/password issue for xtrabackup. Now defaults as undef instead of ''.
+- Remove unsupported Ubuntu versions ([MODULES-5501](https://tickets.puppet.com/browse/MODULES-5501))
+
+## Supported Release 3.11.0
+### Summary
+This release includes README and metadata translations to Japanese, as well as some enhancements and bugfixes.
+
+#### Added
+- New flag for successful backups
+- Solaris support improvements
+- New parameter `optional_args` for extra innobackupex options
+- Specify environment variables (e.g. https_proxy) for MySQLTuner download.
+- Check to only install bzip2 if `$backupcompress` is `true`
+- Debian 9 compatibility
+- Japanese README
+
+#### Fixed
+- Syntax errors
+- Bug where error logs were being created before the datadir was initialized (MODULES-4743)
+
+## Supported Release 3.10.0
+### Summary
+This release includes new features for setting TLS options on a mysql user, a new parameter to allow specifying tool to import sql files, as well as various bugfixes.
+
+#### Features
+- (MODULES-3879) Adds `import_cat_cmd` parameter to specify the command to read sql files
+- Adds support for setting `tls_options` in `mysql_user`
+
+#### Bugfixes
+- (MODULES-3557) Adds Ubuntu 16.04 package names for language bindings
+- (MODULES-3907) Adds MySQL/Percona 5.7 initialize on fresh deploy
+
+## Supported Release 3.9.0
+### Summary
+This release adds Percona 5.7 support and compatibility with Ubuntu 16.04, in addition to various bugfixes.
+
+#### Features
+- (MODULES-3441) Adds the `mysqld_version` fact
+- (MODULES-3513) Adds a new backup dump parameter `maxallowedpacket`
+- Adds new parameter `xtrabackup_package_name` to `mysql::backup::xtrabackup` class
+- Adds ability to revoke GRANT privilege
+
+#### Bugfixes
+- Fixes a bug where `mysql_user` fails if facter cannot retrieve fqdn.
+- Fix global parameter usage in backup script
+- Adds support for `puppet-staging` version `2.0.0`
+- (MODULES-3601) Moves binary logging configuration to take place after package install
+- (MODULES-3711) Add limit to mysql server ID generated value
+- (MODULES-3698) Fixes defaults for SLES12
+- Updates user name length restrictions for MySQL version 5.7.8 and above.
+- Fixes a bug where error log is not writable by owner
+
+## Supported Release 3.8.0
+### Summary
+This release adds Percona 5.7 support and compatibility with Ubuntu 16.04, in addition to various bugfixes.
+
+#### Features
+- Adds support for Percona 5.7
+- Adds support for Ubuntu 16.04 (Xenial)
+
+#### Known Limitations
+- The mysqlbackup.sh script will not work on MySQL 5.7.0 and up.
+
+#### Bugfixes
+- Use mysql_install_db only with uniq defaults-extra-file
+- Updates mysqlbackup.sh to ensure backup directory exist
+- Loosen MariaDB recognition to fix it on Debian 8
+- Allow mysql::backup::mysqldump to access root_group in tests
+- Fixed problem with ignoring parameters from global configs
+- Fixes ordering issue that initialized mysqld before config is set
+- (MODULES-1256) Fix parameters on OpenSUSE 12
+- Fixes install errors on Debian-based OS by configuring the base of includedir
+- Configure the configfile location for mariadb
+- Default mysqld_type return value should be 'mysql' if another type is not detected
+- Make sure that bzip2 is installed before setting up the cron tab job using mysqlbackup.sh
+- Fixes path issue on FreeBSD
+- Check that /var/lib/mysql actually contains files
+- Removes mysql regex when checking type
+- (MODULES-2111) Add the system database to user related actions
+- Updates default group for logfiles on Debian-based OS to 'adm'
+- Fixes an issue with Amazon linux major release 4 installation
+- Fixes 'mysql_install_db' script support on Gentoo
+- Removes erroneous anchors to mysql::client from mysql::db
+- Adds path to be able to find MySQL 5.5 installation on CentOS
+
 ## Supported Release 3.7.0
-###Summary
+### Summary
 
 A large release with several new features. Also includes a considerable amount of bugfixes, many around compatibility and improvements to current functionality.
 
@@ -46,7 +278,7 @@ A large release with several new features. Also includes a considerable amount o
 - Generate .my.cnf for all sections.
 
 ## Supported Release 3.6.2
-###Summary
+### Summary
 
 Small release for support of newer PE versions. This increments the version of PE in the metadata.json file.
 
@@ -74,24 +306,24 @@ This release adds the ability to use mysql::db and `mysql_*` types against unman
 - Fix service dependency when package_manage is false
 - Fix selinux permissions on my.cnf
 
-##2015-07-23 - Supported Release 3.5.0
-###Summary
+## 2015-07-23 - Supported Release 3.5.0
+### Summary
 A small release to add explicit support to newer Puppet versions and accumulated patches.
 
-####Features/Improvements
+#### Features/Improvements
 - Start running tests against puppet 4
 - Support longer usernames on newer MariaDB versions
 - Add parameters for Solaris 11 and 12
 
-####Bugfixes
+#### Bugfixes
 - Fix references to the mysql-server package
 - mysql_server_id doesn't throw and error on machines without macaddress
 
-##2015-05-19 - Supported Release 3.4.0
-###Summary
+## 2015-05-19 - Supported Release 3.4.0
+### Summary
 This release includes the addition of extra facts, OpenBSD compatibility, and a number of other features, improvements and bug fixes.
 
-####Features/Improvements
+#### Features/Improvements
 - Added server_id fact which includes mac address for better uniqueness
 - Added OpenBSD compatibility, only for 'OpenBSD -current' (due to the recent switch to mariadb)
 - Added a $mysql_group parameter, and use that instead of the $root_group parameter to define the group membership of the mysql error log file.
@@ -105,7 +337,7 @@ This release includes the addition of extra facts, OpenBSD compatibility, and a 
 - Cleaned up the privilege assignment in the mysqldump backup script
 - Add a fact for capturing the mysql version installed
 
-####Bugfixes
+#### Bugfixes
 - mysql backup: fix regression in mysql_user call
 - Set service_ensure to undef, in the case of an unmanaged service
 - README Typos fixed
@@ -115,33 +347,33 @@ This release includes the addition of extra facts, OpenBSD compatibility, and a 
 - Fix an issue were we assume triggers work
 - Change default for mysql::server::backup to ignore_triggers = false
 
-####Deprecations
+#### Deprecations
 mysql::server::old_root_password property
 
-##2015-03-03 - Supported Release 3.3.0
-###Summary
+## 2015-03-03 - Supported Release 3.3.0
+### Summary
 This release includes major README updates, the addition of backup providers, and a fix for managing the log-bin directory.
 
-####Features
+#### Features
 - Add package_manage parameters to `mysql::server` and `mysql::client` (MODULES-1143)
 - README improvements
 - Add `mysqldump`, `mysqlbackup`, and `xtrabackup` backup providers.
 
-####Bugfixes
+#### Bugfixes
 - log-error overrides were not being properly used (MODULES-1804)
 - check for full path for log-bin to stop puppet from managing file '.'
 
-##2015-02-09 - Supported Release 3.2.0
-###Summary
+## 2015-02-09 - Supported Release 3.2.0
+### Summary
 This release includes several new features and bugfixes, including support for various plugins, making the output from mysql_password more consistent when input is empty and improved username validation.
 
-####Features
+#### Features
 - Add type and provider to manage plugins
 - Add support for authentication plugins
 - Add support for mysql_install_db on freebsd
 - Add `create_root_user` and `create_root_my_cnf` parameters to `mysql::server`
 
-####Bugfixes
+#### Bugfixes
 - Remove dependency on stdlib >= 4.1.0 (MODULES-1759)
 - Make grant autorequire user
 - Remove invalid parameter 'provider' from mysql_user instance (MODULES-1731)
@@ -154,16 +386,16 @@ This release includes several new features and bugfixes, including support for v
 - Test fixes
 - Lint fixes
 
-##2014-12-16 - Supported Release 3.1.0
-###Summary
+## 2014-12-16 - Supported Release 3.1.0
+### Summary
 
 This release includes several new features, including SLES12 support, and a number of bug fixes.
 
-####Notes
+#### Notes
 
 `mysql::server::mysqltuner` has been refactored to fetch the mysqltuner script from github by default. If you are running on a non-network-connected system, you will need to download that file and have it available to your node at a path specified by the `source` parameter to the `mysqltuner` class.
 
-####Features
+#### Features
 - Add support for install_options for all package resources (MODULES-1484)
 - Add log-bin directory creation
 - Allow mysql::db to import multiple files (MODULES-1338)
@@ -171,20 +403,20 @@ This release includes several new features, including SLES12 support, and a numb
 - Improved identifier quoting detections
 - Reworked `mysql::server::mysqltuner` so that we are no longer packaging the script as it is licensed under the GPL.
 
-####Bugfixes
+#### Bugfixes
 - Fix regression in username validation
 - Proper containment for mysql::client in mysql::db
 - Support quoted usernames of length 15 and 16 chars
 
-##2014-11-11 - Supported Release 3.0.0
-###Summary
+## 2014-11-11 - Supported Release 3.0.0
+### Summary
 
 Added several new features including MariaDB support and future parser
 
-####Backwards-incompatible Changes
+#### Backwards-incompatible Changes
 * Remove the deprecated `database`, `database_user`, and `database_grant` resources. The correct resources to use are `mysql`, `mysql_user`, and `mysql_grant` respectively.
 
-####Features
+#### Features
 * Add MariaDB Support
 * The mysqltuner perl script has been updated to 1.3.0 based on work at http://github.com/major/MySQLTuner-perl
 * Add future parse support, fixed issues with undef to empty string
@@ -195,24 +427,24 @@ Added several new features including MariaDB support and future parser
 * `mysql::server` now takes an `override_options` hash that will affect the installation
 * Ability to install both dev and client dev
 
-####BugFix
+#### BugFix
 * `mysql::server::backup` now passes `ensure` param to the nested `mysql_grant`
 * `mysql::server::service` now properly requires the presence of the `log_error` file
 * `mysql::config` now occurs before `mysql::server::install_db` correctly
 
-##2014-07-15 - Supported Release 2.3.1
-###Summary
+## 2014-07-15 - Supported Release 2.3.1
+### Summary
 
 This release merely updates metadata.json so the module can be uninstalled and
 upgraded via the puppet module command.
 
-##2014-05-14 - Supported Release 2.3.0
+## 2014-05-14 - Supported Release 2.3.0
 
 This release primarily adds support for RHEL7 and Ubuntu 14.04 but it
 also adds a couple of new parameters to allow for further customization,
 as well as ensuring backups can backup stored procedures properly.
 
-####Features
+#### Features
 Added `execpath` to allow a custom executable path for non-standard mysql installations.
 Added `dbname` to mysql::db and use ensure_resource to create the resource.
 Added support for RHEL7 and Fedora Rawhide.
@@ -222,38 +454,38 @@ Ensure the error logfile is owned by MySQL.
 Disable ssl on FreeBSD.
 Add PROCESS privilege for backups.
 
-####Bugfixes
+#### Bugfixes
 
-####Known Bugs
+#### Known Bugs
 * No known bugs
 
-##2014-03-04 - Supported Release 2.2.3
-###Summary
+## 2014-03-04 - Supported Release 2.2.3
+### Summary
 
 This is a supported release.  This release removes a testing symlink that can
 cause trouble on systems where /var is on a seperate filesystem from the
 modulepath.
 
-####Features
-####Bugfixes
-####Known Bugs
+#### Features
+#### Bugfixes
+#### Known Bugs
 * No known bugs
 
-##2014-03-04 - Supported Release 2.2.2
-###Summary
+## 2014-03-04 - Supported Release 2.2.2
+### Summary
 This is a supported release. Mostly comprised of enhanced testing, plus a
 bugfix for Suse.
 
-####Bugfixes
+#### Bugfixes
 - PHP bindings on Suse
 - Test fixes
 
-####Known Bugs
+#### Known Bugs
 * No known bugs
 
-##2014-02-19 - Version 2.2.1
+## 2014-02-19 - Version 2.2.1
 
-###Summary
+### Summary
 
 Minor release that repairs mysql_database{} so that it sees the correct
 collation settings (it was only checking the global mysql ones, not the
@@ -262,18 +494,18 @@ actual database and constantly setting it over and over since January 22nd).
 Also fixes a bunch of tests on various platforms.
 
 
-##2014-02-13 - Version 2.2.0
+## 2014-02-13 - Version 2.2.0
 
-###Summary
+### Summary
 
-####Features
+#### Features
 - Add `backupdirmode`, `backupdirowner`, `backupdirgroup` to
   mysql::server::backup to allow customizing the mysqlbackupdir.
 - Support multiple options of the same name, allowing you to
   do 'replicate-do-db' => ['base1', 'base2', 'base3'] in order to get three
   lines of replicate-do-db = base1, replicate-do-db = base2 etc.
 
-####Bugfixes
+#### Bugfixes
 - Fix `restart` so it actually stops mysql restarting if set to false.
 - DRY out the defaults_file functionality in the providers.
 - mysql_grant fixed to work with root@localhost/@.
@@ -286,16 +518,16 @@ Also fixes a bunch of tests on various platforms.
 - key_buffer renamed to key_buffer_size.
 - log_error renamed to log-error.
 - pid_file renamed to pid-file.
-- Ensure mysql::server:root_password runs before mysql::server::backup
+- Ensure mysql::server::root_password runs before mysql::server::backup
 - Fix options_override -> override_options in the README.
 - Extensively rewrite the README to be accurate and awesome.
 - Move to requiring stdlib 3.2.0, shipped in PE3.0
 - Add many new tests.
 
 
-##2013-11-13 - Version 2.1.0
+## 2013-11-13 - Version 2.1.0
 
-###Summary
+### Summary
 
 The most important changes in 2.1.0 are improvements to the my.cnf creation,
 as well as providers.  Setting options to = true strips them to be just the
@@ -308,13 +540,13 @@ Last, the new hiera integration functionality should make it easier to
 externalize all your grants, users, and, databases.  Another great set of
 community submissions helped to make this release.
 
-####Features
+#### Features
 - Some options can not take a argument. Gets rid of the '= true' when an
 option is set to true.
 - Easier hiera integration:  Add hash parameters to mysql::server to allow
 specifying grants, users, and databases.
 
-####Bugfixes
+#### Bugfixes
 - Fix an issue with lowercase privileges in mysql_grant{} causing them to be reapplied needlessly.
 - Changed defaults-file to defaults-extra-file in providers.
 - Ensure /root/.my.cnf is 0600 and root owned.
@@ -324,22 +556,22 @@ specifying grants, users, and databases.
 - Various test fixes.
 
 
-##2013-10-21 - Version 2.0.1
+## 2013-10-21 - Version 2.0.1
 
-###Summary
+### Summary
 
 This is a bugfix release to handle an issue where unsorted mysql_grant{}
 privileges could cause Puppet to incorrectly reapply the permissions on
 each run.
 
-####Bugfixes
+#### Bugfixes
 - Mysql_grant now sorts privileges in the type and provider for comparison.
 - Comment and test tweak for PE3.1.
 
 
-##2013-10-14 - Version 2.0.0
+## 2013-10-14 - Version 2.0.0
 
-###Summary
+### Summary
 
 (Previously detailed in the changelog for 2.0.0-rc1)
 
@@ -357,53 +589,53 @@ with the hash format: { 'section' => { 'thing' => 'value' }}
 mysql::server.
 
 
-##2013-10-09 - Version 2.0.0-rc5
+## 2013-10-09 - Version 2.0.0-rc5
 
-###Summary
+### Summary
 
 Hopefully the final rc!  Further fixes to mysql_grant (stripping out the
 cleverness so we match a much wider range of input.)
 
-####Bugfixes
+#### Bugfixes
 - Make mysql_grant accept '.*'@'.*' in terms of input for user@host.
 
 
-##2013-10-09 - Version 2.0.0-rc4
+## 2013-10-09 - Version 2.0.0-rc4
 
-###Summary
+### Summary
 
 Bugfixes to mysql_grant and mysql_user form the bulk of this rc, as well as
 ensuring that values in the override_options hash that contain a value of ''
 are created as just "key" in the conf rather than "key =" or "key = false".
 
-####Bugfixes
+#### Bugfixes
 - Improve mysql_grant to work with IPv6 addresses (both long and short).
 - Ensure @host users work as well as user@host users.
 - Updated my.cnf template to support items with no values.
 
 
-##2013-10-07 - Version 2.0.0-rc3
+## 2013-10-07 - Version 2.0.0-rc3
 
-###Summary
+### Summary
 Fix mysql::server::monitor's use of mysql_user{}.
 
-####Bugfixes
+#### Bugfixes
 - Fix myql::server::monitor's use of mysql_user{} to grant the proper
 permissions.  Add specs as well.  (Thanks to treydock!)
 
 
-##2013-10-03 - Version 2.0.0-rc2
+## 2013-10-03 - Version 2.0.0-rc2
 
-###Summary
+### Summary
 Bugfixes
 
-####Bugfixes
+#### Bugfixes
 - Fix a duplicate parameter in mysql::server
 
 
-##2013-10-03 - Version 2.0.0-rc1
+## 2013-10-03 - Version 2.0.0-rc1
 
-###Summary
+### Summary
 
 This module has been completely refactored and works significantly different.
 The changes are broad and touch almost every piece of the module.
@@ -419,9 +651,9 @@ with the hash format: { 'section' => { 'thing' => 'value' }}
 mysql::server.
 
 ---
-##2013-09-23 - Version 1.0.0
+## 2013-09-23 - Version 1.0.0
 
-###Summary
+### Summary
 
 This release introduces a number of new type/providers, to eventually
 replace the database_ ones.  The module has been converted to call the
@@ -431,38 +663,38 @@ fixes, additional options, and work with puppet resource.
 This 1.0.0 release precedes a large refactoring that will be released
 almost immediately after as 2.0.0.
 
-####Features
+#### Features
 - Added mysql_grant, mysql_database, and mysql_user.
 - Add `mysql::bindings` class and refactor all other bindings to be contained underneath mysql::bindings:: namespace.
 - Added support to back up specified databases only with 'mysqlbackup' parameter.
 - Add option to mysql::backup to set the backup script to perform a mysqldump on each database to its own file
 
-####Bugfixes
+#### Bugfixes
 - Update my.cnf.pass.erb to allow custom socket support
 - Add environment variable for .my.cnf in mysql::db.
 - Add HOME environment variable for .my.cnf to mysqladmin command when
 (re)setting root password
 
 ---
-##2013-07-15 - Version 0.9.0
-####Features
+## 2013-07-15 - Version 0.9.0
+#### Features
 - Add `mysql::backup::backuprotate` parameter
 - Add `mysql::backup::delete_before_dump` parameter
 - Add `max_user_connections` attribute to `database_user` type
 
-####Bugfixes
+#### Bugfixes
 - Add client package dependency for `mysql::db`
 - Remove duplicate `expire_logs_days` and `max_binlog_size` settings
 - Make root's `.my.cnf` file path dynamic
 - Update pidfile path for Suse variants
 - Fixes for lint
 
-##2013-07-05 - Version 0.8.1
-####Bugfixes
+## 2013-07-05 - Version 0.8.1
+#### Bugfixes
  - Fix a typo in the Fedora 19 support.
 
-##2013-07-01 - Version 0.8.0
-####Features
+## 2013-07-01 - Version 0.8.0
+#### Features
  - mysql::perl class to install perl-DBD-mysql.
  - minor improvements to the providers to improve reliability
  - Install the MariaDB packages on Fedora 19 instead of MySQL.
@@ -496,16 +728,16 @@ almost immediately after as 2.0.0.
    -  `expire_logs_days`
    -  `max_binlog_size`
 
-####Bugfixes
+#### Bugfixes
  - No longer restart MySQL when /root/.my.cnf changes.
  - Ensure mysql::config runs before any mysql::db defines.
 
-##2013-06-26 - Version 0.7.1
-####Bugfixes
+## 2013-06-26 - Version 0.7.1
+#### Bugfixes
 - Single-quote password for special characters
 - Update travis testing for puppet 3.2.x and missing Bundler gems
 
-##2013-06-25 - Version 0.7.0
+## 2013-06-25 - Version 0.7.0
 This is a maintenance release for community bugfixes and exposing
 configuration variables.
 
@@ -555,10 +787,10 @@ configuration variables.
 * Fix travis support (but still messy)
 * Fix typos
 
-##2013-01-11 - Version 0.6.1
+## 2013-01-11 - Version 0.6.1
 * Fix providers when /root/.my.cnf is absent
 
-##2013-01-09 - Version 0.6.0
+## 2013-01-09 - Version 0.6.0
 * Add `mysql::server::config` define for specific config directives
 * Add `mysql::php` class for php support
 * Add `backupcompress` parameter to `mysql::backup`
@@ -575,7 +807,7 @@ configuration variables.
 * Fix typos
 * Fix lint warnings
 
-##2012-08-23 - Version 0.5.0
+## 2012-08-23 - Version 0.5.0
 * Add puppetlabs/stdlib as requirement
 * Add validation for mysql privs in provider
 * Add `pidfile` parameter to mysql::config
@@ -584,122 +816,132 @@ configuration variables.
 * Change `bind_address` parameter to be optional in my.cnf template
 * Fix quoting root passwords
 
-##2012-07-24 - Version 0.4.0
+## 2012-07-24 - Version 0.4.0
 * Fix various bugs regarding database names
 * FreeBSD support
 * Allow specifying the storage engine
 * Add a backup class
 * Add a security class to purge default accounts
 
-##2012-05-03 - Version 0.3.0
+## 2012-05-03 - Version 0.3.0
 * 14218 Query the database for available privileges
 * Add mysql::java class for java connector installation
 * Use correct error log location on different distros
 * Fix set_mysql_rootpw to properly depend on my.cnf
 
-##2012-04-11 - Version 0.2.0
+## 2012-04-11 - Version 0.2.0
 
-##2012-03-19 - William Van Hevelingen <blkperl@cat.pdx.edu>
+## 2012-03-19 - William Van Hevelingen <blkperl@cat.pdx.edu>
 * (#13203) Add ssl support (f7e0ea5)
 
-##2012-03-18 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-18 - Nan Liu <nan@puppetlabs.com>
 * Travis ci before script needs success exit code. (0ea463b)
 
-##2012-03-18 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-18 - Nan Liu <nan@puppetlabs.com>
 * Fix Puppet 2.6 compilation issues. (9ebbbc4)
 
-##2012-03-16 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-16 - Nan Liu <nan@puppetlabs.com>
 * Add travis.ci for testing multiple puppet versions. (33c72ef)
 
-##2012-03-15 - William Van Hevelingen <blkperl@cat.pdx.edu>
+## 2012-03-15 - William Van Hevelingen <blkperl@cat.pdx.edu>
 * (#13163) Datadir should be configurable (f353fc6)
 
-##2012-03-16 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-16 - Nan Liu <nan@puppetlabs.com>
 * Document create_resources dependency. (558a59c)
 
-##2012-03-16 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-16 - Nan Liu <nan@puppetlabs.com>
 * Fix spec test issues related to error message. (eff79b5)
 
-##2012-03-16 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-16 - Nan Liu <nan@puppetlabs.com>
 * Fix mysql service on Ubuntu. (72da2c5)
 
-##2012-03-16 - Dan Bode <dan@puppetlabs.com>
+## 2012-03-16 - Dan Bode <dan@puppetlabs.com>
 * Add more spec test coverage (55e399d)
 
-##2012-03-16 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-16 - Nan Liu <nan@puppetlabs.com>
 * (#11963) Fix spec test due to path changes. (1700349)
 
-##2012-03-07 - François Charlier <fcharlier@ploup.net>
+## 2012-03-07 - François Charlier <fcharlier@ploup.net>
 * Add a test to check path for 'mysqld-restart' (b14c7d1)
 
-##2012-03-07 - François Charlier <fcharlier@ploup.net>
+## 2012-03-07 - François Charlier <fcharlier@ploup.net>
 * Fix path for 'mysqld-restart' (1a9ae6b)
 
-##2012-03-15 - Dan Bode <dan@puppetlabs.com>
+## 2012-03-15 - Dan Bode <dan@puppetlabs.com>
 * Add rspec-puppet tests for mysql::config (907331a)
 
-##2012-03-15 - Dan Bode <dan@puppetlabs.com>
+## 2012-03-15 - Dan Bode <dan@puppetlabs.com>
 * Moved class dependency between sever and config to server (da62ad6)
 
-##2012-03-14 - Dan Bode <dan@puppetlabs.com>
+## 2012-03-14 - Dan Bode <dan@puppetlabs.com>
 * Notify mysql restart from set_mysql_rootpw exec (0832a2c)
 
-##2012-03-15 - Nan Liu <nan@puppetlabs.com>
+## 2012-03-15 - Nan Liu <nan@puppetlabs.com>
 * Add documentation related to osfamily fact. (8265d28)
 
-##2012-03-14 - Dan Bode <dan@puppetlabs.com>
+## 2012-03-14 - Dan Bode <dan@puppetlabs.com>
 * Mention osfamily value in failure message (e472d3b)
 
-##2012-03-14 - Dan Bode <dan@puppetlabs.com>
+## 2012-03-14 - Dan Bode <dan@puppetlabs.com>
 * Fix bug when querying for all database users (015490c)
 
-##2012-02-09 - Nan Liu <nan@puppetlabs.com>
+## 2012-02-09 - Nan Liu <nan@puppetlabs.com>
 * Major refactor of mysql module. (b1f90fd)
 
-##2012-01-11 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-11 - Justin Ellison <justin.ellison@buckle.com>
 * Ruby and Python's MySQL libraries are named differently on different distros. (1e926b4)
 
-##2012-01-11 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-11 - Justin Ellison <justin.ellison@buckle.com>
 * Per @ghoneycutt, we should fail explicitly and explain why. (09af083)
 
-##2012-01-11 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-11 - Justin Ellison <justin.ellison@buckle.com>
 * Removing duplicate declaration (7513d03)
 
-##2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
 * Use socket value from params class instead of hardcoding. (663e97c)
 
-##2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
 * Instead of hardcoding the config file target, pull it from mysql::params (031a47d)
 
-##2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
 * Moved $socket to within the case to toggle between distros.  Added a $config_file variable to allow per-distro config file destinations. (360eacd)
 
-##2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
+## 2012-01-10 - Justin Ellison <justin.ellison@buckle.com>
 * Pretty sure this is a bug, 99% of Linux distros out there won't ever hit the default. (3462e6b)
 
-##2012-02-09 - William Van Hevelingen <blkperl@cat.pdx.edu>
+## 2012-02-09 - William Van Hevelingen <blkperl@cat.pdx.edu>
 * Changed the README to use markdown (3b7dfeb)
 
-##2012-02-04 - Daniel Black <grooverdan@users.sourceforge.net>
+## 2012-02-04 - Daniel Black <grooverdan@users.sourceforge.net>
 * (#12412) mysqltuner.pl update (b809e6f)
 
-##2011-11-17 - Matthias Pigulla <mp@webfactory.de>
+## 2011-11-17 - Matthias Pigulla <mp@webfactory.de>
 * (#11363) Add two missing privileges to grant: event_priv, trigger_priv (d15c9d1)
 
-##2011-12-20 - Jeff McCune <jeff@puppetlabs.com>
+## 2011-12-20 - Jeff McCune <jeff@puppetlabs.com>
 * (minor) Fixup typos in Modulefile metadata (a0ed6a1)
 
-##2011-12-19 - Carl Caum <carl@carlcaum.com>
+## 2011-12-19 - Carl Caum <carl@carlcaum.com>
 * Only notify Exec to import sql if sql is given (0783c74)
 
-##2011-12-19 - Carl Caum <carl@carlcaum.com>
+## 2011-12-19 - Carl Caum <carl@carlcaum.com>
 * (#11508) Only load sql_scripts on DB creation (e3b9fd9)
 
-##2011-12-13 - Justin Ellison <justin.ellison@buckle.com>
+## 2011-12-13 - Justin Ellison <justin.ellison@buckle.com>
 * Require not needed due to implicit dependencies (3058feb)
 
-##2011-12-13 - Justin Ellison <justin.ellison@buckle.com>
+## 2011-12-13 - Justin Ellison <justin.ellison@buckle.com>
 * Bug #11375: puppetlabs-mysql fails on CentOS/RHEL (a557b8d)
 
-##2011-06-03 - Dan Bode <dan@puppetlabs.com> - 0.0.1
+## 2011-06-03 - Dan Bode <dan@puppetlabs.com> - 0.0.1
 * initial commit
+
+[5.4.0]:https://github.com/puppetlabs/puppetlabs-mysql/compare/5.3.0...5.4.0
+[5.3.0]:https://github.com/puppetlabs/puppetlabs-mysql/compare/5.2.1...5.3.0
+[5.2.1]:https://github.com/puppetlabs/puppetlabs-mysql/compare/5.2.0...5.2.1
+[5.2.0]:https://github.com/puppetlabs/puppetlabs-mysql/compare/5.1.0...5.2.0
+[5.1.0]:https://github.com/puppetlabs/puppetlabs-mysql/compare/5.0.0...5.1.0
+[5.0.0]:https://github.com/puppetlabs/puppetlabs-mysql/compare/4.0.1...5.0.0
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/skywinder/Github-Changelog-Generator)*

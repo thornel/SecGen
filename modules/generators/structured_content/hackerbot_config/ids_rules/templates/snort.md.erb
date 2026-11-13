@@ -1,0 +1,147 @@
+## Intrusion detection system (IDS) monitoring basics
+
+Continuing **on the ids_monitor VM:**
+
+==Change Snort's output== to something more readable:
+
+```bash
+sudo vi /etc/snort/snort.conf
+```
+> (Remember: editing using vi involves pressing "i" to insert/edit text, then *Esc*,
+
+> ":wq" to write changes and quit)
+
+==Confirm Snort's output== is set to something readable:
+
+```bash
+sudo vi /etc/snort/snort.conf
+```
+> (Remember: editing using vi involves pressing "i" to insert/edit text, then *Esc*,
+
+> ":wq" to write changes and quit)
+
+==Check for the following lines:==
+`output alert_fast`
+`output log_tcpdump: tcpdump.log`
+
+```bash
+sudo vi /etc/snort/snort.debian.conf
+```
+==Check Snort's interface== which will be ens19 (or as you identified earlier), and the local network is set to your IP address range (or "any"):
+
+> Confirm the above, and exit vi (Esc, ":wq").
+
+==Start Snort:==
+
+```bash
+sudo service snort stop
+sudo service snort start
+```
+> Using "reload" or "restart" may not update the interface.
+
+Snort should now be running, monitoring network traffic for activity.
+
+==Have a chat with Hackerbot== (**from the desktop VM**).
+
+This should trigger an alert from Snort, which is stored in an alerts log file.
+
+**From the ids_monitor**, ==follow the Snort alert log== file by running (you may like to do this from a new tab):
+
+```bash
+sudo tail -f /var/log/snort/alert
+```
+>The tail program will wait for new alerts to be written to the file, and will display them as they are logged.
+
+==Do an nmap port scan of the web_server== VM (from the desktop VM):
+
+```bash
+nmap <%= $web_server_ip %>
+```
+
+This should trigger another alert.
+
+==Log Book question: Does the log match what happened? Are there any false positives (alerts that describe things that did not actually happen)?==
+
+Try another type of port scan, such as an ==Xmas Tree scan from the desktop== VM (Hint: `man nmap`).
+
+Press Ctrl-C to ==stop the alert tail process==, if it did not do so automatically.
+
+The Snort configuration file is also configured to output a "tcpdump" formatted network capture. (`output log_tcpdump: tcpdump.log`)
+
+Then run the following command to ==view the contents of the log:==
+
+```bash
+sudo ls  /var/log/snort/
+sudo tcpdump -r /var/log/snort/tcpdump.log.XXXXX
+```
+> Where XXXXX is one of the logs shown from the first command.
+
+You can use tcpdump's various flags to change the way it is displayed, or you could even open the logged network activity in Wireshark.
+
+##Configuring Snort
+
+**On the ids_monitor**, ==edit /etc/snort/snort.conf==; for example:
+
+```bash
+vi /etc/snort/snort.conf
+```
+> (Remember: editing using vi involves pressing "i" to insert/edit text, then *Esc*, ":wq" to write changes and quit)
+
+Scroll through the config file and, take notice of these details:
+
+-   In a production environment you would configure Snort to to correctly identify which traffic is considered LAN traffic, and which IP addresses are known to run various servers (this is also configured in snort.debian.conf). In this case, we will leave these settings as is.
+
+-   Note the line "`var RULE_PATH /etc/snort/rules`": this is where the IDS signatures are stored.
+
+-   Note the presence of a Back Orifice detector preprocessor "bo". Back Orifice was a Windows Trojan horse that was popular in the 90s.
+
+-   Note the "sfportscan" preprocessor (is it enabled?), which can detect various kinds of port scans.
+
+-   The "arpspoof" preprocessor is described as experimental, and is not enabled by default.
+
+-   Towards the end of the config file are "include" lines, which specify which of the rule files in RULE\_PATH are in effect. As is common, lines beginning with "\#" are ignored, which is used to list disabled rule files. There are rule files for detecting known exploits, attacks against services such as DNS and FTP, denial of service (DoS) attacks, and so on.
+
+Add the following line below the other include rules (at the end of the file):
+
+`include $RULE_PATH/my.rules`
+
+Save your changes to snort.conf
+> (For example, in vi, press Esc, then type ":wq").
+
+> Hint: you may find it easier to use Esc, then type ":w" to write your changes to disk and then type ":q" to exit (or "x" shorthand for "wq").
+
+Run this command, to ==create your new rule file:==
+
+```bash
+sudo touch /etc/snort/rules/my.rules
+```
+
+==Edit the file.== For example:
+
+```bash
+sudo vi /etc/snort/rules/my.rules
+```
+
+==Add this line (*with your own name*), and save your changes:==
+
+`alert icmp any any ->any any (msg: "*Your-name*: ICMP Packet found"; sid:1000000; rev:1;)`
+
+> For example, `alert icmp any any -> any any (msg: "**Cliffe**: ICMP Packet found"; sid:1000000; rev:1;)`
+
+Now that you have new rules, tell Snort to ==reload its configuration:==
+
+```bash
+sudo service snort stop
+sudo service snort start
+```
+> If after attempting a reload, Snort fails to start, then you have probably made a configuration mistake, so check the log for details by running: `tail /var/log/syslog`
+
+Due to the new rule you have just applied, sending a simple ICMP Ping (typically used to troubleshoot connectivity) will trigger a Snort alert.
+
+Try it, **from the desktop** VM, ==ping the web_server:==
+
+```bash
+ping <%= $web_server_ip %>
+```
+
+Check for the Snort alert. You should see that the ping was detected, and our new message was added to the alerts log file.

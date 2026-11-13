@@ -1,3 +1,7 @@
+# @summary 
+#   Private class for managing the MySQL service
+#
+# @api private
 #
 class mysql::server::service {
   $options = $mysql::server::options
@@ -12,18 +16,11 @@ class mysql::server::service {
     $service_ensure = undef
   }
 
-  if $mysql::server::override_options and $mysql::server::override_options['mysqld'] and $mysql::server::override_options['mysqld']['user'] {
+  if $mysql::server::override_options and $mysql::server::override_options['mysqld']
+      and $mysql::server::override_options['mysqld']['user'] {
     $mysqluser = $mysql::server::override_options['mysqld']['user']
   } else {
     $mysqluser = $options['mysqld']['user']
-  }
-
-  if $options['mysqld']['log-error'] {
-    file { $options['mysqld']['log-error']:
-      ensure => present,
-      owner  => $mysqluser,
-      group  => $::mysql::server::mysql_group,
-    }
   }
 
   if $mysql::server::real_service_manage {
@@ -48,19 +45,22 @@ class mysql::server::service {
       File['mysql-config-file'] -> Service['mysqld']
     }
 
-    if $mysql::server::override_options and $mysql::server::override_options['mysqld'] and $mysql::server::override_options['mysqld']['socket'] {
+    if $mysql::server::override_options and $mysql::server::override_options['mysqld']
+        and $mysql::server::override_options['mysqld']['socket'] {
       $mysqlsocket = $mysql::server::override_options['mysqld']['socket']
     } else {
       $mysqlsocket = $options['mysqld']['socket']
     }
 
-    exec { 'wait_for_mysql_socket_to_open':
-      command   => "test -S ${mysqlsocket}",
-      unless    => "test -S ${mysqlsocket}",
-      tries     => '3',
-      try_sleep => '10',
-      require   => Service['mysqld'],
-      path      => '/bin:/usr/bin',
+    if $service_ensure != 'stopped' {
+      exec { 'wait_for_mysql_socket_to_open':
+        command   => "test -S ${mysqlsocket}",
+        unless    => "test -S ${mysqlsocket}",
+        tries     => '3',
+        try_sleep => '10',
+        require   => Service['mysqld'],
+        path      => '/bin:/usr/bin',
+      }
     }
   }
 }

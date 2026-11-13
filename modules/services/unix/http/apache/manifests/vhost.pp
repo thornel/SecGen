@@ -1,143 +1,181 @@
 # See README.md for usage information
 define apache::vhost(
-  $docroot,
-  $manage_docroot              = true,
-  $virtual_docroot             = false,
-  $port                        = undef,
-  $ip                          = undef,
-  $ip_based                    = false,
-  $add_listen                  = true,
-  $docroot_owner               = 'root',
-  $docroot_group               = $::apache::params::root_group,
-  $docroot_mode                = undef,
-  $serveradmin                 = undef,
-  $ssl                         = false,
-  $ssl_cert                    = $::apache::default_ssl_cert,
-  $ssl_key                     = $::apache::default_ssl_key,
-  $ssl_chain                   = $::apache::default_ssl_chain,
-  $ssl_ca                      = $::apache::default_ssl_ca,
-  $ssl_crl_path                = $::apache::default_ssl_crl_path,
-  $ssl_crl                     = $::apache::default_ssl_crl,
-  $ssl_crl_check               = $::apache::default_ssl_crl_check,
-  $ssl_certs_dir               = $::apache::params::ssl_certs_dir,
-  $ssl_protocol                = undef,
-  $ssl_cipher                  = undef,
-  $ssl_honorcipherorder        = undef,
-  $ssl_verify_client           = undef,
-  $ssl_verify_depth            = undef,
-  $ssl_proxy_verify            = undef,
-  $ssl_proxy_check_peer_cn     = undef,
-  $ssl_proxy_check_peer_name   = undef,
-  $ssl_proxy_machine_cert      = undef,
-  $ssl_options                 = undef,
-  $ssl_openssl_conf_cmd        = undef,
-  $ssl_proxyengine             = false,
-  $priority                    = undef,
-  $default_vhost               = false,
-  $servername                  = $name,
-  $serveraliases               = [],
-  $options                     = ['Indexes','FollowSymLinks','MultiViews'],
-  $override                    = ['None'],
-  $directoryindex              = '',
-  $vhost_name                  = '*',
-  $logroot                     = $::apache::logroot,
-  $logroot_ensure              = 'directory',
-  $logroot_mode                = undef,
-  $log_level                   = undef,
-  $access_log                  = true,
-  $access_log_file             = false,
-  $access_log_pipe             = false,
-  $access_log_syslog           = false,
-  $access_log_format           = false,
-  $access_log_env_var          = false,
-  $access_logs                 = undef,
-  $aliases                     = undef,
-  $directories                 = undef,
-  $error_log                   = true,
-  $error_log_file              = undef,
-  $error_log_pipe              = undef,
-  $error_log_syslog            = undef,
-  $error_documents             = [],
-  $fallbackresource            = undef,
-  $scriptalias                 = undef,
-  $scriptaliases               = [],
-  $proxy_dest                  = undef,
-  $proxy_dest_match            = undef,
-  $proxy_dest_reverse_match    = undef,
-  $proxy_pass                  = undef,
-  $proxy_pass_match            = undef,
-  $suphp_addhandler            = $::apache::params::suphp_addhandler,
-  $suphp_engine                = $::apache::params::suphp_engine,
-  $suphp_configpath            = $::apache::params::suphp_configpath,
-  $php_flags                   = {},
-  $php_values                  = {},
-  $php_admin_flags             = {},
-  $php_admin_values            = {},
-  $no_proxy_uris               = [],
-  $no_proxy_uris_match         = [],
-  $proxy_preserve_host         = false,
-  $proxy_error_override        = false,
-  $redirect_source             = '/',
-  $redirect_dest               = undef,
-  $redirect_status             = undef,
-  $redirectmatch_status        = undef,
-  $redirectmatch_regexp        = undef,
-  $redirectmatch_dest          = undef,
-  $rack_base_uris              = undef,
-  $passenger_base_uris         = undef,
-  $headers                     = undef,
-  $request_headers             = undef,
-  $filters                     = undef,
-  $rewrites                    = undef,
-  $rewrite_base                = undef,
-  $rewrite_rule                = undef,
-  $rewrite_cond                = undef,
-  $setenv                      = [],
-  $setenvif                    = [],
-  $block                       = [],
-  $ensure                      = 'present',
-  $wsgi_application_group      = undef,
-  $wsgi_daemon_process         = undef,
-  $wsgi_daemon_process_options = undef,
-  $wsgi_import_script          = undef,
-  $wsgi_import_script_options  = undef,
-  $wsgi_process_group          = undef,
-  $wsgi_script_aliases         = undef,
-  $wsgi_pass_authorization     = undef,
-  $wsgi_chunked_request        = undef,
-  $custom_fragment             = undef,
-  $itk                         = undef,
-  $action                      = undef,
-  $fastcgi_server              = undef,
-  $fastcgi_socket              = undef,
-  $fastcgi_dir                 = undef,
-  $additional_includes         = [],
-  $use_optional_includes       = $::apache::use_optional_includes,
-  $apache_version              = $::apache::apache_version,
-  $allow_encoded_slashes       = undef,
-  $suexec_user_group           = undef,
-  $passenger_app_root          = undef,
-  $passenger_app_env           = undef,
-  $passenger_ruby              = undef,
-  $passenger_min_instances     = undef,
-  $passenger_start_timeout     = undef,
-  $passenger_pre_start         = undef,
-  $add_default_charset         = undef,
-  $modsec_disable_vhost        = undef,
-  $modsec_disable_ids          = undef,
-  $modsec_disable_ips          = undef,
-  $modsec_body_limit           = undef,
-  $auth_kerb                   = false,
-  $krb_method_negotiate        = 'on',
-  $krb_method_k5passwd         = 'on',
-  $krb_authoritative           = 'on',
-  $krb_auth_realms             = [],
-  $krb_5keytab                 = undef,
-  $krb_local_user_mapping      = undef,
-  $krb_verify_kdc              = 'on',
-  $krb_servicename             = 'HTTP',
-  $krb_save_credentials        = 'off',
+  Variant[Boolean,String] $docroot,
+  $manage_docroot                                                                   = true,
+  $virtual_docroot                                                                  = false,
+  $port                                                                             = undef,
+  $ip                                                                               = undef,
+  Boolean $ip_based                                                                 = false,
+  $add_listen                                                                       = true,
+  $docroot_owner                                                                    = 'root',
+  $docroot_group                                                                    = $::apache::params::root_group,
+  $docroot_mode                                                                     = undef,
+  $serveradmin                                                                      = undef,
+  Boolean $ssl                                                                      = false,
+  $ssl_cert                                                                         = $::apache::default_ssl_cert,
+  $ssl_key                                                                          = $::apache::default_ssl_key,
+  $ssl_chain                                                                        = $::apache::default_ssl_chain,
+  $ssl_ca                                                                           = $::apache::default_ssl_ca,
+  $ssl_crl_path                                                                     = $::apache::default_ssl_crl_path,
+  $ssl_crl                                                                          = $::apache::default_ssl_crl,
+  $ssl_crl_check                                                                    = $::apache::default_ssl_crl_check,
+  $ssl_certs_dir                                                                    = $::apache::params::ssl_certs_dir,
+  $ssl_protocol                                                                     = undef,
+  $ssl_cipher                                                                       = undef,
+  $ssl_honorcipherorder                                                             = undef,
+  $ssl_verify_client                                                                = undef,
+  $ssl_verify_depth                                                                 = undef,
+  Optional[Enum['none', 'optional', 'require', 'optional_no_ca']] $ssl_proxy_verify = undef,
+  $ssl_proxy_verify_depth                                                           = undef,
+  $ssl_proxy_ca_cert                                                                = undef,
+  Optional[Enum['on', 'off']] $ssl_proxy_check_peer_cn                              = undef,
+  Optional[Enum['on', 'off']] $ssl_proxy_check_peer_name                            = undef,
+  Optional[Enum['on', 'off']] $ssl_proxy_check_peer_expire                          = undef,
+  $ssl_proxy_machine_cert                                                           = undef,
+  $ssl_proxy_protocol                                                               = undef,
+  $ssl_options                                                                      = undef,
+  $ssl_openssl_conf_cmd                                                             = undef,
+  Boolean $ssl_proxyengine                                                          = false,
+  Optional[Boolean] $ssl_stapling                                                   = undef,
+  $ssl_stapling_timeout                                                             = undef,
+  $ssl_stapling_return_errors                                                       = undef,
+  $priority                                                                         = undef,
+  Boolean $default_vhost                                                            = false,
+  $servername                                                                       = $name,
+  $serveraliases                                                                    = [],
+  $options                                                                          = ['Indexes','FollowSymLinks','MultiViews'],
+  $override                                                                         = ['All'],
+  $directoryindex                                                                   = '',
+  $vhost_name                                                                       = '*',
+  $logroot                                                                          = $::apache::logroot,
+  Enum['directory', 'absent'] $logroot_ensure                                       = 'directory',
+  $logroot_mode                                                                     = undef,
+  $logroot_owner                                                                    = undef,
+  $logroot_group                                                                    = undef,
+  $log_level                                                                        = undef,
+  Boolean $access_log                                                               = true,
+  $access_log_file                                                                  = false,
+  $access_log_pipe                                                                  = false,
+  $access_log_syslog                                                                = false,
+  $access_log_format                                                                = false,
+  $access_log_env_var                                                               = false,
+  $access_logs                                                                      = undef,
+  $aliases                                                                          = undef,
+  $directories                                                                      = undef,
+  Boolean $error_log                                                                = true,
+  $error_log_file                                                                   = undef,
+  $error_log_pipe                                                                   = undef,
+  $error_log_syslog                                                                 = undef,
+  $http_protocol_options                                                            = undef,
+  $modsec_audit_log                                                                 = undef,
+  $modsec_audit_log_file                                                            = undef,
+  $modsec_audit_log_pipe                                                            = undef,
+  $error_documents                                                                  = [],
+  Optional[Variant[Stdlib::Absolutepath, Enum['disabled']]] $fallbackresource       = undef,
+  $scriptalias                                                                      = undef,
+  $scriptaliases                                                                    = [],
+  $proxy_dest                                                                       = undef,
+  $proxy_dest_match                                                                 = undef,
+  $proxy_dest_reverse_match                                                         = undef,
+  $proxy_pass                                                                       = undef,
+  $proxy_pass_match                                                                 = undef,
+  $suphp_addhandler                                                                 = $::apache::params::suphp_addhandler,
+  Enum['on', 'off'] $suphp_engine                                                   = $::apache::params::suphp_engine,
+  $suphp_configpath                                                                 = $::apache::params::suphp_configpath,
+  $php_flags                                                                        = {},
+  $php_values                                                                       = {},
+  $php_admin_flags                                                                  = {},
+  $php_admin_values                                                                 = {},
+  $no_proxy_uris                                                                    = [],
+  $no_proxy_uris_match                                                              = [],
+  $proxy_preserve_host                                                              = false,
+  $proxy_add_headers                                                                = undef,
+  $proxy_error_override                                                             = false,
+  $redirect_source                                                                  = '/',
+  $redirect_dest                                                                    = undef,
+  $redirect_status                                                                  = undef,
+  $redirectmatch_status                                                             = undef,
+  $redirectmatch_regexp                                                             = undef,
+  $redirectmatch_dest                                                               = undef,
+  $rack_base_uris                                                                   = undef,
+  $passenger_base_uris                                                              = undef,
+  $headers                                                                          = undef,
+  $request_headers                                                                  = undef,
+  $filters                                                                          = undef,
+  Optional[Array] $rewrites                                                         = undef,
+  $rewrite_base                                                                     = undef,
+  $rewrite_rule                                                                     = undef,
+  $rewrite_cond                                                                     = undef,
+  $rewrite_inherit                                                                  = false,
+  $setenv                                                                           = [],
+  $setenvif                                                                         = [],
+  $setenvifnocase                                                                   = [],
+  $block                                                                            = [],
+  Enum['absent', 'present'] $ensure                                                 = 'present',
+  $wsgi_application_group                                                           = undef,
+  $wsgi_daemon_process                                                              = undef,
+  Optional[Hash] $wsgi_daemon_process_options                                       = undef,
+  $wsgi_import_script                                                               = undef,
+  Optional[Hash] $wsgi_import_script_options                                        = undef,
+  $wsgi_process_group                                                               = undef,
+  Optional[Hash] $wsgi_script_aliases_match                                         = undef,
+  Optional[Hash] $wsgi_script_aliases                                               = undef,
+  Optional[Enum['on', 'off', 'On', 'Off']] $wsgi_pass_authorization                 = undef,
+  $wsgi_chunked_request                                                             = undef,
+  Optional[String] $custom_fragment                                                 = undef,
+  Optional[Hash] $itk                                                               = undef,
+  $action                                                                           = undef,
+  $fastcgi_server                                                                   = undef,
+  $fastcgi_socket                                                                   = undef,
+  $fastcgi_dir                                                                      = undef,
+  $fastcgi_idle_timeout                                                             = undef,
+  $additional_includes                                                              = [],
+  $use_optional_includes                                                            = $::apache::use_optional_includes,
+  $apache_version                                                                   = $::apache::apache_version,
+  Optional[Enum['on', 'off', 'nodecode']] $allow_encoded_slashes                    = undef,
+  $suexec_user_group                                                                = undef,
+  $passenger_app_root                                                               = undef,
+  $passenger_app_env                                                                = undef,
+  $passenger_ruby                                                                   = undef,
+  $passenger_min_instances                                                          = undef,
+  $passenger_max_requests                                                           = undef,
+  $passenger_start_timeout                                                          = undef,
+  $passenger_pre_start                                                              = undef,
+  $passenger_user                                                                   = undef,
+  $passenger_high_performance                                                       = undef,
+  $passenger_nodejs                                                                 = undef,
+  Optional[Boolean] $passenger_sticky_sessions                                      = undef,
+  $passenger_startup_file                                                           = undef,
+  $add_default_charset                                                              = undef,
+  $modsec_disable_vhost                                                             = undef,
+  $modsec_disable_ids                                                               = undef,
+  $modsec_disable_ips                                                               = undef,
+  $modsec_disable_msgs                                                              = undef,
+  $modsec_disable_tags                                                              = undef,
+  $modsec_body_limit                                                                = undef,
+  $jk_mounts                                                                        = undef,
+  Boolean $auth_kerb                                                                = false,
+  $krb_method_negotiate                                                             = 'on',
+  $krb_method_k5passwd                                                              = 'on',
+  $krb_authoritative                                                                = 'on',
+  $krb_auth_realms                                                                  = [],
+  $krb_5keytab                                                                      = undef,
+  $krb_local_user_mapping                                                           = undef,
+  $krb_verify_kdc                                                                   = 'on',
+  $krb_servicename                                                                  = 'HTTP',
+  $krb_save_credentials                                                             = 'off',
+  Optional[Enum['on', 'off']] $keepalive                                            = undef,
+  $keepalive_timeout                                                                = undef,
+  $max_keepalive_requests                                                           = undef,
+  $cas_attribute_prefix                                                             = undef,
+  $cas_attribute_delimiter                                                          = undef,
+  $cas_scrub_request_headers                                                        = undef,
+  $cas_sso_enabled                                                                  = undef,
+  $cas_login_url                                                                    = undef,
+  $cas_validate_url                                                                 = undef,
+  $cas_validate_saml                                                                = undef,
 ) {
+
   # The base class must be included first because it is used by parameter defaults
   if ! defined(Class['apache']) {
     fail('You must include the apache base class before using any apache defined resources')
@@ -145,22 +183,17 @@ define apache::vhost(
 
   $apache_name = $::apache::apache_name
 
-  validate_re($ensure, '^(present|absent)$',
-  "${ensure} is not supported for ensure.
-  Allowed values are 'present' and 'absent'.")
-  validate_re($suphp_engine, '^(on|off)$',
-  "${suphp_engine} is not supported for suphp_engine.
-  Allowed values are 'on' and 'off'.")
-  validate_bool($ip_based)
-  validate_bool($access_log)
-  validate_bool($error_log)
-  validate_bool($ssl)
-  validate_bool($default_vhost)
-  validate_bool($ssl_proxyengine)
+  if $http_protocol_options != undef {
+    validate_re($http_protocol_options, '^((Strict|Unsafe)?\s*(\b(RegisteredMethods|LenientMethods))?\s*(\b(Allow0\.9|Require1\.0))?)$',
+    "${http_protocol_options} is not supported for http_protocol_options.
+    Allowed value is any sequence of the following alternative values:
+    'Strict' or Unsafe, 'RegisteredMethods' or 'LenientMethods', and
+    'Allow0.9' or 'Require1.0'.")
+  }
   if $rewrites {
-    validate_array($rewrites)
     unless empty($rewrites) {
-      validate_hash($rewrites[0])
+      $rewrites_flattened = delete_undef_values(flatten([$rewrites]))
+      validate_hash($rewrites_flattened[0])
     }
   }
 
@@ -170,40 +203,6 @@ define apache::vhost(
     validate_re($suexec_user_group, '^[\w-]+ [\w-]+$',
     "${suexec_user_group} is not supported for suexec_user_group.  Must be 'user group'.")
   }
-
-  if $wsgi_pass_authorization {
-    validate_re(downcase($wsgi_pass_authorization), '^(on|off)$',
-    "${wsgi_pass_authorization} is not supported for wsgi_pass_authorization.
-    Allowed values are 'on' and 'off'.")
-  }
-
-  # Deprecated backwards-compatibility
-  if $rewrite_base {
-    warning('Apache::Vhost: parameter rewrite_base is deprecated in favor of rewrites')
-  }
-  if $rewrite_rule {
-    warning('Apache::Vhost: parameter rewrite_rule is deprecated in favor of rewrites')
-  }
-  if $rewrite_cond {
-    warning('Apache::Vhost parameter rewrite_cond is deprecated in favor of rewrites')
-  }
-
-  if $wsgi_script_aliases {
-    validate_hash($wsgi_script_aliases)
-  }
-  if $wsgi_daemon_process_options {
-    validate_hash($wsgi_daemon_process_options)
-  }
-  if $wsgi_import_script_options {
-    validate_hash($wsgi_import_script_options)
-  }
-  if $itk {
-    validate_hash($itk)
-  }
-
-  validate_re($logroot_ensure, '^(directory|absent)$',
-  "${logroot_ensure} is not supported for logroot_ensure.
-  Allowed values are 'directory' and 'absent'.")
 
   if $log_level {
     validate_apache_log_level($log_level)
@@ -217,35 +216,12 @@ define apache::vhost(
     fail("Apache::Vhost[${name}]: 'error_log_file' and 'error_log_pipe' cannot be defined at the same time")
   }
 
-  if $fallbackresource {
-    validate_re($fallbackresource, '^/|disabled', 'Please make sure fallbackresource starts with a / (or is "disabled")')
+  if $modsec_audit_log_file and $modsec_audit_log_pipe {
+    fail("Apache::Vhost[${name}]: 'modsec_audit_log_file' and 'modsec_audit_log_pipe' cannot be defined at the same time")
   }
 
-  if $custom_fragment {
-    validate_string($custom_fragment)
-  }
-
-  if $allow_encoded_slashes {
-    validate_re($allow_encoded_slashes, '(^on$|^off$|^nodecode$)', "${allow_encoded_slashes} is not permitted for allow_encoded_slashes. Allowed values are 'on', 'off' or 'nodecode'.")
-  }
-
-  validate_bool($auth_kerb)
-
-  # Validate the docroot as a string if:
-  # - $manage_docroot is true
-  if $manage_docroot {
-    validate_string($docroot)
-  }
-
-  if $ssl_proxy_verify {
-    validate_re($ssl_proxy_verify,'^(none|optional|require|optional_no_ca)$',"${ssl_proxy_verify} is not permitted for ssl_proxy_verify. Allowed values are 'none', 'optional', 'require' or 'optional_no_ca'.")
-  }
-
-  if $ssl_proxy_check_peer_cn {
-    validate_re($ssl_proxy_check_peer_cn,'(^on$|^off$)',"${ssl_proxy_check_peer_cn} is not permitted for ssl_proxy_check_peer_cn. Allowed values are 'on' or 'off'.")
-  }
-  if $ssl_proxy_check_peer_name {
-    validate_re($ssl_proxy_check_peer_name,'(^on$|^off$)',"${ssl_proxy_check_peer_name} is not permitted for ssl_proxy_check_peer_name. Allowed values are 'on' or 'off'.")
+  if $ssl_proxy_verify_depth {
+    validate_integer($ssl_proxy_verify_depth)
   }
 
   # Input validation ends
@@ -272,7 +248,7 @@ define apache::vhost(
     include ::apache::mod::suexec
   }
 
-  if $passenger_app_root or $passenger_app_env or $passenger_ruby or $passenger_min_instances or $passenger_start_timeout or $passenger_pre_start {
+  if $passenger_app_root or $passenger_app_env or $passenger_ruby or $passenger_min_instances or $passenger_max_requests or $passenger_start_timeout or $passenger_pre_start or $passenger_user or $passenger_high_performance or $passenger_nodejs or $passenger_sticky_sessions or $passenger_startup_file {
     include ::apache::mod::passenger
   }
 
@@ -307,6 +283,8 @@ define apache::vhost(
   if ! defined(File[$logroot]) {
     file { $logroot:
       ensure  => $logroot_ensure,
+      owner   => $logroot_owner,
+      group   => $logroot_group,
       mode    => $logroot_mode,
       require => Package['httpd'],
       before  => Concat["${priority_real}${filename}.conf"],
@@ -320,9 +298,17 @@ define apache::vhost(
   # Is apache::mod::shib enabled (or apache::mod['shib2'])
   $shibboleth_enabled = defined(Apache::Mod['shib2'])
 
+  # Is apache::mod::cas enabled (or apache::mod['cas'])
+  $cas_enabled = defined(Apache::Mod['auth_cas'])
+
   if $access_log and !$access_logs {
     if $access_log_file {
-      $_logs_dest = "${logroot}/${access_log_file}"
+      if $access_log_file =~ /^\// {
+        # Absolute path provided - don't prepend $logroot
+        $_logs_dest = $access_log_file
+      } else {
+        $_logs_dest = "${logroot}/${access_log_file}"
+      }
     } elsif $access_log_pipe {
       $_logs_dest = $access_log_pipe
     } elsif $access_log_syslog {
@@ -345,7 +331,12 @@ define apache::vhost(
   }
 
   if $error_log_file {
-    $error_log_destination = "${logroot}/${error_log_file}"
+    if $error_log_file =~ /^\// {
+      # Absolute path provided - don't prepend $logroot
+      $error_log_destination = $error_log_file
+    } else {
+      $error_log_destination = "${logroot}/${error_log_file}"
+    }
   } elsif $error_log_pipe {
     $error_log_destination = $error_log_pipe
   } elsif $error_log_syslog {
@@ -358,11 +349,29 @@ define apache::vhost(
     }
   }
 
+  if $modsec_audit_log == false {
+    $modsec_audit_log_destination = undef
+  } elsif $modsec_audit_log_file {
+    $modsec_audit_log_destination = "${logroot}/${modsec_audit_log_file}"
+  } elsif $modsec_audit_log_pipe {
+    $modsec_audit_log_destination = $modsec_audit_log_pipe
+  } elsif $modsec_audit_log {
+    if $ssl {
+      $modsec_audit_log_destination = "${logroot}/${name}_security_ssl.log"
+    } else {
+      $modsec_audit_log_destination = "${logroot}/${name}_security.log"
+    }
+  } else {
+    $modsec_audit_log_destination = undef
+  }
+
+
   if $ip {
-    $_ip = enclose_ipv6($ip)
+    $_ip = any2array(enclose_ipv6($ip))
     if $port {
-      $listen_addr_port = suffix(any2array($_ip),":${port}")
-      $nvh_addr_port = suffix(any2array($_ip),":${port}")
+      $_port = any2array($port)
+      $listen_addr_port = split(inline_template("<%= @_ip.product(@_port).map {|x| x.join(':')  }.join(',')%>"), ',')
+      $nvh_addr_port = split(inline_template("<%= @_ip.product(@_port).map {|x| x.join(':')  }.join(',')%>"), ',')
     } else {
       $listen_addr_port = undef
       $nvh_addr_port = $_ip
@@ -373,11 +382,11 @@ define apache::vhost(
   } else {
     if $port {
       $listen_addr_port = $port
-      $nvh_addr_port = "${vhost_name}:${port}"
+      $nvh_addr_port = prefix(any2array($port),"${vhost_name}:")
     } else {
       $listen_addr_port = undef
       $nvh_addr_port = $name
-      if ! $servername {
+      if ! $servername and $servername != '' {
         fail("Apache::Vhost[${name}]: must pass 'ip' and/or 'port' parameters, and/or 'servername' parameter")
       }
     }
@@ -387,12 +396,12 @@ define apache::vhost(
       fail("Apache::Vhost[${name}]: Mixing IP and non-IP Listen directives is not possible; check the add_listen parameter of the apache::vhost define to disable this")
     }
     if $listen_addr_port and $ensure == 'present' {
-      ensure_resource('apache::listen', $listen_addr_port)
+      ensure_resource('apache::listen', $listen_addr_port, {'port'=> $port})
     }
   }
   if ! $ip_based {
     if $ensure == 'present' and (versioncmp($apache_version, '2.4') < 0) {
-      ensure_resource('apache::namevirtualhost', $nvh_addr_port)
+      ensure_resource('::apache::namevirtualhost', $nvh_addr_port, {'port' => $port})
     }
   }
 
@@ -453,7 +462,19 @@ define apache::vhost(
     }
   }
 
-  if ($setenv and ! empty($setenv)) or ($setenvif and ! empty($setenvif)) {
+  # Check if mod_env is required and not yet loaded.
+  # create an expression to simplify the conditional check
+  $use_env_mod = $setenv and ! empty($setenv)
+  if ($use_env_mod) {
+    if ! defined(Class['apache::mod::env']) {
+      include ::apache::mod::env
+    }
+  }
+  # Check if mod_setenvif is required and not yet loaded.
+  # create an expression to simplify the conditional check
+  $use_setenvif_mod = ($setenvif and ! empty($setenvif)) or ($setenvifnocase and ! empty($setenvifnocase))
+
+  if ($use_setenvif_mod) {
     if ! defined(Class['apache::mod::setenvif']) {
       include ::apache::mod::setenvif
     }
@@ -486,6 +507,8 @@ define apache::vhost(
     }
 
     $_directories = [ merge($_directory, $_directory_version) ]
+  } else {
+    $_directories = undef
   }
 
   ## Create a global LocationMatch if locations aren't defined
@@ -496,6 +519,26 @@ define apache::vhost(
       $_modsec_disable_ids = { '.*' => $modsec_disable_ids }
     } else {
       fail("Apache::Vhost[${name}]: 'modsec_disable_ids' must be either a Hash of location/IDs or an Array of IDs")
+    }
+  }
+
+  if $modsec_disable_msgs {
+    if is_hash($modsec_disable_msgs) {
+      $_modsec_disable_msgs = $modsec_disable_msgs
+    } elsif is_array($modsec_disable_msgs) {
+      $_modsec_disable_msgs = { '.*' => $modsec_disable_msgs }
+    } else {
+      fail("Apache::Vhost[${name}]: 'modsec_disable_msgs' must be either a Hash of location/Msgs or an Array of Msgs")
+    }
+  }
+
+  if $modsec_disable_tags {
+    if is_hash($modsec_disable_tags) {
+      $_modsec_disable_tags = $modsec_disable_tags
+    } elsif is_array($modsec_disable_tags) {
+      $_modsec_disable_tags = { '.*' => $modsec_disable_tags }
+    } else {
+      fail("Apache::Vhost[${name}]: 'modsec_disable_tags' must be either a Hash of location/Tags or an Array of Tags")
     }
   }
 
@@ -706,8 +749,9 @@ define apache::vhost(
   # - $proxy_pass
   # - $proxy_pass_match
   # - $proxy_preserve_host
+  # - $proxy_add_headers
   # - $no_proxy_uris
-  if $proxy_dest or $proxy_pass or $proxy_pass_match or $proxy_dest_match {
+  if $proxy_dest or $proxy_pass or $proxy_pass_match or $proxy_dest_match or $proxy_preserve_host {
     concat::fragment { "${name}-proxy":
       target  => "${priority_real}${filename}.conf",
       order   => 160,
@@ -748,7 +792,7 @@ define apache::vhost(
   # - $redirectmatch_status_a
   # - $redirectmatch_regexp_a
   # - $redirectmatch_dest
-  if ($redirect_source and $redirect_dest) or ($redirectmatch_status and $redirectmatch_regexp and $redirectmatch_dest) {
+  if ($redirect_source and $redirect_dest) or ($redirectmatch_regexp and $redirectmatch_dest) {
     concat::fragment { "${name}-redirect":
       target  => "${priority_real}${filename}.conf",
       order   => 180,
@@ -794,7 +838,7 @@ define apache::vhost(
   # Template uses:
   # - $setenv
   # - $setenvif
-  if ($setenv and ! empty($setenv)) or ($setenvif and ! empty($setenvif)) {
+  if ($use_env_mod or $use_setenvif_mod) {
     concat::fragment { "${name}-setenv":
       target  => "${priority_real}${filename}.conf",
       order   => 220,
@@ -819,6 +863,7 @@ define apache::vhost(
   # - $ssl_verify_depth
   # - $ssl_options
   # - $ssl_openssl_conf_cmd
+  # - $ssl_stapling
   # - $apache_version
   if $ssl {
     concat::fragment { "${name}-ssl":
@@ -831,9 +876,13 @@ define apache::vhost(
   # Template uses:
   # - $ssl_proxyengine
   # - $ssl_proxy_verify
+  # - $ssl_proxy_verify_depth
+  # - $ssl_proxy_ca_cert
   # - $ssl_proxy_check_peer_cn
   # - $ssl_proxy_check_peer_name
+  # - $ssl_proxy_check_peer_expire
   # - $ssl_proxy_machine_cert
+  # - $ssl_proxy_protocol
   if $ssl_proxyengine {
     concat::fragment { "${name}-sslproxy":
       target  => "${priority_real}${filename}.conf",
@@ -923,6 +972,7 @@ define apache::vhost(
   # - $fastcgi_server
   # - $fastcgi_socket
   # - $fastcgi_dir
+  # - $fastcgi_idle_timeout
   # - $apache_version
   if $fastcgi_server or $fastcgi_dir {
     concat::fragment { "${name}-fastcgi":
@@ -947,9 +997,14 @@ define apache::vhost(
   # - $passenger_app_env
   # - $passenger_ruby
   # - $passenger_min_instances
+  # - $passenger_max_requests
   # - $passenger_start_timeout
   # - $passenger_pre_start
-  if $passenger_app_root or $passenger_app_env or $passenger_ruby or $passenger_min_instances or $passenger_start_timeout or $passenger_pre_start {
+  # - $passenger_user
+  # - $passenger_nodejs
+  # - $passenger_sticky_sessions
+  # - $passenger_startup_file
+  if $passenger_app_root or $passenger_app_env or $passenger_ruby or $passenger_min_instances or $passenger_start_timeout or $passenger_pre_start or $passenger_user or $passenger_nodejs or $passenger_sticky_sessions or $passenger_startup_file{
     concat::fragment { "${name}-passenger":
       target  => "${priority_real}${filename}.conf",
       order   => 300,
@@ -971,12 +1026,15 @@ define apache::vhost(
   # - $modsec_disable_vhost
   # - $modsec_disable_ids
   # - $modsec_disable_ips
+  # - $modsec_disable_msgs
+  # - $modsec_disable_tags
   # - $modsec_body_limit
-  if $modsec_disable_vhost or $modsec_disable_ids or $modsec_disable_ips {
+  # - $modsec_audit_log_destination
+  if $modsec_disable_vhost or $modsec_disable_ids or $modsec_disable_ips or $modsec_disable_msgs or $modsec_disable_tags or $modsec_audit_log_destination {
     concat::fragment { "${name}-security":
       target  => "${priority_real}${filename}.conf",
       order   => 320,
-      content => template('apache/vhost/_security.erb')
+      content => template('apache/vhost/_security.erb'),
     }
   }
 
@@ -987,6 +1045,48 @@ define apache::vhost(
       target  => "${priority_real}${filename}.conf",
       order   => 330,
       content => template('apache/vhost/_filters.erb'),
+    }
+  }
+
+  # Template uses:
+  # - $jk_mounts
+  if $jk_mounts and ! empty($jk_mounts) {
+    concat::fragment { "${name}-jk_mounts":
+      target  => "${priority_real}${filename}.conf",
+      order   => 340,
+      content => template('apache/vhost/_jk_mounts.erb'),
+    }
+  }
+
+  # Template uses:
+  # - $keepalive
+  # - $keepalive_timeout
+  # - $max_keepalive_requests
+  if $keepalive or $keepalive_timeout or $max_keepalive_requests {
+    concat::fragment { "${name}-keepalive_options":
+      target  => "${priority_real}${filename}.conf",
+      order   => 350,
+      content => template('apache/vhost/_keepalive_options.erb'),
+    }
+  }
+
+  # Template uses:
+  # - $cas_*
+  if $cas_enabled {
+    concat::fragment { "${name}-auth_cas":
+      target  => "${priority_real}${filename}.conf",
+      order   => 350,
+      content => template('apache/vhost/_auth_cas.erb'),
+    }
+  }
+
+  # Template uses:
+  # - $http_protocol_options
+  if $http_protocol_options {
+    concat::fragment { "${name}-http_protocol_options":
+      target  => "${priority_real}${filename}.conf",
+      order   => 350,
+      content => template('apache/vhost/_http_protocol_options.erb'),
     }
   }
 

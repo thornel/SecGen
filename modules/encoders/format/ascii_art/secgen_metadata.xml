@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+
+<encoder xmlns="http://www.github/cliffe/SecGen/encoder"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/encoder">
+  <name>Text to ASCII Art</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Outputs an ASCII art version of the text. Works best with short strings.
+  </description>
+
+  <type>string_format_encoder</type>
+  <platform>linux</platform>
+  <platform>windows</platform>
+
+  <read_fact>strings_to_encode</read_fact>
+  <read_fact>font</read_fact>
+  <!-- Select one of the clearer ascii fonts -->
+  <default_input into="font">
+    <encoder type="string_selector">
+      <input into="strings_to_encode">
+        <value>banner</value>
+        <value>big</value>
+        <value>bubble</value>
+        <value>bulbhead</value>
+        <value>contessa</value>
+        <value>doom</value>
+        <value>drpepper</value>
+        <value>fourtops</value>
+        <value>invita</value>
+        <value>italic</value>
+        <value>larry3d</value>
+        <value>maxfour</value>
+        <value>mini</value>
+        <value>moscow</value>
+        <value>ntgreek</value>
+        <value>ogre</value>
+        <value>pawp</value>
+        <value>pebbles</value>
+        <value>puffy</value>
+        <value>rectangles</value>
+        <value>serifcap</value>
+        <value>short</value>
+        <value>slant</value>
+        <value>slscript</value>
+        <value>small</value>
+        <value>smisome1</value>
+        <value>smslant</value>
+        <value>speed</value>
+        <value>standard</value>
+        <value>straight</value>
+        <value>twopoint</value>
+      </input>
+    </encoder>
+  </default_input>
+
+  <!-- TODO default fonts, random, and read in local.rb -->
+
+  <output_type>encoded_strings</output_type>
+
+</encoder>

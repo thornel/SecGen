@@ -7,10 +7,16 @@
   <author>Jason Keighley</author>
   <author>Alessandro Franceschi</author>
   <module_license>Apache v2</module_license>
-  <description>An installation of vsftpd</description>
+  <description>An installation of the vsftpd FTP server, with local user logins enabled, anonymous access disabled and a configurable listen port.</description>
 
   <type>ftp</type>
   <platform>linux</platform>
+
+  <read_fact>port</read_fact>
+
+  <default_input into="port">
+    <value>21</value>
+  </default_input>
 
   <!--optional details-->
   <reference>https://security.appspot.com/vsftpd.html</reference>
@@ -20,5 +26,10 @@
   <conflict>
     <software_name>vsftpd</software_name>
   </conflict>
+  <!--Cannot co-exist with other ftp servers (default to same ports)-->
+  <conflict>
+    <type>^ftp$</type>
+  </conflict>
+
 
 </service>

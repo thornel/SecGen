@@ -1,0 +1,16 @@
+<%  require 'json'
+    $port = @secgen_parameters['port'].first
+%>
+[Unit]
+Description=Chroot
+After=network.target
+
+[Service]
+ExecStart=/usr/sbin/chroot /opt/chroot ncat -l -p <%=$port%> -e /bin/bash -k
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+WorkingDirectory=/tmp/
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

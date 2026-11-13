@@ -1,33 +1,65 @@
-# See README.md for details.
+# @summary
+#   Create and configure a MySQL database.
+#
+# @example Create a database
+#   mysql::db { 'mydb':
+#     user     => 'myuser',
+#     password => 'mypass',
+#     host     => 'localhost',
+#     grant    => ['SELECT', 'UPDATE'],
+#   }
+#
+# @param user
+#   The user for the database you're creating.
+# @param password
+#   The password for $user for the database you're creating.
+# @param tls_options
+#   The tls_options for $user for the database you're creating.
+# @param dbname
+#   The name of the database to create.
+# @param charset
+#   The character set for the database.
+# @param collate
+#   The collation for the database.
+# @param host
+#   The host to use as part of user@host for grants.
+# @param grant
+#   The privileges to be granted for user@host on the database.
+# @param grant_options
+#   The grant_options for the grant for user@host on the database.
+# @param sql
+#   The path to the sqlfile you want to execute. This can be single file specified as string, or it can be an array of strings.
+# @param enforce_sql
+#   Specifies whether executing the sqlfiles should happen on every run. If set to false, sqlfiles only run once.
+# @param ensure
+#   Specifies whether to create the database. Valid values are 'present', 'absent'. Defaults to 'present'.
+# @param import_timeout
+#   Timeout, in seconds, for loading the sqlfiles. Defaults to 300.
+# @param import_cat_cmd
+#   Command to read the sqlfile for importing the database. Useful for compressed sqlfiles. For example, you can use 'zcat' for .gz files.
+#
 define mysql::db (
   $user,
   $password,
-  $dbname         = $name,
-  $charset        = 'utf8',
-  $collate        = 'utf8_general_ci',
-  $host           = 'localhost',
-  $grant          = 'ALL',
-  $sql            = undef,
-  $enforce_sql    = false,
-  $ensure         = 'present',
-  $import_timeout = 300,
+  $tls_options                                = undef,
+  $dbname                                     = $name,
+  $charset                                    = 'utf8',
+  $collate                                    = 'utf8_general_ci',
+  $host                                       = 'localhost',
+  $grant                                      = 'ALL',
+  $grant_options                              = undef,
+  Optional[Variant[Array, Hash, String]] $sql = undef,
+  $enforce_sql                                = false,
+  Enum['absent', 'present'] $ensure           = 'present',
+  $import_timeout                             = 300,
+  $import_cat_cmd                             = 'cat',
 ) {
-  #input validation
-  validate_re($ensure, '^(present|absent)$',
-  "${ensure} is not supported for ensure. Allowed values are 'present' and 'absent'.")
-  $table = "${dbname}.*"
 
-  if !(is_array($sql) or is_string($sql)) {
-    fail('$sql must be either a string or an array.')
-  }
+  $table = "${dbname}.*"
 
   $sql_inputs = join([$sql], ' ')
 
   include '::mysql::client'
-
-  anchor{"mysql::db_${name}::begin": }->
-  Class['::mysql::client']->
-  anchor{"mysql::db_${name}::end": }
 
   $db_resource = {
     ensure   => $ensure,
@@ -40,8 +72,8 @@ define mysql::db (
 
   $user_resource = {
     ensure        => $ensure,
-    password_hash => mysql_password($password),
-    provider      => 'mysql',
+    password_hash => mysql::password($password),
+    tls_options   => $tls_options,
   }
   ensure_resource('mysql_user', "${user}@${host}", $user_resource)
 
@@ -51,6 +83,7 @@ define mysql::db (
       provider   => 'mysql',
       user       => "${user}@${host}",
       table      => $table,
+      options    => $grant_options,
       require    => [
         Mysql_database[$dbname],
         Mysql_user["${user}@${host}"],
@@ -61,7 +94,7 @@ define mysql::db (
 
     if $sql {
       exec{ "${dbname}-import":
-        command     => "cat ${sql_inputs} | mysql ${dbname}",
+        command     => "${import_cat_cmd} ${sql_inputs} | mysql ${dbname}",
         logoutput   => true,
         environment => "HOME=${::root_home}",
         refreshonly => $refresh,

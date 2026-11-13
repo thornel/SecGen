@@ -1,0 +1,187 @@
+#!/usr/bin/env bash
+# Launch a SecGen Proxmox build with an auto-incremented prefix and VLAN.
+#
+# Usage: scripts/secgen-dev-run -s scenario.xml [-p name] [--test] [--dry-run] [-- extra secgen args]
+#        scripts/secgen-dev-run -m modules/<type>/.../<module> [-p name] [--dry-run] [-- extra secgen args]
+#   -s  scenario      (default: $SECGEN_SCENARIO; required if that is unset)
+#   -m  module path   test one module (secgen.rb test-module; implies --test)
+#   -p  prefix name   (default: $SECGEN_NAME, the module name with -m, or "dev") -> <owner>-<name>-NN
+#   --test            build, test, write test_results/<project-id>/, then destroy the VMs
+#                     and project whatever the result (secgen.rb test-scenario).
+#                     Add -- --keep-vms to keep them.
+#   --dry-run         print the command and the next numbers without using them
+#
+# Without --test/-m (development build): runs the secgen_tests after net0 teardown +
+# reboot and writes test_results/<project-id>/, but always leaves the VMs running in
+# their final state, even if the build or a test fails, so you can investigate.
+# Add -- --no-tests to skip the tests. Exit 0 PASS / 1 FAIL (or build failed) / 2 SKIP.
+#
+# Settings (env, or ~/.config/secgen/secgen-dev-run.env):
+#   SECGEN_RUN_OWNER  first part of the prefix (default: $USER)
+#   SECGEN_VLAN_MIN / SECGEN_VLAN_MAX  VLAN range to cycle through (default 200-1000)
+#   SECGEN_RETRIES    --retries passed to secgen.rb unless given (default 1; absorbs
+#                     the intermittent no-DHCP-lease provisioning flake)
+#   SECGEN_VMID_MIN   --proxmox-vmid-min passed to secgen.rb unless given (e.g. 5000 for pipeline builds)
+#   SECGEN_VMID_MAX   --proxmox-vmid-max passed to secgen.rb unless given (e.g. 5999 for pipeline builds)
+#   SECGEN_PROXMOX_NODE  build on this node instead of the options file's --proxmox-node, cloning
+#                     from its copies of the templates: passes --proxmox-node <node> and
+#                     --proxmox-template-suffix -<node> unless given (leave unset for the
+#                     node that holds the original templates)
+#   SECGEN_CONF       options file with the Proxmox creds (default SecGen/secgen.conf in the main checkout)
+#   SECGEN_STATE      counter file (default ~/.config/secgen/run_counter)
+#
+# State file, one "key value" per line:
+#   vlan <last_vlan>      shared by all names, so builds never clash
+#   <name> <last_index>   per-name index (new names start at 01)
+# Edit it by hand to jump to a different number/VLAN.
+#
+# Builds the checkout this script lives in (so a worktree builds its own code).
+# Output is logged to log/[ERROR_]<project_id>: interleaved, then stderr only. When
+# tests ran, the log is also copied (password masked) to test_results/<project-id>/build.log.
+
+set -euo pipefail
+source "$(dirname "$(readlink -f "$0")")/lib/common.sh"
+
+STATE="${SECGEN_STATE:-$HOME/.config/secgen/run_counter}"
+VLAN_MIN="${SECGEN_VLAN_MIN:-200}"   # VLAN wraps back to VLAN_MIN after VLAN_MAX
+VLAN_MAX="${SECGEN_VLAN_MAX:-1000}"
+RETRIES="${SECGEN_RETRIES:-1}"
+SCENARIO="${SECGEN_SCENARIO:-}"
+OWNER="${SECGEN_RUN_OWNER:-${USER:-$(id -un)}}"
+NAME="${SECGEN_NAME:-}"
+MODULE=""
+TEST=0
+DRY_RUN=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -s) SCENARIO="$2"; shift 2 ;;
+    -m) MODULE="${2%/}"; TEST=1; shift 2 ;;
+    -p) NAME="$2"; shift 2 ;;
+    --test) TEST=1; shift ;;
+    --dry-run) DRY_RUN=1; shift ;;
+    -h|--help) sed -n '2,34p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --) shift; break ;;
+    *) break ;;
+  esac
+done
+
+require_conf
+if [[ -n "$MODULE" ]]; then
+  [[ -f "$SECGEN_DIR/$MODULE/secgen_metadata.xml" ]] || { echo "Not a module in $SECGEN_DIR: $MODULE" >&2; exit 1; }
+  NAME="${NAME:-$(basename "$MODULE")}"
+else
+  [[ -n "$SCENARIO" ]] || { echo "No scenario: pass -s <scenario.xml> (or set SECGEN_SCENARIO)" >&2; exit 1; }
+  if [[ ! -f "$SECGEN_DIR/$SCENARIO" ]]; then
+    # Not relative to the checkout: accept a path relative to the caller's cwd.
+    [[ -f "$SCENARIO" ]] || { echo "Scenario not found: $SCENARIO" >&2; exit 1; }
+    SCENARIO="$(readlink -f "$SCENARIO")"
+  fi
+fi
+NAME="${NAME:-dev}"
+[[ "$NAME" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "Invalid name '$NAME' (use letters, digits, . _ -)" >&2; exit 1; }
+[[ "$OWNER" =~ ^[A-Za-z0-9._-]+$ ]] || { echo "Invalid SECGEN_RUN_OWNER '$OWNER'" >&2; exit 1; }
+[[ "$NAME" != "vlan" ]] || { echo "'vlan' is reserved" >&2; exit 1; }
+
+# Reserve the next index + VLAN atomically.
+mkdir -p "$(dirname "$STATE")"
+exec 9>"$STATE.lock"
+flock 9
+touch "$STATE"
+LAST_VLAN=$(awk '$1=="vlan"{print $2}' "$STATE")
+LAST_RUN=$(awk -v n="$NAME" '$1==n{print $2}' "$STATE")
+RUN=$((10#${LAST_RUN:-0} + 1))
+VLAN=$((${LAST_VLAN:-0} + 1))
+(( VLAN >= VLAN_MIN && VLAN <= VLAN_MAX )) || VLAN=$VLAN_MIN
+if [[ $DRY_RUN -eq 0 ]]; then
+  awk -v n="$NAME" -v r="$RUN" -v v="$VLAN" '
+    $1=="vlan" {print "vlan", v; sv=1; next}
+    $1==n      {print n, r; sn=1; next}
+    {print}
+    END {if (!sv) print "vlan", v; if (!sn) print n, r}' "$STATE" > "$STATE.tmp"
+  mv "$STATE.tmp" "$STATE"
+fi
+flock -u 9
+
+PREFIX=$(printf '%s-%s-%02d' "$OWNER" "$NAME" "$RUN")
+
+EXTRA=("$@")
+[[ " ${EXTRA[*]} " == *" --retries "* ]] || EXTRA=(--retries "$RETRIES" "${EXTRA[@]}")
+[[ -z "${SECGEN_VMID_MIN:-}" || " ${EXTRA[*]} " == *" --proxmox-vmid-min "* ]] || EXTRA=(--proxmox-vmid-min "$SECGEN_VMID_MIN" "${EXTRA[@]}")
+[[ -z "${SECGEN_VMID_MAX:-}" || " ${EXTRA[*]} " == *" --proxmox-vmid-max "* ]] || EXTRA=(--proxmox-vmid-max "$SECGEN_VMID_MAX" "${EXTRA[@]}")
+if [[ -n "${SECGEN_PROXMOX_NODE:-}" && " ${EXTRA[*]} " != *" --proxmox-node "* ]]; then
+  [[ " ${EXTRA[*]} " == *" --proxmox-template-suffix "* ]] || EXTRA=(--proxmox-template-suffix "-$SECGEN_PROXMOX_NODE" "${EXTRA[@]}")
+  EXTRA=(--proxmox-node "$SECGEN_PROXMOX_NODE" "${EXTRA[@]}")
+fi
+
+if [[ -n "$MODULE" ]]; then
+  CMD=(ruby secgen.rb --read-options "$SECGEN_CONF"
+       --prefix "$PREFIX"
+       --proxmox-vlan "$VLAN"
+       "${EXTRA[@]}" test-module "$MODULE")
+elif [[ $TEST -eq 1 ]]; then
+  CMD=(ruby secgen.rb --read-options "$SECGEN_CONF"
+       --prefix "$PREFIX"
+       -s "$SCENARIO"
+       --proxmox-vlan "$VLAN"
+       "${EXTRA[@]}" test-scenario)
+else
+  CMD=(ruby secgen.rb --read-options "$SECGEN_CONF"
+       --shutdown
+       --prefix "$PREFIX"
+       -s "$SCENARIO"
+       --proxmox-vlan "$VLAN"
+       --proxmox-post-boot --no-destroy-on-failure
+       "${EXTRA[@]}" r)
+fi
+
+echo "SecGen run: prefix=$PREFIX vlan=$VLAN dir=$SECGEN_DIR${BUNDLE_PATH:+ gems=$BUNDLE_PATH}"
+echo "${CMD[*]}"
+[[ $DRY_RUN -eq 1 ]] && exit 0
+
+cd "$SECGEN_DIR"
+
+# Log to log/[ERROR_]<project_id> (batch_secgen naming; project id parsed from
+# "Creating project: ..."; falls back to <prefix>_<time>). The log has the full
+# output interleaved in order, then stderr again on its own so errors stand out.
+# Output still streams to the terminal while it runs.
+mkdir -p log
+ALL=$(mktemp); ERR=$(mktemp); SYNC=$(mktemp --suffix=.rb)
+trap 'rm -f "$ALL" "$ERR" "$SYNC"' EXIT
+trap 'true' INT TERM   # let Ctrl-C stop secgen but still write the log
+# Piped stdout is block-buffered by Ruby, which would scramble the interleaving.
+echo '$stdout.sync = true' > "$SYNC"
+export RUBYOPT="${RUBYOPT:+$RUBYOPT }-r$SYNC"
+set +e
+{ ( "${CMD[@]}" | tee -a "$ALL"; exit "${PIPESTATUS[0]}" ) 2>&1 1>&3 | tee -a "$ALL" "$ERR" >&2; } 3>&1
+STATUS=${PIPESTATUS[0]}
+set -e
+
+PROJECT_PATH=$(sed -n 's/.*Creating project: \(.*\)\.\.\..*/\1/p' "$ALL" | head -1)
+if [[ -n "$PROJECT_PATH" ]]; then
+  PROJECT_ID=${PROJECT_PATH##*projects/}
+else
+  PROJECT_PATH=unknown
+  PROJECT_ID="${PREFIX}_$(date +%Y%m%d_%H%M%S)"
+fi
+# 2 = tests SKIPped (could not test): not a build error
+[[ $STATUS -eq 0 || $STATUS -eq 2 ]] && LOG_PREFIX="" || LOG_PREFIX="ERROR_"
+LOG="log/${LOG_PREFIX}${PROJECT_ID}"
+{
+  printf 'SecGen project path::: %s\n\n\n' "$PROJECT_PATH"
+  printf 'SecGen arguments::: %s\n\n\n' "${CMD[*]:2}"
+  printf 'SecGen exit status::: %s\n\n\n' "$STATUS"
+  printf 'SecGen output (stdout + stderr, interleaved)::: \n\n\n'
+  cat "$ALL"
+  printf '\n\n\nErrors only (stderr)::: \n\n\n'
+  cat "$ERR"
+} > "$LOG"
+echo "SecGen exit status $STATUS; log: $SECGEN_DIR/$LOG"
+
+if [[ -f "test_results/$PROJECT_ID/summary.json" ]]; then
+  # Masking happens in Ruby with the password from the environment, never argv.
+  SECGEN_PROXMOX_PASS="$(conf_get --proxmoxpass)" SECGEN_LLM_API_KEY="${SECGEN_LLM_API_KEY:-$(conf_get --llm-api-key)}" \
+    ruby "$SECGEN_DIR/scripts/lib/attach_build_log.rb" "$SECGEN_DIR" "$LOG" "$PROJECT_ID" || true
+  echo "Test results: $SECGEN_DIR/test_results/$PROJECT_ID/summary.json"
+fi
+exit "$STATUS"

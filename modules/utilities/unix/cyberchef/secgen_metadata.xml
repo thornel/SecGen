@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>CyberChef</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>The Cyber Swiss Army Knife - a web app for encryption, encoding, compression and data analysis
+  </description>
+
+  <type>local_webapp</type>
+  <platform>linux</platform>
+
+</utility>

@@ -1,0 +1,1 @@
+include cyberchef::install

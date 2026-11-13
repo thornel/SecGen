@@ -1,0 +1,276 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>AppArmor lab</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    # Introduction
+    Mandatory Access Controls (MAC) encompass mechanisms such as Capabilities and AppArmor, which provide system-wide access controls to manage and enforce permissions for processes and applications, mitigating security risks and enhancing overall system security. In this lab, you will explore two aspects of system-wide access controls in Linux security: Capabilities and AppArmor.
+
+    First, you will delve into the concept of Capabilities, a coarse-grained approach to control privileges in Linux. You will learn how capabilities can be used to grant specific permissions to programs without having them run as the all-powerful root user. You will also explore AppArmor, a rule-based, fine-grained access control system for Linux. You will examine how AppArmor profiles are used to specify the resources and permissions that a program can access, effectively creating a whitelist of allowed actions. You will create rules and experience the learning mode of AppArmor, which helps construct rules based on actual program behavior and understand the advantages and disadvantages of a blacklist (deny) versus a whitelist (ignore) approach to writing AppArmor rules. By the end of this lab, you will have a deep understanding of how capabilities and AppArmor can enhance the security of your Linux system by controlling what programs can do and which resources they can access.
+
+    # Hackerbot and CTF challenges
+    This is a Hackerbot lab. Work through the lab sheet, then when prompted interact with Hackerbot.
+
+    Hackerbot will challenge you to use AppArmor to provide a shell to attackers, with only limitted access to specific resources.
+
+    # Lecture
+    [Slides continued here](http://z.cliffe.schreuders.org/presentations/slides/slides_out_sandboxing/ADS_PDS_Lectures_8_Sandboxes_and_Virtualisation.html)
+
+    # Lectures for the next two weeks
+    [Secure software development](https://leedsbeckettreplay.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=31ee4531-1834-4028-8829-aa1d00a73a7e)
+
+    [Secure design principles](https://leedsbeckettreplay.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=6f409b1c-2daa-4798-8bc7-aa2400952d29)
+
+    [Slides](http://z.cliffe.schreuders.org/presentations/slides/slides_secure_design/ADS_PDS_Lectures_3_Secure_Software_Development_and_Bug_Hunting.html)
+  </description>
+
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/systems_security/8-apparmor/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>hackerbot-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>intermediate</difficulty>
+
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>ACCESS CONTROL - MAC (MANDATORY ACCESS CONTROL)</keyword>
+    <keyword>ACCESS CONTROL - NDAC (NON-DISCRETIONARY ACCESS CONTROL)</keyword>
+    <keyword>Application-based access controls: user-based access controls insufficiently limit privileges</keyword>
+    <keyword>Rule-based sandboxes</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+    <keyword>Rule-based controls: Fine grained: AppArmor</keyword>
+    <keyword>Vulnerabilities and attacks on sandboxing misconfigurations</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Mitigating Exploitation">
+    <keyword>limiting privileges</keyword>
+  </CyBOK>
+
+  <video>
+    <title>Rule-based Sandboxing and Mandatory Access Controls</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/Xgs5akM6ayc</url>
+    <type>lecture-prerecorded</type>
+    <CyBOK KA="AAA" topic="Authorisation">
+      <keyword>ACCESS CONTROL - MAC (MANDATORY ACCESS CONTROL)</keyword>
+      <keyword>ACCESS CONTROL - NDAC (NON-DISCRETIONARY ACCESS CONTROL)</keyword>
+      <keyword>Application-based access controls: user-based access controls insufficiently limit privileges</keyword>
+      <keyword>Rule-based sandboxes</keyword>
+      <keyword>System call interposition</keyword>
+      <keyword>Integrity level access controls</keyword>
+    </CyBOK>
+    <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+      <keyword>Rule-based controls: Fine grained: AppArmor</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Mitigating Exploitation">
+      <keyword>limiting privileges</keyword>
+    </CyBOK>
+  </video>
+
+  <system>
+    <system_name>desktop</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <network_ip system="desktop"/>
+      <network_ip system="hackerbot_server"/>
+    </input>
+
+    <!--generate two accounts, YOU and someone else-->
+    <input into_datastore="accounts">
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+        <input into="leaked_filenames">
+          <value>mysecret</value>
+          <value>hello</value>
+        </input>
+        <input into="strings_to_leak">
+          <generator type="random_line_generator">
+            <input into="linelist">
+              <value>secrets</value>
+            </input>
+          </generator>
+          <generator type="random_line_generator">
+            <input into="linelist">
+              <value>server_greetings</value>
+            </input>
+          </generator>
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>test</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>test</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+    </input>
+
+    <!-- an admin account used for hackerbot access to the desktop and also spoilers/administration of the challenge -->
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <input into_datastore="hackerbot_key">
+      <generator type="ssh_key_pair"/>
+    </input>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="strings_to_leak">
+        <value></value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>hackerbot</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <datastore access="0">accounts</datastore>
+      </input>
+      <input into="start_page">
+        <value>hackerbot:8080</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/apparmor"/>
+
+    <vulnerability module_path=".*/nc_backdoor"/>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+
+  <system>
+    <system_name>hackerbot_server</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <service module_path=".*/ergochat"/>
+
+    <utility module_path=".*/hackerbot_webclient">
+      <input into="username">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="irc_server_ip">
+        <value>hackerbot</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/nmap"/>
+    <utility module_path=".*/handy_cli_tools"/>
+
+    <service type="httpd"/>
+
+    <utility module_path=".*/hackerbot">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+      <input into="hackerbot_configs">
+        <generator module_path=".*/hb_apparmor">
+          <input into="accounts">
+            <datastore>accounts</datastore>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+
+    <build type="cleanup">
+      <input into="root_password">
+        <generator type="strong_password_generator"/>
+      </input>
+    </build>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

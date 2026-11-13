@@ -1,0 +1,507 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Break Escape SAFETYNET: Mission 9 — Digital Archaeology VMs</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+# Break Escape SAFETYNET Mission 9: Digital Archaeology
+
+Virtual machines for the Break Escape SAFETYNET mission 9 narrative experience. The operative works in a records archive in Helena, Montana, and needs two old machines: the archive's catalogue server, and the last server of Tomb Beta, one of the Architect's closed workshops, racked in the tape room. The first machine holds the Insider Threat Initiative's ledger. The second holds the owner's credential, his memo on a flaw SAFETYNET catalogued and never reported, his unsent vendor notice, and the job that still mirrors the stolen database to Tomb Gamma.
+
+The two machines are reached in different ways, and both are diegetic. The catalogue's restricted index opens only to the catalogue service account, whose login the game hands the operative on the reading-room duty-desk slip (authenticated access with a recovered credential). Tomb Beta's old lightweight web server is reached through an unauthenticated remote code execution flaw, landing on its web service account. After the foothold, a sudo misconfiguration on a common pager utility escalates each box to root.
+
+## Included Systems
+
+**catalogue_server**
+- Debian 12 desktop system
+- Hosts the archive's catalogue. The public catalogue is browsable, but the restricted index is reachable only by signing in as the catalogue service account.
+- Catalogue service account `catalogsvc` (password `Catalog!Helena2016`, the duty-desk slip) holds flag 1 in its home: the restricted catalogue index (Series R, R-114 to R-161, restricted cage bay 10)
+- Root's home holds flag 2, the Insider Threat Initiative's ledger (placements 23, candidates 47, WREN / H&amp;L source file HL2015-0477), reached through a sudo rule on a common pager utility
+
+**tomb_beta_server**
+- Debian 12 desktop system
+- Old lightweight web server on a random port, running under the web service account `nostromousr`. Reached through an unauthenticated remote code execution flaw in the web server (no login required).
+- The web service account's home holds flag 3, a SAFETYNET staff credential issued to Dr Adrian Tesseract, which proves who owns the server. The same home holds the vulnerability-holdings record for the Albion control flaw (ref VH-2017-0312, Carrow Controls RM-4), Tesseract's memo to the Disposition Board, and his unsent vendor notice.
+- Root's home holds flag 4, a scheduled job that mirrors to Tomb Gamma, the publication hour, the head start for the cells, and the list of defences. Reached through a sudo rule on a common pager utility.
+
+**attack_vm**
+- Kali Linux penetration testing platform
+- The field laptop and drop terminal in the reading room
+
+## Flags
+
+Flags 1 and 2 (the catalogue server) are submitted at the reading-room drop terminal. Flags 3 and 4 (Tomb Beta's server) are submitted at the drop link in the salvage cage, beside the machine they came from.
+
+## Integration with Break Escape
+
+These VMs are provisioned by the Break Escape game engine via SecGen integration. Players interact with these systems through the game's narrative and task system, with guided hints delivered via SAFETYNET field guides. The catalogue account name and password are the fixed strings the game prints on the reading-room duty-desk slip; they must match the catalogue account this VM builds. Tomb Beta is entered by exploitation, so its web service account needs no login credential.
+
+## CyBOK Coverage
+
+- Network mapping and service fingerprinting
+- Authenticated access using a recovered credential (catalogue server)
+- Unauthenticated remote code execution and its mitigation (Tomb Beta web server)
+- Access control and privilege escalation through sudo misconfiguration
+- Insider-threat investigation and document analysis
+- Cyber kill chain
+  </description>
+
+  <type>ctf-lab</type>
+  <type>attack-ctf</type>
+  <type>pwn-ctf</type>
+  <difficulty>medium</difficulty>
+
+  <!-- service fingerprinting and reconnaissance on both targets -->
+  <CyBOK KA="NS" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - FINGERPRINTING</keyword>
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - NMAP</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - RECONNAISSANCE</keyword>
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+
+  <!-- authenticating to the catalogue with a credential recovered in the game -->
+  <CyBOK KA="AAA" topic="Authentication">
+    <keyword>authentication</keyword>
+    <keyword>credential management</keyword>
+  </CyBOK>
+
+  <!-- unauthenticated remote code execution on the Tomb Beta web server -->
+  <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+    <keyword>server-side misconfiguration and vulnerable components</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+    <keyword>CVEs and CWEs</keyword>
+  </CyBOK>
+
+  <!-- escalate to root through a sudo rule on a pager utility -->
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>access control</keyword>
+    <keyword>Elevated privileges</keyword>
+    <keyword>Vulnerabilities and attacks on access control misconfigurations</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+    <keyword>Access controls and operating systems</keyword>
+    <keyword>Linux security model</keyword>
+    <keyword>Attacks against SUDO</keyword>
+  </CyBOK>
+
+  <CyBOK KA="AB" topic="Models">
+    <keyword>kill chains</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malicious Activities by Malware">
+    <keyword>cyber kill chain</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>attack_vm</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_top10"/>
+    <utility module_path=".*/kali_web"/>
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/nmap"/>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>catalogue_server</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <!--
+      Flag 1: the catalogue service account (catalogsvc). The game hands this
+      login on the reading-room duty-desk slip (catalogsvc / Catalog!Helena2016);
+      the restricted catalogue index is in this account's home and is reachable
+      only after signing in with that credential. No unauthenticated foothold:
+      the slip is required, so the flag cannot be captured before the game hands
+      it over (R31/R34). Username and password are fixed to the game's slip.
+    -->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <generator type="account">
+          <input into="username">
+            <value>catalogsvc</value>
+          </input>
+          <input into="password">
+            <value>Catalog!Helena2016</value>
+          </input>
+          <input into="super_user">
+            <value>false</value>
+          </input>
+          <input into="leaked_filenames">
+            <value>catalogue_index</value> <!-- flag1: restricted catalogue index -->
+          </input>
+          <input into="strings_to_leak">
+            <!-- flag1: the restricted catalogue index the game expects (R33) -->
+            <encoder module_path="modules/encoders/selector/concatenate">
+              <input into="strings_to_encode">
+                <value>ARCHIVE CATALOGUE -- RESTRICTED INDEX
+Staff access only. Not shown on the public catalogue.
+LIVE CAPTURE -- FULL CATALOGUE
+Series R, restricted: R-114 to R-161.
+Location: restricted cage, bay 10.
+
+</value>
+                <generator type="flag_generator"/>
+              </input>
+            </encoder>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <!-- flag 2: root's home, the Insider Threat Initiative ledger, through a sudo rule on a pager.
+         Reachable only as a logged-in user, so it is gated by the catalogsvc login too. -->
+    <vulnerability module_path=".*/sudo_root_more">
+      <!-- Pre-leak the night-run index log that the sudo rule pages: sudoers allows
+           /bin/more /root/overnight_index_run.log. The slip tells the player to "read its log".
+           >=150 lines so more pauses at its prompt even on a tall terminal (old review MED-2).
+           No flag and no flag_generator here. Series R (R-114..R-161) read WITHHELD, tying the
+           log to the restricted index and the shredder. -->
+      <input into="pre_leak_filename">
+        <value>overnight_index_run.log</value>
+      </input>
+      <input into="strings_to_pre_leak">
+        <value>OVERNIGHT INDEX RUN -- Helena records archive
+Catalogue service account: catalogsvc. Do not restart. Read the log if it stalls. M.S.
+Run start 02:00:00 UTC. One line per item. Status OK unless noted.
+
+02:00:07 indexed L-0401 county deeds, Lewis &amp; Clark ... OK
+02:00:10 indexed L-0402 county deeds, Cascade ... OK
+02:00:13 indexed L-0403 county deeds, Gallatin ... OK
+02:00:16 indexed L-0404 homestead patents, Chouteau ... OK
+02:00:19 indexed L-0405 homestead patents, Teton ... OK
+02:00:22 indexed L-0406 water rights filings, Jefferson ... OK
+02:00:25 indexed L-0407 water rights filings, Broadwater ... OK
+02:00:28 indexed L-0408 plat maps, Helena townsite ... OK
+02:00:31 indexed L-0409 plat maps, East Helena ... OK
+02:00:34 indexed L-0410 mineral claims, Last Chance Gulch ... OK
+02:00:37 indexed L-0411 mineral claims, Marysville district ... OK
+02:00:40 indexed L-0412 county deeds, Lewis &amp; Clark, supplement ... OK
+02:00:43 indexed L-0413 grazing leases, Meagher ... OK
+02:00:46 indexed L-0414 grazing leases, Wheatland ... OK
+02:00:49 indexed L-0415 railroad right-of-way, Northern Pacific ... OK
+02:00:52 indexed L-0416 railroad right-of-way, Great Northern ... OK
+02:00:55 indexed L-0417 irrigation district records, Helena valley ... OK
+02:00:58 indexed L-0418 timber sale ledgers, Helena forest ... OK
+02:01:01 indexed L-0419 school trust lands, state survey ... OK
+02:01:04 indexed L-0420 state survey notes, 1894 resurvey ... OK
+02:01:07 indexed M-0210 USGS quadrangle, Helena 1:24000 ... OK
+02:01:10 indexed M-0211 USGS quadrangle, Townsend 1:24000 ... OK
+02:01:13 indexed M-0212 Sanborn fire maps, Helena 1890 ... OK
+02:01:16 indexed M-0213 Sanborn fire maps, Helena 1930 ... OK
+02:01:19 indexed M-0214 mine workings, Drumlummon ... OK
+02:01:22 indexed M-0215 mine workings, Spring Hill ... OK
+02:01:25 indexed M-0216 forest cover survey, 1911 ... OK
+02:01:28 indexed M-0217 soil survey, Prickly Pear valley ... OK
+02:01:31 indexed M-0218 river channel survey, Missouri headwaters ... OK
+02:01:34 indexed M-0219 town boundary maps, East Helena ... OK
+02:01:37 indexed M-0220 geological sections, Boulder batholith ... OK
+02:01:40 indexed M-0221 aerial photo index, 1947 ... OK
+02:01:43 indexed M-0222 aerial photo index, 1962 ... OK
+02:01:46 indexed M-0223 highway survey, US 12 realignment ... OK
+02:01:49 indexed M-0224 reservoir survey, Canyon Ferry ... OK
+02:01:52 indexed P-0820 portrait prints, territorial legislature ... OK
+02:01:55 indexed P-0821 portrait prints, early mayors ... OK
+02:01:58 indexed P-0822 street views, Last Chance Gulch 1880s ... OK
+02:02:01 indexed P-0823 street views, Last Chance Gulch 1920s ... OK
+02:02:04 indexed P-0824 mining camp photographs, Marysville ... OK
+02:02:07 indexed P-0825 mining camp photographs, Rimini ... OK
+02:02:10 indexed P-0826 railroad construction, Mullan Pass ... OK
+02:02:13 indexed P-0827 flood of 1908, Missouri river ... OK
+02:02:16 indexed P-0828 capitol construction, 1899-1902 ... OK
+02:02:19 indexed P-0829 smelter works, East Helena ... OK
+02:02:22 indexed P-0830 fire of 1928, business district ... OK
+02:02:25 indexed P-0831 school groups, Central school ... OK
+02:02:28 indexed P-0832 fairgrounds, state fair 1910 ... OK
+02:02:31 indexed P-0833 church interiors, Cathedral of St Helena ... OK
+02:02:34 indexed P-0834 panoramas, Mount Helena overlook ... OK
+02:02:37 indexed C-0501 city council minutes, 1889-1900 ... OK
+02:02:40 indexed C-0502 city council minutes, 1901-1915 ... OK
+02:02:43 indexed C-0503 territorial governor correspondence ... OK
+02:02:46 indexed C-0504 assay office ledgers ... OK
+02:02:49 indexed C-0505 water company records, Helena ... OK
+02:02:52 indexed C-0506 streetcar company records ... OK
+02:02:55 indexed C-0507 chamber of commerce files ... OK
+02:02:58 indexed C-0508 hospital admission registers, St Peter's ... OK
+02:03:01 indexed C-0509 cemetery registers, Forestvale ... OK
+02:03:04 indexed C-0510 naturalisation records, district court ... OK
+02:03:07 indexed C-0511 poll books, early county elections ... OK
+02:03:10 indexed C-0512 tax rolls, 1900 assessment ... OK
+02:03:13 indexed C-0513 tax rolls, 1920 assessment ... OK
+02:03:16 indexed C-0514 bank records, Montana National ... OK
+02:03:19 indexed C-0515 newspaper morgue, Helena Independent ... OK
+02:03:22 indexed N-0301 Helena Independent, bound 1889 ... OK
+02:03:25 indexed N-0302 Helena Independent, bound 1890 ... OK
+02:03:28 indexed N-0303 Helena Independent, bound 1891 ... OK
+02:03:31 indexed N-0304 Montana Record-Herald, 1900 ... OK
+02:03:34 indexed N-0305 Montana Record-Herald, 1901 ... OK
+02:03:37 indexed N-0306 Weekly Herald, territorial run ... OK
+02:03:40 indexed N-0307 mining journal clippings, 1895 ... OK
+02:03:43 indexed N-0308 legislative gazette, 1897 session ... OK
+02:03:46 indexed N-0309 agricultural bulletin, 1903 ... OK
+02:03:49 indexed N-0310 railroad timetable collection ... OK
+02:03:52 indexed N-0311 Helena city directory, 1888 ... OK
+02:03:55 indexed N-0312 Helena city directory, 1905 ... OK
+02:03:58 indexed N-0313 Helena city directory, 1921 ... OK
+02:04:01 indexed N-0314 telephone directory, 1910 ... OK
+02:04:04 indexed N-0315 trade catalogues, hardware ... OK
+02:04:07 indexed G-0701 territorial statutes, 1879 ... OK
+02:04:10 indexed G-0702 territorial statutes, 1885 ... OK
+02:04:13 indexed G-0703 constitutional convention proceedings, 1889 ... OK
+02:04:16 indexed G-0704 state auditor reports, 1890s ... OK
+02:04:19 indexed G-0705 mine inspector reports, 1900-1910 ... OK
+02:04:22 indexed G-0706 state engineer water surveys ... OK
+02:04:25 indexed G-0707 penitentiary registers, Deer Lodge ... OK
+02:04:28 indexed G-0708 militia muster rolls ... OK
+02:04:31 indexed G-0709 supreme court case files, early ... OK
+02:04:34 indexed G-0710 land office tract books ... OK
+02:04:37 indexed G-0711 board of health minutes ... OK
+02:04:40 indexed G-0712 highway commission minutes, 1917 ... OK
+02:04:43 indexed G-0713 fish and game warden reports ... OK
+02:04:46 indexed G-0714 state library accession lists ... OK
+02:04:49 indexed G-0715 capitol commission records ... OK
+02:04:52 item R-114 WITHHELD -- restricted, disposition pending. M.S.
+02:04:55 item R-115 WITHHELD -- restricted, disposition pending. M.S.
+02:04:58 item R-116 WITHHELD -- restricted, disposition pending. M.S.
+02:05:01 item R-117 WITHHELD -- restricted, disposition pending. M.S.
+02:05:04 item R-118 WITHHELD -- restricted, disposition pending. M.S.
+02:05:07 item R-119 WITHHELD -- restricted, disposition pending. M.S.
+02:05:10 item R-120 WITHHELD -- restricted, disposition pending. M.S.
+02:05:13 item R-121 WITHHELD -- restricted, disposition pending. M.S.
+02:05:16 item R-122 WITHHELD -- restricted, disposition pending. M.S.
+02:05:19 item R-123 WITHHELD -- restricted, disposition pending. M.S.
+02:05:22 item R-124 WITHHELD -- restricted, disposition pending. M.S.
+02:05:25 item R-125 WITHHELD -- restricted, disposition pending. M.S.
+02:05:28 item R-126 WITHHELD -- restricted, disposition pending. M.S.
+02:05:31 item R-127 WITHHELD -- restricted, disposition pending. M.S.
+02:05:34 item R-128 WITHHELD -- restricted, disposition pending. M.S.
+02:05:37 item R-129 WITHHELD -- restricted, disposition pending. M.S.
+02:05:40 item R-130 WITHHELD -- restricted, disposition pending. M.S.
+02:05:43 item R-131 WITHHELD -- restricted, disposition pending. M.S.
+02:05:46 item R-132 WITHHELD -- restricted, disposition pending. M.S.
+02:05:49 item R-133 WITHHELD -- restricted, disposition pending. M.S.
+02:05:52 item R-134 WITHHELD -- restricted, disposition pending. M.S.
+02:05:55 item R-135 WITHHELD -- restricted, disposition pending. M.S.
+02:05:58 item R-136 WITHHELD -- restricted, disposition pending. M.S.
+02:06:01 item R-137 WITHHELD -- restricted, disposition pending. M.S.
+02:06:04 item R-138 WITHHELD -- restricted, disposition pending. M.S.
+02:06:07 item R-139 WITHHELD -- restricted, disposition pending. M.S.
+02:06:10 item R-140 WITHHELD -- restricted, disposition pending. M.S.
+02:06:13 item R-141 WITHHELD -- restricted, disposition pending. M.S.
+02:06:16 item R-142 WITHHELD -- restricted, disposition pending. M.S.
+02:06:19 item R-143 WITHHELD -- restricted, disposition pending. M.S.
+02:06:22 item R-144 WITHHELD -- restricted, disposition pending. M.S.
+02:06:25 item R-145 WITHHELD -- restricted, disposition pending. M.S.
+02:06:28 item R-146 WITHHELD -- restricted, disposition pending. M.S.
+02:06:31 item R-147 WITHHELD -- restricted, disposition pending. M.S.
+02:06:34 item R-148 WITHHELD -- restricted, disposition pending. M.S.
+02:06:37 item R-149 WITHHELD -- restricted, disposition pending. M.S.
+02:06:40 item R-150 WITHHELD -- restricted, disposition pending. M.S.
+02:06:43 item R-151 WITHHELD -- restricted, disposition pending. M.S.
+02:06:46 item R-152 WITHHELD -- restricted, disposition pending. M.S.
+02:06:49 item R-153 WITHHELD -- restricted, disposition pending. M.S.
+02:06:52 item R-154 WITHHELD -- restricted, disposition pending. M.S.
+02:06:55 item R-155 WITHHELD -- restricted, disposition pending. M.S.
+02:06:58 item R-156 WITHHELD -- restricted, disposition pending. M.S.
+02:07:01 item R-157 WITHHELD -- restricted, disposition pending. M.S.
+02:07:04 item R-158 WITHHELD -- restricted, disposition pending. M.S.
+02:07:07 item R-159 WITHHELD -- restricted, disposition pending. M.S.
+02:07:10 item R-160 WITHHELD -- restricted, disposition pending. M.S.
+02:07:13 item R-161 WITHHELD -- restricted, disposition pending. M.S.
+
+Run complete. Items indexed 95, withheld 48. Next run 02:00 UTC.
+If this run stalls, read this log. Do not restart the indexer. M.S.</value>
+      </input>
+      <input into="leaked_filenames">
+        <value>insider_ledger</value>
+      </input>
+      <input into="strings_to_leak">
+        <!-- flag2: the Initiative ledger body the game expects, incl. HL2015-0477 (R33) -->
+        <encoder module_path="modules/encoders/selector/concatenate">
+          <input into="strings_to_encode">
+            <value>LIVE CAPTURE -- INITIATIVE LEDGER
+Placements 23. Candidates 47. Legacy 11.
+WREN -- H&amp;L -- placed 11 yrs -- LIVE -- Day 10: assigned TF Null, Montana operation. M.S.
+Source file: HL2015-0477
+
+</value>
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>tomb_beta_server</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <!--
+      Flag 3 is reached by an unauthenticated web RCE in the Tomb Beta web
+      server; the exploit lands on the web service account (nostromousr,
+      hard-coded by the module, created with NO login password). No credential
+      login exists on the box, so the box does not offer a shortcut that skips
+      the exploitation lesson. The game's enrolment binder points the player at
+      the enrolment site / service as a story find, not a login.
+
+      Flag 3 and the story files share the web service account's home.
+      strings_to_leak and leaked_filenames pair by position:
+        1 enrolment_record       = credential text, then flag 3
+        2 albion_memo            = Tesseract's memo to the Disposition Board (no flag)
+        3 vendor_notice_draft    = his unsent vendor notice (no flag)
+        4 vulnerability_holdings = the catalogue holdings record for the Albion flaw (no flag)
+      strings_to_pre_leak carries an authored, diegetic landing page for Tomb Beta's
+      enrolment site (immersion): the game's enrolment binder sends the player to
+      browse this web service, so the public page reads as the owner's old, sealed
+      host-enrolment node rather than a blank default. It holds no flag (pre_leak has
+      no flag_generator) and no login hint (entry is the unauthenticated RCE, not a
+      credential), so the attack chain is unchanged. The owner stays anonymous on the
+      public page; his name is on the staff credential in the service account's home.
+      The Albion documents are aligned to the game's specifics (R37): ref
+      VH-2017-0312, Carrow Controls RM-4, 14 March 2017, ~400 UK sites, the
+      Disposition Board.
+    -->
+    <vulnerability module_path=".*/nostromo_code_exec">
+      <!-- Pin the Tomb Beta web port; must equal tomb_beta_web_port in scenario.json.erb and the enrolment binder. -->
+      <input into="port">
+        <value>8016</value>
+      </input>
+      <input into="strings_to_pre_leak">
+        <value>TOMB BETA // host enrolment service
+
+  Internal host-enrolment node for the Tomb Beta workshop.
+  This service signed workshop hosts into the register and ran
+  under the site's own web service account.
+
+  Register ............. SEALED
+  Workshop ............. decommissioned
+  Hosts on file ........ archived on the owner's departure
+  Maintainer ........... post vacant, seven years
+  Last status .......... node still powered, nothing scheduled
+
+  No listings are published here.</value>
+      </input>
+      <input into="leaked_filenames">
+        <value>enrolment_record</value>      <!-- flag3 -->
+        <value>albion_memo</value>
+        <value>vendor_notice_draft</value>
+        <value>vulnerability_holdings</value>
+      </input>
+      <input into="strings_to_leak">
+        <encoder module_path="modules/encoders/selector/concatenate">
+          <input into="strings_to_encode">
+            <value>SAFETYNET STAFF CREDENTIAL
+Issued to: Dr Adrian Tesseract
+Post: Chief Strategist
+Left SAFETYNET: seven years ago
+Status: active, never revoked
+Enrolled host: Tomb Beta enrolment site (web service account nostromousr)
+
+Enrolment record for this host. The enrolling account is the site's web service account.
+
+</value>
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+        <value>MEMO
+To: Disposition Board
+From: Chief Strategist (Dr A. Tesseract)
+Date: 14 March 2017
+Re: VH-2017-0312
+
+We are holding a flaw in a Carrow controller because it may one day be useful to us. It will certainly one day be useful to someone else.
+Four hundred sites run this module. Their engineers cannot patch what nobody has told them about, and we cannot defend them from it, having chosen not to.
+I recommend notification to the vendor within thirty days. I have drafted the notice. I would rather send it than explain later why we didn't.
+A. Tesseract</value>
+        <value>DRAFT, NOT SENT
+Date: 14 March 2017
+To: Product Security, Carrow Controls
+From: SAFETYNET Vulnerability Management (Dr A. Tesseract, Chief Strategist)
+Re: RM-4 remote-management module
+
+We have found a flaw in the RM-4 module that lets an unauthenticated user on the management network issue control commands. A test case is attached for your engineers.
+We will keep this confidential for ninety days from the date of this letter, or until a fix ships, whichever is sooner, so that your customers have time to patch. We are glad to help with testing.
+With thanks,
+Dr Adrian Tesseract, Chief Strategist</value>
+        <value>CATALOGUE ENTRY -- VULNERABILITY HOLDINGS
+Ref: VH-2017-0312. Authentication bypass, Carrow Controls RM-4 remote-management module.
+Deployed at: grid battery sites, water treatment works, substations. Approx. 400 UK sites.
+Vendor aware: no.
+Disposition: RETAIN. Operational value. Review 2019.
+Board sign-off: OPS yes, LEGAL yes, TECH yes, INT yes, STRAT withheld.</value>
+      </input>
+    </vulnerability>
+
+    <!-- flag 4: root's home, the Tomb Gamma mirror job and the defences list, through a sudo rule on a pager. -->
+    <!-- Tomb Gamma is named as the target only. No host, address or route is given. -->
+    <vulnerability module_path=".*/sudo_root_less">
+      <!-- Optional flavour: the sudo rule pages /root/tomb_gamma_mirror.log. less always opens
+           interactively, so no length requirement. No flag and no flag_generator here. -->
+      <input into="pre_leak_filename">
+        <value>tomb_gamma_mirror.log</value>
+      </input>
+      <input into="strings_to_pre_leak">
+        <value>MIRROR JOB -- Tomb Beta to Tomb Gamma
+Runs as: root
+Last run: OK
+Next run: 02:00 UTC</value>
+      </input>
+      <input into="leaked_filenames">
+        <value>mirror_job_and_defences</value>
+      </input>
+      <input into="strings_to_leak">
+        <encoder module_path="modules/encoders/selector/concatenate">
+          <input into="strings_to_encode">
+            <value>TOMB BETA: SCHEDULED JOB
+Job: mirror to Tomb Gamma (target only, no route recorded here)
+Publication hour: 06:00 UTC, day 13
+Cells head start: 04:00 UTC
+Fallback: city by city from 06:00 UTC, if the core has not been shut
+Defences: list built from the stolen database, grouped by sector, with the weaknesses SAFETYNET catalogued and did not report</value>
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

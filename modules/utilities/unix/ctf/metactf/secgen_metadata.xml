@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>MetaCTF Reverse Engineering Challenge Generator</name>
+  <author>Thomas Shaw</author>
+  <author>Wu-Chang Feng</author>
+  <author>Jake Springer</author>
+  <module_license>GPLv3</module_license>
+  <description>MetaCTF is a polymorphic reverse engineering challenge generation platform developed at Portland State University.</description>
+
+  <type>ctf_generator</type>
+  <platform>linux</platform>
+
+  <reference>https://thefengs.com/wuchang/papers/3gse15metactf.pdf</reference>
+  <reference>https://bitbucket.org/wuchangfeng/metactf</reference>
+
+  <read_fact>account</read_fact>
+  <read_fact>challenge_list</read_fact>
+  <read_fact>include_scaffolding</read_fact>
+
+  <default_input into="challenge_list">
+    <generator type="metactf_challenge">
+      <input into="challenge_path">
+        <value>src_angr/00_angr_find</value>
+      </input>
+      <input into="flag">
+        <generator type="flag_generator"/>
+      </input>
+    </generator>
+    <generator type="metactf_challenge">
+      <input into="challenge_path">
+        <value>src_angr/01_angr_avoid</value>
+      </input>
+      <input into="flag">
+        <generator type="flag_generator"/>
+      </input>
+    </generator>
+    <generator type="metactf_challenge">
+      <input into="challenge_path">
+        <value>src_angr/02_angr_find_condition</value>
+      </input>
+      <input into="flag">
+        <generator type="flag_generator"/>
+      </input>
+    </generator>
+  </default_input>
+
+  <!-- src_angr challenges have scaffolded example python files, optionally include them. -->
+  <default_input into="include_scaffolding">
+    <value>true</value>
+  </default_input>
+
+  <conflict>
+    <name>Wheezy</name>
+  </conflict>
+  <requires>
+    <type>update</type>
+  </requires>
+
+</utility>

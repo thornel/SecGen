@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <system>
+    <system_name>example_server</system_name>
+    <base platform="linux" type="server"/>
+
+    <!-- When storing IP_addresses and passing them into <network> modules, it is essential to name the datastore 'IP_addresses' as below.
+         This is because the network-ranges command line argument overwrites values within this datastore before use.
+         For an example of this, try running this scenario and passing in two network-ranges arguments separated by a comma. -->
+    <input into_datastore="IP_addresses">
+      <network_ip system="example_server"/>
+      <network_ip system="example_server"/>
+      <network_ip system="example_server"/>
+    </input>
+
+    <network type="private_network"/>
+  </system>
+
+  <system>
+    <system_name>example_server</system_name>
+    <base platform="linux" type="server"/>
+
+    <network type="private_network"/>
+  </system>
+
+  <system>
+    <system_name>example_server</system_name>
+    <base platform="linux" type="server"/>
+
+    <network type="private_network"/>
+  </system>
+
+</scenario>

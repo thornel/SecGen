@@ -1,0 +1,101 @@
+<?php
+  include('connect.php');
+  if(!isset($_SESSION['username'])){
+    header("Location:login.php");
+  }
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<% $page_title = "Update-Profile" %>
+<%= scope.function_template(['commando/subtemplates/header.html.erb']) %>
+
+<body>
+<%= scope.function_template(['commando/subtemplates/nav.html.erb']) %>
+<div class="container container-fluid">
+  <div class="row">
+    <div id="pp-holder">
+      <img src="images/icon.png" alt="avi" id="pp">
+    </div>
+  </div>
+
+  <div id="details">
+    <h3>Update User Details:</h3>
+    <?php
+      $user = $_SESSION['username'];
+      $info="SELECT  * FROM <%= @user_table_name %> WHERE Username='$user'";
+      $result=mysqli_query($conn2, $info);
+      $id = 0;
+      $row=mysqli_fetch_assoc($result);
+      $id = $row['ID']; ?>
+    <form method="POST" action="<?php echo $_SERVER['SCRIPT_NAME'];?>">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" class="form-control" placeholder="<?php echo $row['name'];?>">
+      </div>
+      <div class="form-group">
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" class="form-control" placeholder="<?php echo $row['address'];?>">
+      </div>
+      <div class="form-group">
+        <label for="mobile">Mobile:</label>
+        <input type="text" id="mobile" name="mobile" maxlength="30" class="form-control" placeholder="<?php echo $row['mobile'];?>">
+      </div>
+      <div class="form-group">
+        <label for="email">E-Mail:</label>
+        <input type="text" id="email" name="email" class="form-control" placeholder="<?php echo $row['Email'];?>">
+      </div>
+      <input type="submit" name="submit" value="Save">
+    </form>
+    <?php
+
+      if (isset($_POST['submit']) && (!empty($_POST['name']) || !empty($_POST['address']) || !empty($_POST['mobile']) || !empty($_POST['email']))){
+          $statement="UPDATE <%= @user_table_name %> SET ";
+          $hasFirst= false;
+            if (!empty($_POST['name'])) {
+              $statement .= "name = '" . $_POST['name'] . "' ";
+              $hasFirst = true;
+            }
+            if (!empty($_POST['address'])) {
+              if ($hasFirst == true) {
+                $statement .= " , ";
+              }
+              $statement .= "address = '" . $_POST['address'] . "' ";
+              $hasFirst = true;
+            }
+            if (!empty($_POST['mobile'])) {
+              if ($hasFirst == true) {
+                $statement .= " , ";
+              }
+              $statement .= "mobile = '" . $_POST['mobile'] . "' ";
+              $hasFirst = true;
+            }
+            if (!empty($_POST['email'])) {
+              if ($hasFirst == true) {
+                $statement .= " , ";
+              }
+              $statement .= "email = '" . $_POST['email'] . "' ";
+            }
+          $statement .= " WHERE ID = $id";
+      }
+      $result=mysqli_query($conn2, $statement);
+      if ($result) {
+        $_SESSION['updated'] = true;
+        header('Location: profile.php');
+      }
+  ?>
+    <footer class="footer">
+      <ul>
+        <li>
+          <a href="profile.php">Profile</a>
+        </li>
+        <li>
+          <a href="logout.php">Logout</a>
+        </li>
+      </ul>
+    </footer>
+  </div>
+</div>
+</body>
+<%= scope.function_template(['commando/subtemplates/libraries.html.erb']) %>
+</html>

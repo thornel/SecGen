@@ -1,4 +1,21 @@
 class moinmoin_195::config {
+  $secgen_parameters = secgen_functions::get_parameters($::base64_inputs_file)
+  $images_to_leak = $secgen_parameters['images_to_leak']
+  $raw_org = $secgen_parameters['organisation']
+
+  $strings_to_leak = $secgen_parameters['strings_to_leak']
+  $leaked_filenames = $secgen_parameters['leaked_filenames']
+
+  # pre_leaked are displayed on the Wiki
+  $strings_to_pre_leak = $secgen_parameters['strings_to_pre_leak']
+
+  if $raw_org and $raw_org[0] and $raw_org[0] != '' {
+    $organisation = parsejson($raw_org[0])
+    $raw_default_page = regsubst($organisation['business_name'], ',', '', 'G')  # Remove commas from co. names
+  } else{
+    $raw_default_page = $secgen_parameters['default_page'][0]
+  }
+  $default_page = regsubst($raw_default_page,' ','(20)', 'G') # replace space with (20) for default pages w/ space.
 
   # Config files
   file { '/usr/local/share/moin/moin.wsgi':
@@ -8,9 +25,10 @@ class moinmoin_195::config {
 
   file { '/usr/local/share/moin/wikiconfig.py':
     ensure => file,
-    source => '/usr/local/share/moin/config/wikiconfig.py'
+    content  => template('moinmoin_195/wikiconfig.py.erb'),
   }
 
+  # TODO: use apache puppet module, as we've done for other webapps
   # Web server config
   file { '/etc/apache2/apache2.conf':
     ensure => file,
@@ -19,12 +37,39 @@ class moinmoin_195::config {
 
   # Set up an article within MoinMoin
   ##  Create outer article directory /usr/local/share/moin/data/pages/NameOfPage/
-  file { '/usr/local/share/moin/data/pages/WikiSandBox':
+  file { "/usr/local/share/moin/data/pages/$default_page":
     ensure => directory,
     recurse => true,
     source => 'puppet:///modules/moinmoin_195/WikiSandBox',
     notify => Exec['permissions-moinmoin'],
   }
+
+  ## Leak some data onto the page.
+  file { "/usr/local/share/moin/data/pages/$default_page/revisions/00000001":
+    ensure => file,
+    content => template('moinmoin_195/article.erb'),
+  }
+
+  # Leak image
+  file { "/usr/local/share/moin/data/pages/$default_page/attachments/":
+    ensure => directory,
+  }
+
+  ::secgen_functions::leak_files{ 'moinmoin_195-image-leak':
+    storage_directory => "/usr/local/share/moin/data/pages/$default_page/attachments",
+    images_to_leak => $images_to_leak,
+    leaked_from => "moinmoin_195",
+    owner => "www-data"
+  }
+  ::secgen_functions::leak_files { 'moinmoin_195-flag-leak':
+    storage_directory => '/usr/local/share/moin/',
+    leaked_filenames  => $leaked_filenames,
+    strings_to_leak   => $strings_to_leak,
+    owner             => 'www-data',
+    mode              => '0750',
+    leaked_from       => 'moinmoin_195',
+  }
+
 
   # File permissions + ownership
   exec { 'permissions-moinmoin':
@@ -33,4 +78,6 @@ class moinmoin_195::config {
     /bin/chmod -R o-rwx /usr/local/share/moin',
     notify => Service['apache2'],
   }
+
+  ensure_resource('tidy','moinmoin remove default site', {'path'=>'/etc/apache2/sites-enabled/000-default.conf'})
 }

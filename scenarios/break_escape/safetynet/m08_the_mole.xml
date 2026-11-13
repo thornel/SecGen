@@ -1,0 +1,403 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Break Escape SAFETYNET: Mission 8 — The Mole VMs</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+# Break Escape SAFETYNET Mission 8: The Mole
+
+Virtual machines for the Break Escape SAFETYNET mission 8 narrative experience. After the Portland deployment leak that got two SAFETYNET field agents killed, an internal investigation traces the breach to SAFETYNET's own headquarters. The agency's internal source-code server — an unpatched GitList instance nobody ever hardened — is hosting far more than source: the mole committed working credentials into a repository, corresponded with ENTROPY from the box, and left the access logs that place them on the Portland deployment plan. Operatives must exploit SAFETYNET's own repository server to prove the mole's identity: Agent 0x47 "Nightshade", a placed insider of ENTROPY's Insider Threat Initiative.
+
+## Included Systems
+
+**safetynet_gitlist_server** (172.16.0.2)
+- Debian 10 desktop system
+- Hosts SAFETYNET's internal GitList repository browser, vulnerable to an argument-injection remote-code-execution flaw that requires no authentication (GitList 0.4.0, CVE-2018-1000533)
+- Contains the mole's operations account, credentials committed into repository history, encrypted ENTROPY correspondence staged in a home directory, and a root-level cache of The Architect's authorisation confirming the Portland deployment database exfiltration
+- Intelligence: the exposed repository (recon), the stashed credentials, the ENTROPY correspondence, and The Architect's signed authorisation with a casualty acknowledgement
+
+**attack_vm** (172.16.0.3)
+- Kali Linux penetration testing platform
+- Used for reconnaissance and exploitation against safetynet_gitlist_server
+
+## Integration with Break Escape
+
+These VMs are provisioned by the Break Escape game engine via SecGen integration. Players interact with these systems through the game's narrative and task system, with guided hints delivered via SAFETYNET field guides. The four primary flags map directly onto the mission's investigation aims: repository exposure (recon), stashed credentials (web/exploitation), proper login and the ENTROPY correspondence (user access), and root plus the access logs and The Architect's authorisation (root).
+
+## CyBOK Coverage
+
+- Version-control security and credential leakage in repositories
+- Argument-injection / remote code execution without authentication
+- Authentication and secure shell access
+- Sudo misconfiguration and privilege escalation
+- Audit-log analysis and insider-threat investigation
+  </description>
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/safetynet/scanning-and-exploitation/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>attack-ctf</type>
+  <type>pwn-ctf</type>
+  <difficulty>medium</difficulty>
+
+  <!-- exploiting GitList gives credentials to log in -->
+  <CyBOK KA="AAA" topic="Authentication">
+    <keyword>user authentication</keyword>
+  </CyBOK>
+  <CyBOK KA="NS" topic="PENETRATION TESTING">
+    <keyword>SECURE SHELL (SSH)</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+    <keyword>CVEs and CWEs</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+
+  <!-- escalate to user and to root via sudo -->
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>access control</keyword>
+    <keyword>Elevated privileges</keyword>
+    <keyword>Vulnerabilities and attacks on access control misconfigurations</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+    <keyword>Access controls and operating systems</keyword>
+    <keyword>Linux security model</keyword>
+    <keyword>Attacks against SUDO</keyword>
+  </CyBOK>
+
+  <CyBOK KA="AB" topic="Models">
+    <keyword>kill chains</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malicious Activities by Malware">
+    <keyword>cyber kill chain</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>attack_vm</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 attack_vm -->
+      <network_ip system="attack_vm"/>
+      <!-- 1 safetynet_gitlist_server -->
+      <network_ip system="safetynet_gitlist_server"/>
+    </input>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+      <input into="autostart">
+        <value>true</value>
+      </input>
+      <input into="start_page">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_top10"/>
+    <utility module_path=".*/kali_web"/>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>safetynet_gitlist_server</system_name>
+    <base distro="Debian 10" type="desktop" name="KDE"/>
+
+    <input into_datastore="organisation">
+      <encoder type="line_selector">
+        <input into="file_path">
+          <value>lib/resources/structured_content/organisations/json_organisations</value>
+        </input>
+      </encoder>
+    </input>
+
+    <!-- generate a password >= 6 characters long (the mole's committed credential) -->
+    <input into_datastore="password">
+        <generator type="random_sanitised_word">
+        <input into="wordlist">
+          <value>wordlist</value>
+        </input>
+        <input into="min_length">
+          <value>6</value>
+        </input>
+      </generator>
+    </input>
+
+    <!-- GitList 0.4.0 argument-injection RCE (CVE-2018-1000533): no credentials
+         required. Exposes the repository (recon) and the credentials the mole
+         committed into history then scrubbed. -->
+    <vulnerability module_path=".*/gitlist_040">
+      <!-- Flag order is document order: the recon (pre_leak) flag is written first so it
+           numbers before the credentials flag. Within-module order needs a build to confirm. -->
+
+      <!-- Immersion: make the box read as SAFETYNET's own internal source server, not a
+           generic lab box. The repository is the mission-tooling repo the README names,
+           and every commit is authored by the ops service account the mole worked
+           through (svc-planning), so `git log` and GitList's commit view reinforce
+           "my account, my terminal, my mail" (R22) instead of showing a stock
+           "gitlist <git@list.com>" identity. Cosmetic only: the unauthenticated RCE
+           enumerates whatever repository exists, so the kill chain is unchanged. The
+           m08 solve fetches this repo name and digs its on-disk history. -->
+      <input into="repo_name">
+        <value>mission-tooling</value>
+      </input>
+      <input into="commit_author_name">
+        <value>svc-planning</value>
+      </input>
+      <input into="commit_author_email">
+        <value>svc-planning@safetynet.internal</value>
+      </input>
+
+      <!-- The repo's "real" files, committed in the initial commit and browsable in
+           GitList. README.md carries the recon flag; the python stub and the example
+           env file make the repo read as a used project and point at planning_sync.env,
+           where the real credential was committed and later scrubbed (deleted history). -->
+      <input into="pre_leaked_filenames">
+        <value>README.md</value>
+      </input>
+      <input into="pre_leaked_filenames">
+        <value>planning_sync.py</value>
+      </input>
+      <input into="pre_leaked_filenames">
+        <value>planning_sync.env.example</value>
+      </input>
+
+      <!-- flag1: REPOSITORY EXPOSURE (recon) - browsing the exposed repo discloses the
+           ops account and the fact that a credential was committed and never rotated. -->
+      <input into="strings_to_pre_leak">
+        <!-- R22: one account across all three surfaces. The committed service account
+             is svc-planning (the "planning sync job" in the commit message); the same
+             name owns the leaked login (flag 3) and appears in the root access log
+             (flag 4), so the box backs Nightshade's "my account, my terminal, my mail". -->
+        <!-- One string per file: leak_files pairs strings_to_pre_leak with
+             pre_leaked_filenames by position, so the text and its flag are
+             concatenated into README.md rather than spilling the flag into
+             planning_sync.py (see cbb180dbb). All three strings_to_pre_leak go
+             through an encoder: encoder output resolves after plain values, so
+             mixing the two would put the files out of document order. -->
+        <encoder module_path="modules/encoders/selector/concatenate">
+          <input into="strings_to_encode">
+            <value>SAFETYNET INTERNAL SOURCE -- mission-tooling
+Repo: internal/mission-tooling  (GitList browser exposed, no auth required)
+The planning sync job authenticates as the ops service account: svc-planning
+Its credential was committed to planning_sync.env for "testing" and later removed --
+check the history, it was never actually rotated.</value>
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+      </input>
+      <input into="strings_to_pre_leak">
+        <encoder module_path="modules/encoders/selector/concatenate">
+          <input into="strings_to_encode">
+            <value>#!/usr/bin/env python3
+# planning sync job -- pushes mission planning artefacts to the ops share.
+# Reads SYNC_USER / SYNC_PASSWORD from planning_sync.env (see planning_sync.env.example).
+import os
+
+def main():
+    user = os.environ.get("SYNC_USER", "svc-planning")
+    # TODO: rotate the service credential before go-live
+    print("[planning-sync] starting sync as %s" % user)
+
+if __name__ == "__main__":
+    main()</value>
+          </input>
+        </encoder>
+      </input>
+      <input into="strings_to_pre_leak">
+        <encoder module_path="modules/encoders/selector/concatenate">
+          <input into="strings_to_encode">
+            <value># Copy to planning_sync.env and fill in. Do NOT commit the real file.
+SYNC_USER=svc-planning
+SYNC_PASSWORD=changeme</value>
+          </input>
+        </encoder>
+      </input>
+
+      <!-- flag2: STASHED CREDENTIALS - the mole's password, committed into
+           planning_sync.env then removed in a later commit. Gone from the working
+           tree and GitList's file browser; recoverable only by digging git history
+           (git log / git show). Same document slot as the old strings_to_leak flag,
+           so it still numbers second. -->
+      <input into="strings_to_leak_in_history">
+        <value>SYNC_PASSWORD=</value>
+        <datastore>password</datastore>
+        <generator type="flag_generator"/>
+      </input>
+      <input into="history_leaked_filenames">
+        <value>planning_sync.env</value>
+      </input>
+      <input into="history_commit_message">
+        <value>add planning sync service credentials (temporary, rotate before go-live)</value>
+      </input>
+      <input into="history_removal_commit_message">
+        <value>remove committed credentials from planning_sync.env</value>
+      </input>
+
+      <!-- Suppress the old loose /home/git flag file: the credential now lives in
+           deleted history, not in a loose file. Blank -> the module skips that leak. -->
+      <input into="strings_to_leak">
+        <value/>
+      </input>
+
+      <input into="organisation">
+        <datastore>organisation</datastore>
+      </input>
+    </vulnerability>
+
+    <!-- Create the mole's operations account; SSH login with the recovered
+         credentials lands here, where the ENTROPY correspondence is staged. -->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <generator type="account">
+          <input into="username">
+            <!-- R22: fixed to svc-planning so the leaked login, the mail sender and
+                 the root access-log user are one account on the box. -->
+            <value>svc-planning</value>
+          </input>
+          <input into="password">
+            <datastore>password</datastore>
+          </input>
+          <input into="super_user">
+            <value>false</value>
+          </input>
+          <input into="leaked_filenames">
+            <!-- flag3: USER ACCESS - the sealed dead drop in the mole's home directory.
+                 The filename carries the ENTROPY alias (deep_state_drop) so the player
+                 matches it to the Director's intercept, which holds the drop's seal. -->
+            <value>deep_state_drop.zip.b64</value>
+          </input>
+          <input into="strings_to_leak">
+            <!-- flag3: USER ACCESS - the ENTROPY correspondence, sealed in a password-
+                 protected zip (base64 text at rest). The login (history credential) opens
+                 the home, but the drop stays unreadable without the seal
+                 "candle-in-a-hurricane" (the Director's intercept carries it), so the
+                 game input is genuinely required on every route (user and root).
+                 The zip generator is nested INLINE here (not hoisted into an
+                 into_datastore) so this flag keeps its document-order slot after the
+                 gitlist flags; confirm flag3 is still the home/drop flag after a build. -->
+            <generator type="zip_file_generator">
+              <input into="file_name">
+                <value>package_receipt.txt</value>
+              </input>
+              <input into="password">
+                <!-- fixed; must equal drop_seal in the game (scenario.json.erb) -->
+                <value>candle-in-a-hurricane</value>
+              </input>
+              <input into="strings_to_leak">
+                <!-- decoded ENTROPY correspondence, staged on the box -->
+                <encoder module_path="modules/encoders/selector/concatenate">
+                  <input into="strings_to_encode">
+                    <value>ENTROPY DEAD DROP -- deep_state_drop
+
+To:      architect@entropy.onion
+From:    svc-planning  (ENTROPY alias: deep_state_drop)
+Subject: M7 package -- delivered
+
+Package delivered: team assignments, response timeline, and the agent's
+identity, all confirmed before the tasking order was issued. Your
+coordination of the four simultaneous operations proceeded as modelled.
+
+I know what the two unanswered sites cost. You do not need to send me the
+number. I made the trade with my eyes open. Order is a candle in a
+hurricane; I would rather help the wind than keep relighting the wick.
+
+The real objective completed cleanly during the noise -- see the
+authorisation cached under root once you get there. They spent the night
+choosing which fire to fight and never noticed the vault open behind them.
+
+Awaiting next tasking.
+-- N (Insider Threat Initiative)</value>
+                    <generator type="flag_generator"/>
+                  </input>
+                </encoder>
+              </input>
+            </generator>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <!-- Sudo misconfiguration scoped to the web service account (www-data): the
+         GitList deploy account was left able to run a package tool as root, which
+         is trivially turned into a root shell. This ties root to the GitList RCE
+         foothold: www-data has no interactive login, so the only way to that
+         account is the unauthenticated RCE. The mole's own ops account
+         (svc-planning) deliberately has NO sudo, so recovering the credential and
+         SSHing in is not enough to reach root; the RCE is required. Root holds the
+         access logs and The Architect's authorisation. -->
+    <vulnerability module_path=".*/sudo_root_apt_get">
+      <!-- scope the NOPASSWD apt-get-as-root rule to www-data only (default is ALL) -->
+      <input into="sudo_user">
+        <value>www-data</value>
+      </input>
+      <!-- flag4: ROOT - access logs + The Architect's authorisation, the mission's key payload -->
+      <input into="strings_to_leak">
+        <encoder module_path="modules/encoders/base/base64">
+          <input into="strings_to_encode">
+            <value>SAFETYNET GLOBAL THREAT DATABASE -- EXFILTRATION AUTHORISATION
+Classification: ENTROPY EYES ONLY -- INSIDER THREAT INITIATIVE
+
+Subject: SAFETYNET Global Threat Database (complete vulnerability catalogue)
+Source: internal placement, codename NIGHTSHADE (Agent 0x47), recruited during
+        SAFETYNET training, dormant ~15 years, activated for the Portland deployment.
+Handler: The Architect (direct)
+
+DISPOSITION: The four Portland deployment operations were cover. The objective was the
+database. During the response window, the complete catalogue -- every zero-day,
+unpatched critical, infrastructure weakness and supply-chain vector SAFETYNET
+has ever recorded -- was exfiltrated through a channel Nightshade held open.
+Retain and integrate. Destination: Tomb Gamma.
+
+ACCESS-LOG CORRELATION (recovered from /var/log, root only):
+  user svc-planning  T-48h before M7  OPEN mission_planning/pnw_contingency.enc
+  duration 00:47:00  source: Cryptography Lab terminal 03
+  -- the plan was not read in forty-seven minutes. It was copied.
+
+OPERATIONAL IMPACT -- ACKNOWLEDGED COST:
+Two SAFETYNET field agents were killed at the two crisis sites the tactical
+team could not reach, because the enemy knew, in advance, where the gaps would
+be. This was reviewed and filed as an acceptable cost of acquiring the database.
+The source was aware of the projected loss before delivery and proceeded.
+
+AUTHORISATION: Proceed. Deliver the catalogue to Tomb Gamma.
+-- The Architect</value>
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

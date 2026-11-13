@@ -1,0 +1,31 @@
+# Containers: Chroot and Docker
+
+## Getting started
+### VMs in this lab
+
+==Start these VMs== (if you haven't already):
+- hackerbot_server (leave it running, you don't log into this)
+- desktop (you can sudo to get superuser access)
+<%= if $chroot_esc_server_ip
+  "- chroot_esc_server (#{$chroot_esc_server_ip})"
+end %>
+<%= if $docker_esc_server_ip
+   "- docker_esc_server (#{$docker_esc_server_ip})"
+ end %>
+
+### Your login details for the "desktop" VM
+User: <%= $main_user %>
+Password: tiaspbiqe2r (**t**his **i**s **a** **s**ecure **p**assword **b**ut **i**s **q**uite **e**asy **2** **r**emember)
+
+You won't login to the hackerbot_server, but the VM needs to be running to complete the lab.
+
+## Meet Hackerbot!
+![small-right](images/skullandusb.svg)
+
+This exercise involves interacting with Hackerbot, a chatbot who will ask you to attack systems.
+
+> If Hackerbot seems to be waiting or halted, simply say 'hi'
+
+Work through the below exercises, completing the Hackerbot challenges as noted.
+
+---

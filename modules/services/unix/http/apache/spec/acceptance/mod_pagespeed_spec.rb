@@ -1,29 +1,20 @@
 require 'spec_helper_acceptance'
+require_relative './version.rb'
 
-describe 'apache::mod::pagespeed class' do
+# Only run the test on centos 7, this is to cut down on the different types of setup
+# required. Installing the dependancies are highly prone to failure.
+describe 'apache::mod::pagespeed class', :if =>
+  ((fact('operatingsystem') == 'CentOS' ) and
+   (fact('operatingsystemmajrelease') == '7' )) do
   context "default pagespeed config" do
     it 'succeeds in puppeting pagespeed' do
       pp= <<-EOS
-        if $::osfamily == 'Debian' {
-          class { 'apt': }
-
-          apt::source { 'mod-pagespeed':
-            key         => '7FAC5991',
-            key_server  => 'pgp.mit.edu',
-            location    => 'http://dl.google.com/linux/mod-pagespeed/deb/',
-            release     => 'stable',
-            repos       => 'main',
-            include_src => false,
-            before      => Class['apache'],
-          }
-        } elsif $::osfamily == 'RedHat' {
-         yumrepo { 'mod-pagespeed':
-          baseurl  => "http://dl.google.com/linux/mod-pagespeed/rpm/stable/$::architecture",
-            enabled  => 1,
-            gpgcheck => 1,
-            gpgkey   => 'https://dl-ssl.google.com/linux/linux_signing_key.pub',
-            before   => Class['apache'],
-          }
+       yumrepo { 'mod-pagespeed':
+        baseurl  => "http://dl.google.com/linux/mod-pagespeed/rpm/stable/$::architecture",
+          enabled  => 1,
+          gpgcheck => 1,
+          gpgkey   => 'https://dl-ssl.google.com/linux/linux_signing_key.pub',
+          before   => Class['apache'],
         }
 
         class { 'apache':
@@ -36,10 +27,10 @@ describe 'apache::mod::pagespeed class' do
         }
         apache::vhost { 'pagespeed.example.com':
           port    => '80',
-          docroot => '/var/www/pagespeed',
+          docroot => '#{$doc_root}/pagespeed',
         }
         host { 'pagespeed.example.com': ip => '127.0.0.1', }
-        file { '/var/www/pagespeed/index.html':
+        file { '#{$doc_root}/pagespeed/index.html':
           ensure  => file,
           content => "<html>\n<!-- comment -->\n<body>\n<p>Hello World!</p>\n</body>\n</html>",
         }
@@ -48,11 +39,7 @@ describe 'apache::mod::pagespeed class' do
     end
 
     describe service($service_name) do
-      if (fact('operatingsystem') == 'Debian' && fact('operatingsystemmajrelease') == '8')
-        pending 'Should be enabled - Bug 760616 on Debian 8'
-      else
-        it { should be_enabled }
-      end
+      it { should be_enabled }
       it { is_expected.to be_running }
     end
 

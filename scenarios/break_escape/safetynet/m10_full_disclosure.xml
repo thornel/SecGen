@@ -1,0 +1,515 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Break Escape SAFETYNET: Mission 10 — Full Disclosure VMs</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+# Break Escape SAFETYNET Mission 10: Full Disclosure
+
+Virtual machines for the Break Escape SAFETYNET mission 10 narrative experience. Task Force Null goes into Tomb Gamma, a Cold War bunker in Montana, the night before the Publication. The operatives enter through the bunker's security monitoring host, which the camera and door systems report to. Its staging copy of the schedule lists the release channels, the cells' early-access orders and the first entries by city. The climax is in the release host and the core host, where each operative has to leave a confined service before reaching the machine beneath it.
+
+## Included Systems
+
+**bunker_monitor** (entry stage)
+- Debian 12 desktop system
+- Hosts a network traffic monitoring and threat-intelligence platform on a fixed port, with an unauthenticated command injection flaw in its login handler
+- The monitoring platform's service account (`secmon`) holds flag 1, reached through the command-injection foothold
+- A separate, password-gated staging account (`staging`) holds flag 2 and the staging copy of the release schedule in its own home, not readable from the flag-1 foothold
+
+**release_host** (climax stage one)
+- Debian 12 desktop system
+- Runs the release service inside a privileged container, behind a bind shell on a random port
+- Two generated operative accounts. Neither is an administrator. The shell is a container, not the host.
+- Root's home on the host beneath the container holds flag 3 and the release service's arming / kill configuration (how six o'clock is armed and what stops it; the trigger itself is on the core console). The container itself holds no flag.
+- The shift operator's home holds the handover log, which names the port the release service's bind shell listens on
+
+**core_host** (climax stage two)
+- Debian 12 desktop system
+- Runs a bind shell on a random port that drops into an older chroot jail
+- Root's home on the host beneath the jail holds a sealed archive addressed to the agent, holding flag 4 and a short note, opened only with the core access code the envelope on the desk carries. The stolen copy of the database and the live line into the Citadel's vault are here too. The jail itself holds no flag.
+
+**attack_vm**
+- Kali Linux penetration testing platform
+- HaX's field console (SAFETYNET kit), racked at the gate, in the server hall and in the core; the only attack box
+
+## Flags
+
+Flag 1 and flag 2 are submitted at the forward post's terminal and the server-hall console. Flag 3 is submitted at the sealed section's hatch in the server hall. Flag 4 is submitted at the core host terminal, after the clock is stopped.
+
+## Integration with Break Escape
+
+These VMs are provisioned by the Break Escape game engine via SecGen integration. Players interact with these systems through the game's narrative and task system, with guided hints delivered via SAFETYNET field guides.
+
+## CyBOK Coverage
+
+- Command injection in web-facing services
+- Container and chroot confinement, and escaping them
+- Network mapping and service fingerprinting
+- Authorisation, least privilege and root access
+- Kill chains across a multi-stage intrusion
+  </description>
+
+  <type>ctf-lab</type>
+  <type>attack-ctf</type>
+  <type>pwn-ctf</type>
+  <difficulty>hard</difficulty>
+
+  <!-- reconnaissance and service fingerprinting across the bunker network -->
+  <CyBOK KA="NS" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - FINGERPRINTING</keyword>
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - NMAP</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - RECONNAISSANCE</keyword>
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+
+  <!-- command injection on the entry stage -->
+  <CyBOK KA="WAM" topic="Web Application Security">
+    <keyword>Injection vulnerabilities</keyword>
+    <keyword>Command injection</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+
+  <!-- container and chroot escapes on the climax stage -->
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>SANDBOX</keyword>
+    <keyword>Application-based access controls: user-based access controls insufficiently limit privileges</keyword>
+    <keyword>Elevated privileges</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="Primitives for Isolation and Mediation">
+    <keyword>Container-based sandboxes: chroot, Docker</keyword>
+    <keyword>Vulnerabilities and attacks on sandboxing misconfigurations</keyword>
+    <keyword>Access controls and operating systems</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="Role of Operating Systems">
+    <keyword>isolation</keyword>
+    <keyword>CONTAINERS</keyword>
+  </CyBOK>
+  <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+    <keyword>sandboxing</keyword>
+  </CyBOK>
+
+  <CyBOK KA="AB" topic="Models">
+    <keyword>kill chains</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malicious Activities by Malware">
+    <keyword>cyber kill chain</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>attack_vm</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+      <input into="autostart">
+        <value>false</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_top10"/>
+    <utility module_path=".*/kali_web"/>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- Entry stage. Flags 1 and 2 are the earlier stage the brief asks for. -->
+  <system>
+    <system_name>bunker_monitor</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <!-- R34: the monitoring service account is named secmon, matching the game's maintenance-tag find.
+         The foothold is an unauthenticated command injection (CyBOK WAM), so the account stays
+         passwordless: the maintenance tag's value to the player is the account name + host address,
+         not a password login. flag 1 is read via the RCE foothold on this account's home. -->
+    <vulnerability module_path=".*/maltrail_rce" access="remote" privilege="user_rwx">
+      <input into="unix_username">
+        <value>secmon</value>
+      </input>
+
+      <!-- Pin the monitoring console port. 8338 is the module default, but pinning it makes the
+           game/VM contract explicit: this MUST equal monitor_console_port in the game ERB, which
+           the maintenance tag (forward post) hands the player. -->
+      <input into="port">
+        <value>8338</value>
+      </input>
+
+      <!-- flag 1: the monitoring service account's home, reached by the command-injection foothold -->
+      <input into="leaked_filenames">
+        <value>monitor_status</value>
+      </input>
+      <input into="strings_to_leak">
+        <generator type="flag_generator"/>
+      </input>
+
+      <!-- The maltrail_data generator embeds a CTF flag in the threat data by default. The game
+           expects bunker_monitor to build exactly two flags (foothold + staging), so override the
+           generator's embedded_flag with a short in-story note instead of a flag: a narrative
+           breadcrumb on the watch-floor console that points the player at the staging account,
+           where flag 2 lives. Concept level only, no technique, and not a SecGen flag. -->
+      <input into="maltrail_data">
+        <generator type="maltrail_data">
+          <input into="embedded_flag">
+            <value>SAFETYNET watch floor. Cameras and doors nominal. Release staging copy moved off this console to the staging operators' account.</value>
+          </input>
+
+          <!-- Immersion: theme the watch-floor threat feed to Tomb Gamma and the Publication so
+               the monitoring dashboard reads as SAFETYNET's own catalogue, not generic noise. The
+               feed still carries bulk random events (module default); these lead the list. The two
+               internal (.lan) indicators match the embedded-flag note ("Cameras and doors
+               nominal"); the catalogue indicators are the same live channels the staging schedule
+               and the core file index already describe (Carrow/Albion RM-4, the Seattle first
+               entries 0001-0003, the Trojan Horse backdoor, the two early-access buyers, the
+               Citadel vault line). All ambience: no flag lives in this feed, and the player's three
+               targets are handed out by in-game IP, so nothing here is a red herring to chase. -->
+          <input into="themed_trails">
+            <value>cam-gate.tombgamma.lan | camera_feed_ok | internal
+door-ctl.tombgamma.lan | door_controller_ok | internal
+rm4-mgmt.carrow-controls.net | remote_mgmt_backdoor | catalogue
+albion-plant-rtu.carrow-controls.net | plant_rtu_beacon | catalogue
+infusion-fleet.seattle-hospitalgroup.org | medical_device_beacon | catalogue
+dispatch-cad.county-911.gov | emergency_dispatch_c2 | catalogue
+scada-wtp.seattle-water.gov | water_treatment_scada | catalogue
+trojan-horse.release-cdn.net | mass_backdoor_c2 | catalogue
+203.0.113.47 | vault_line_citadel | catalogue
+zero-day.earlyaccess.pw | buyer_beacon | catalogue
+ransomware-inc.earlyaccess.pw | buyer_beacon | catalogue</value>
+          </input>
+        </generator>
+      </input>
+
+      <!-- Flag 2 and the staging schedule no longer live here (they were world-readable in the
+           threat-data store / web UI). R30/B7 moves them to a separate, password-gated staging
+           account below. The monitoring platform keeps generic threat data (module default). -->
+    </vulnerability>
+
+    <!-- R30/B7: flag 2 lives in a separate staging account with its own 0600 home, not readable
+         from the flag-1 (secmon) foothold. It is gated by the staging sign-in card found in the
+         server hall by the release console (staging / Staging!Copy25). The release operators who
+         run the staging copy own this login; it opens the staging copy of the release schedule. -->
+    <input into_datastore="staging_accounts">
+      <generator type="account">
+        <input into="username">
+          <value>staging</value>
+        </input>
+        <input into="password">
+          <value>Staging!Copy25</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <!-- R37: the staging copy of the release schedule, aligned to the game's text
+             (Ransomware Incorporated, entries 0001-0003, RETAIN, two early-access shares).
+             Second string is flag 2. -->
+        <input into="strings_to_leak">
+          <value>THE PUBLICATION. RELEASE SCHEDULE, STAGING COPY.
+92,460 entries, with working detail.
+Fallback: 06:00 UTC, day 13, city by city. Key: all cities, one minute.
+
+CHANNELS
+1. Release servers, this site.
+2. Trojan Horse backdoor. 47 million systems. Queued batch: Seattle.
+
+EARLY ACCESS, 04:00 UTC. Two shares, paid for the theft.
+Zero Day. Collecting on site. Resale not permitted.
+Ransomware Incorporated. Collecting by its own arrangement.
+
+FIRST ENTRIES. SEATTLE.
+0001  Infusion pumps, a hospital group. The same flaw is live in 140 hospitals. SAFETYNET disposition: RETAIN. Operational value. Catalogued three years ago.
+0002  Dispatch software. One county's emergency calls.
+0003  Water treatment controllers, a city utility. End of life. The vendor cannot fix them.</value>
+          <generator type="flag_generator"/>
+        </input>
+        <input into="leaked_filenames">
+          <value>release_schedule_staging</value>
+          <value>staging_flag</value>
+        </input>
+      </generator>
+    </input>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>staging_accounts</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- Climax stage one. Flag 3 is root's home, reached after leaving the container. -->
+  <system>
+    <system_name>release_host</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <!-- The release service's bind-shell port, per build. The handover log in relops' home names
+         it, and nc_backdoor_docker_esc listens on it. The player reads it off the log, not from the
+         game, and asserts it matches the open port a scan finds. -->
+    <input into_datastore="release_service_port">
+      <generator module_path=".*/random_unregistered_port"/>
+    </input>
+
+    <!-- Two operative accounts, neither an administrator; no root login over SSH.
+         R34: the first is named relops with the duty-sheet password (relops / Release!Shift25),
+         so the operator duty card the game hands out names a real login on this host. The second
+         keeps a random operative name with a strong generated password (the old 'test' password
+         was weak and guessable, flagged in the VM review). NOTE: the relops login cannot gate
+         flag 3 (see the comment on the container-escape vulnerability below). -->
+    <input into_datastore="accounts">
+      <generator type="account">
+        <input into="username">
+          <value>relops</value>
+        </input>
+        <input into="password">
+          <value>Release!Shift25</value>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <!-- R32: the handover log in relops' home names the release service's port, where HaX's
+             hatch steer points ("the log it points to says where the service listens"). The port
+             value is the per-build release_service_port datastore, so the player must read the log
+             on the VM (it is not handed out by the game). Concept level only, no technique. -->
+        <input into="leaked_filenames">
+          <value>handover_log</value>
+        </input>
+        <input into="strings_to_leak">
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="delim">
+              <value>&#10;</value>
+            </input>
+            <input into="strings_to_encode">
+              <value>RELEASE SERVICE. HANDOVER LOG. NIGHT SHIFT, DAY 12-13.
+The service runs in its container. Don't touch the host under it.
+The arming state is on the host. The trigger is on the core console, not here.
+Sign below at handover.
+  relops  22:00  signed on.
+Release service listens on port:</value>
+              <datastore>release_service_port</datastore>
+            </input>
+          </encoder>
+        </input>
+      </generator>
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <generator type="strong_password_generator"/>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value></value>
+        </input>
+        <input into="strings_to_leak">
+          <value></value>
+        </input>
+      </generator>
+    </input>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <utility module_path=".*/docker">
+      <input into="images">
+        <value>ubuntu:xenial</value>
+        <value>debian:bookworm</value>
+        <value>busybox</value>
+      </input>
+    </utility>
+
+    <!-- flag 3: root's home on the host, beneath the release service's container.
+         The escape yields host root, so the relops login above cannot gate this flag (root reads
+         any file). The relops credential is kept for consistency with the duty card; strict
+         credential-gating of flag 3 is not achievable VM-side without removing the container-escape
+         teaching (see the VM review report). The hard rule is held by the submit-station room-gating.
+         R32: the release service's arming / kill configuration (how six o'clock is armed and what
+         stops it) is seeded in root's home beside the flag, where HaX's hatch steer points. Concept
+         level only, no technique. -->
+    <vulnerability module_path=".*/nc_backdoor_docker_esc">
+      <!-- The bind shell listens on the per-build release_service_port, which the handover log in
+           relops' home names. -->
+      <input into="port">
+        <datastore>release_service_port</datastore>
+      </input>
+      <input into="leaked_filenames">
+        <value>docker_flag</value>
+        <value>release_kill_config</value>
+      </input>
+      <input into="strings_to_leak">
+        <generator type="flag_generator"/>
+        <value>RELEASE SERVICE. ARMING / KILL CONFIGURATION.
+
+The publication is armed to release at 06:00 UTC, day 13, city by city, from the release servers on this site. The early-access shares go two hours ahead, at 04:00 UTC.
+
+What stops it:
+- The release is held on a single trigger. Nothing goes until the trigger is thrown.
+- The trigger is on the core host's console, not on this host. This host holds the schedule and the arming state only; it cannot throw or cancel the release itself.
+- A full stop needs the core console. The key is one hand, one of theirs.
+
+Staged by the release operators. The shift is on the operators' duty sheet.</value>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- Climax stage two. Flag 4 is root's home, reached after leaving the chroot. -->
+  <system>
+    <system_name>core_host</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <utility module_path=".*/chroot_debootstrap">
+      <input into="chroot_dir">
+        <value>/opt/chroot</value>
+      </input>
+    </utility>
+
+    <!-- The chroot escape yields host root and seeds root's home with the core host's file index
+         (matching the game's "Core Host: File Index") and the unsent Albion / Carrow Controls vendor
+         notice, where the description and Tesseract's steer point. flag 4 is NO LONGER leaked here:
+         it now lives in the sealed archive below (zip_file), gated by the core access code the
+         envelope hands the player, so reaching host root is not enough. Concept level only, no
+         technique. This module now leaks exactly two files and no flag. -->
+    <vulnerability module_path=".*/nc_backdoor_chroot_esc">
+      <input into="leaked_filenames">
+        <value>core_file_index</value>
+        <value>vendor_notice_albion</value>
+      </input>
+      <input into="strings_to_leak">
+        <value>CORE HOST. FILE INDEX.
+
+catalogue         92,460 entries. Theirs, with working detail.
+personnel         Their staff index. 1,206 badges, loaded to the readers.
+vault line        Open. Their end is the Citadel.
+schedule          06:00 UTC, day 13. City by city. Seattle first.
+early access      04:00 UTC. Two shares, paid for the theft.
+key               One hand. One of theirs.
+purge             Armed. Both copies, or nothing.
+alpha             Closed. Papers to Helena.
+beta              Closed. Server left running in Helena. For whoever came.
+notice, albion    2017. Drafted. Not sent.
+reading, for 0x00 A copy. The original went to Helena.
+for the agent     Sealed. The code is on my desk.</value>
+        <value>VENDOR NOTICE. ALBION / CARROW CONTROLS. DRAFT. NOT SENT.
+
+To: Carrow Controls, product security.
+Re: remote-management module, RM-4 series.
+
+A flaw in the RM-4 remote-management module lets an unauthenticated operator take control of connected plant equipment. It is present across roughly four hundred UK sites, including the Albion plant. We have held it since 2017.
+
+This notice was drafted so the vendor could issue a fix. It was never sent. SAFETYNET disposition at the time: retain for operational value.
+
+Drafted 2017. Held. Not sent.</value>
+      </input>
+    </vulnerability>
+
+    <!-- flag 4: the sealed archive Tesseract left for the agent, in root's home (0600, root-owned),
+         readable only after the chroot escape. The zip is password-protected with the core access
+         code TSRCT-CORE-9F21, which the game's Core Access Code envelope hands the player: this
+         MUST equal core_access_key in the game ERB, and the password is case-sensitive. Reaching
+         host root is not enough; without the envelope's code the archive stays sealed, so the flag
+         cannot be read until the player has physically reached the core. The archive also carries
+         Tesseract's short note to 0x00, read on the way to the flag. zip_file writes a real binary
+         zip (leak_to_file base64-decodes it). core_host must still have exactly one flag (this one);
+         check flag_hints.xml after the build. -->
+    <vulnerability module_path=".*/zip_file">
+      <input into="leaked_filename">
+        <value>for_the_agent.zip</value>
+      </input>
+      <input into="storage_directory">
+        <value>/root/</value>
+      </input>
+      <input into="mode">
+        <value>0600</value>
+      </input>
+      <input into="base64_file">
+        <generator type="zip_file_generator">
+          <input into="file_name">
+            <value>for_the_agent.txt</value>
+          </input>
+          <input into="password">
+            <value>TSRCT-CORE-9F21</value>
+          </input>
+          <input into="strings_to_leak">
+            <value>FOR THE AGENT. FROM A.T.
+
+You came down through my walls. I built them to be come through, by someone who would read what was behind them.
+Everything on this box is true. The notice is real. I wrote it in 2017 and was told to hold it.
+The trigger is on my console. Come and talk to me before you touch it.
+</value>
+            <generator type="flag_generator"/>
+          </input>
+        </generator>
+      </input>
+    </vulnerability>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+    <name>SQL injection</name>
+    <author>James Davis</author>
+    <description>
+# Introduction
+In this web security lab you will delve into the critical realm of SQL injection attacks, a prevalent threat to web applications. SQL injection occurs when untrusted data is injected into a database query, exploiting vulnerabilities in the application's handling of user inputs. The lab adopts a hands-on approach, utilizing hands-on learning resources such as Damn Vulnerable Web App (DVWA), OWASP WebGoat, and OWASP Security Shepherd to guide you through understanding, detecting, and mitigating SQL injection vulnerabilities. The lab emphasizes the importance of working through different layers of security, from client-side validation to application-level filtering, to ultimately interact with the database directly. Through practical exercises and challenges, you will gain an understanding of SQL injection, including blind SQL injection attacks, and learn essential techniques to secure web applications against these threats.
+
+Throughout this lab, you will engage in a series of tasks across various platforms. Starting with WebGoat, you will log in and progress through SQL injection exercises, honing your skills in crafting attacks and understanding mitigation strategies. In DVWA challenges, you will undertake guided walk-throughs at low, medium, and high security levels to retrieve passwords, crack hashed passwords, and master blind SQL injection. Further, Security Shepherd tasks will enhance your skills in session management and SQL injection, reinforcing your ability to apply theoretical concepts in real-world scenarios. By the end, you will have not only learned about SQL injection but also independently completed challenges, solidifying your expertise in securing web applications against this pervasive security threat.
+    </description>
+    <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/web_security/4-sqli/</lab_sheet_url>
+
+    <type>lab-environment</type>
+    <type>ctf-lab</type>
+
+    <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+        <keyword>HYPERTEXT MARKUP LANGUAGE (HTML)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP) - PROXYING</keyword>
+        <keyword>DATABASE</keyword>
+        <keyword>SESSION HIJACKING</keyword>
+        <keyword>CLIENT-SERVER MODELS</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+        <keyword>injection vulnerabilities</keyword>
+        <keyword>server-side misconfiguration and vulnerable components</keyword>
+        <keyword>SQL-INJECTION</keyword>
+        <keyword>BACK-END</keyword>
+        <keyword>BLIND ATTACKS</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+        <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Prevention of Vulnerabilities">
+        <keyword>coding practices</keyword>
+        <keyword>Protecting against session management attacks, XSS, SQLi, CSRF</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+        <keyword>dynamic detection</keyword>
+    </CyBOK>
+
+    <video>
+        <title>Injection Attacks and SQL Injection</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=q_krNN5YRSA</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+            <keyword>injection vulnerabilities</keyword>
+            <keyword>SQL-INJECTION</keyword>
+        </CyBOK>
+        <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+            <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Injection Attacks: SQL Injection (SQLi)</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=mzKUJl8R88c</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+            <keyword>SQL-INJECTION</keyword>
+            <keyword>BLIND ATTACKS</keyword>
+            <keyword>BACK-END</keyword>
+        </CyBOK>
+        <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+            <keyword>DATABASE</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Injection Attacks: Prevention</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=efeFBfGtbbI</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="SS" topic="Prevention of Vulnerabilities">
+            <keyword>coding practices</keyword>
+            <keyword>Protecting against session management attacks, XSS, SQLi, CSRF</keyword>
+        </CyBOK>
+        <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+            <keyword>dynamic detection</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Hints: SQLi challenges Part 1 (optional)</title>
+        <by>Thalita Vergilio</by>
+        <url>https://www.youtube.com/watch?v=wL7xsXv3gvo</url>
+        <type>lecture-prerecorded</type>
+    </video>
+    <video>
+        <title>Hints: SQLi challenges Part 2 (optional)</title>
+        <by>Thalita Vergilio</by>
+        <url>https://www.youtube.com/watch?v=v8YuPrLXynQ</url>
+        <type>lecture-prerecorded</type>
+    </video>
+
+    <system>
+        <system_name>web_server</system_name>
+        <base distro="Debian 10" type="desktop" name="KDE"/>
+
+        <input into_datastore="IP_addresses">
+            <!-- 0 web_server -->
+            <network_ip system="web_server"/>
+            <!-- 1 kali -->
+            <network_ip system="kali"/>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <generator type="account">
+                    <input into="username">
+                        <value>shepherd</value>
+                    </input>
+                    <input into="password">
+                        <value>tiaspbiqe2r</value>
+                    </input>
+                    <input into="super_user">
+                        <value>false</value>
+                    </input>
+                </generator>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/security_shepherd">
+            <input into="modules">
+                <generator type="ss_modules">
+                    <input into="filter">
+                        <value>Session 6 7 8,SQL 1 2 3 4 5 6 7,Escaping</value>
+                    </input>
+                </generator>
+            </input>
+            <input into="unix_username">
+                <value>shepherd</value>
+            </input>
+            <input into="flag_store" into_datastore="flag_store">
+                <generator type="flag_generator" module_path=".*base64">
+                    <input into="iterations">
+                        <value>11</value>
+                    </input>
+                </generator>
+            </input>
+        </vulnerability>
+
+        <input into_datastore="spoiler_admin_pass">
+            <generator type="strong_password_generator"/>
+        </input>
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+
+        <utility module_path=".*/hosts_legacy">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <network type="private_network"/>
+    </system>
+
+    <system>
+        <system_name>kali</system_name>
+        <base distro="Kali" name="MSF" />
+
+        <input into_datastore="kali_account">
+            <value>
+                {"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/dvwa" />
+
+        <vulnerability module_path=".*/webgoat">
+            <input into="port">
+                <value>8085</value>
+            </input>
+        </vulnerability>
+
+        <utility module_path=".*/kali_web" />
+
+        <utility module_path=".*/iceweasel">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+            <input into="autostart">
+                <value>true</value>
+            </input>
+            <input into="start_page">
+                <value>http://localhost:8085/WebGoat|http://localhost/|webserver</value>
+            </input>
+        </utility>
+
+        <utility module_path=".*/hosts">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+        <network type="private_network"/>
+    </system>
+
+</scenario>

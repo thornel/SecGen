@@ -1,0 +1,219 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+    <name>Cross-Site Scripting</name>
+    <author>James Davis</author>
+    <description>
+# Introduction
+In this web security lab you will delve into the critical realm of web application security, focusing specifically on the pervasive threat of Cross-Site Scripting (XSS). XSS is a type of injection attack where malicious code is inserted into a trusted website, often exploiting vulnerabilities in user input handling. The lab covers three main types of XSS attacks: Reflected, Stored, and DOM-Based. These attacks involve injecting malicious scripts into a web application, potentially compromising user data, sessions, and overall security. The lab introduces theoretical concepts behind XSS and provides hands-on experience through practical exercises and challenges.
+
+Throughout this lab, you will engage with various learning resources, including Damn Vulnerable Web App (DVWA), OWASP WebGoat and WebWolf, and OWASP Security Shepherd. The hands-on activities involve creating and manipulating PHP pages, implementing XSS filters, and exploring vulnerabilities in web applications using DVWA challenges. You will also work with WebGoat and Security Shepherd to further validate your understanding of XSS attacks in different scenarios. By the end of this lab, you will have gained practical insights into identifying, exploiting, and mitigating XSS vulnerabilities, a crucial skill in the field of web security.
+    </description>
+    <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/web_security/3-xss/</lab_sheet_url>
+
+    <type>lab-environment</type>
+    <type>ctf-lab</type>
+
+    <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+        <keyword>cookies</keyword>
+        <keyword>JAVASCRIPT</keyword>
+        <keyword>HYPERTEXT MARKUP LANGUAGE (HTML)</keyword>
+        <keyword>HYPERTEXT TRANSFER PROTOCOL (HTTP) - PROXYING</keyword>
+        <keyword>SESSION HIJACKING</keyword>
+        <keyword>CLIENT-SERVER MODELS</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Client-Side Vulnerabilities and Mitigations">
+        <keyword>client-side storage</keyword>
+        <keyword>CLIENT-SIDE VALIDATION</keyword>
+    </CyBOK>
+    <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+        <keyword>injection vulnerabilities</keyword>
+        <keyword>server-side misconfiguration and vulnerable components</keyword>
+        <keyword>CROSS-SITE SCRIPTING (XSS)</keyword>
+        <keyword>BACK-END</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+        <keyword>Web vulnerabilities / OWASP Top 10</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Prevention of Vulnerabilities">
+        <keyword>coding practices</keyword>
+        <keyword>Protecting against session management attacks, XSS, SQLi, CSRF</keyword>
+    </CyBOK>
+    <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+        <keyword>dynamic detection</keyword>
+    </CyBOK>
+
+    <video>
+        <title>Cross-Site Scripting (XSS): Part 1 Types of XSS</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=bYYpsdDX43Q</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Fundamental Concepts and Approaches">
+            <keyword>cookies</keyword>
+            <keyword>CLIENT-SERVER MODELS</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Cross-Site Scripting (XSS): Part 2 Prevention</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=MJX1pShMrio</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="SS" topic="Prevention of Vulnerabilities">
+            <keyword>coding practices</keyword>
+            <keyword>Protecting against session management attacks, XSS, SQLi, CSRF</keyword>
+        </CyBOK>
+        <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+            <keyword>CROSS-SITE SCRIPTING (XSS)</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Cross-Site Scripting (XSS): Demo</title>
+        <by>Z. Cliffe Schreuders</by>
+        <url>https://www.youtube.com/watch?v=jG49H73vjng</url>
+        <type>lecture-prerecorded</type>
+        <CyBOK KA="WAM" topic="Server-Side Vulnerabilities and Mitigations">
+            <keyword>CROSS-SITE SCRIPTING (XSS)</keyword>
+            <keyword>injection vulnerabilities</keyword>
+        </CyBOK>
+        <CyBOK KA="SS" topic="Detection of Vulnerabilities">
+            <keyword>dynamic detection</keyword>
+        </CyBOK>
+    </video>
+    <video>
+        <title>Hints: XSS challenges (optional)</title>
+        <by>Thalita Vergilio</by>
+        <url>https://www.youtube.com/watch?v=jjAXSY4h2nI</url>
+        <type>lecture-prerecorded</type>
+    </video>
+
+    <system>
+        <system_name>web_server</system_name>
+        <base distro="Debian 10" type="desktop" name="KDE"/>
+
+        <input into_datastore="IP_addresses">
+            <!-- 0 web_server -->
+            <network_ip system="web_server"/>
+            <!-- 1 kali -->
+            <network_ip system="kali"/>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <generator type="account">
+                    <input into="username">
+                        <value>shepherd</value>
+                    </input>
+                    <input into="password">
+                        <value>tiaspbiqe2r</value>
+                    </input>
+                    <input into="super_user">
+                        <value>false</value>
+                    </input>
+                </generator>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/security_shepherd">
+            <input into="modules">
+                <generator type="ss_modules">
+                    <input into="filter">
+                        <value>Cross 1 2 3 4 5 6</value>
+                    </input>
+                </generator>
+            </input>
+            <input into="unix_username">
+                <value>shepherd</value>
+            </input>
+            <input into="flag_store" into_datastore="flag_store">
+                <generator type="flag_generator" module_path=".*base64">
+                    <input into="iterations">
+                        <value>6</value>
+                    </input>
+                </generator>
+            </input>
+        </vulnerability>
+
+        <input into_datastore="spoiler_admin_pass">
+            <generator type="strong_password_generator"/>
+        </input>
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+
+        <utility module_path=".*/hosts_legacy">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <network type="private_network"/>
+    </system>
+
+    <system>
+        <system_name>kali</system_name>
+        <base distro="Kali Linux Rolling" />
+
+        <input into_datastore="kali_account">
+            <value>
+                {"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+        </input>
+
+        <utility module_path=".*/parameterised_accounts">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+        </utility>
+
+        <vulnerability module_path=".*/dvwa" />
+
+        <vulnerability module_path=".*/webgoat">
+            <input into="port">
+                <value>8085</value>
+            </input>
+        </vulnerability>
+
+        <utility module_path=".*/kali_web" />
+
+        <utility module_path=".*/iceweasel">
+            <input into="accounts">
+                <datastore>kali_account</datastore>
+            </input>
+            <input into="autostart">
+                <value>true</value>
+            </input>
+            <input into="start_page">
+                <value>http://localhost:8085/WebGoat|http://localhost/|webserver</value>
+            </input>
+        </utility>
+
+
+        <utility module_path=".*/hosts">
+            <input into="hosts">
+                <value>webserver</value>
+                <value>kali</value>
+            </input>
+            <input into="IP_addresses">
+                <datastore access="0">IP_addresses</datastore>
+                <datastore access="1">IP_addresses</datastore>
+            </input>
+        </utility>
+
+        <build type="cleanup">
+            <input into="root_password">
+                <datastore>spoiler_admin_pass</datastore>
+            </input>
+        </build>
+        <network type="private_network"/>
+    </system>
+
+</scenario>

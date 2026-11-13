@@ -1,0 +1,9 @@
+Labname telnetlab
+
+Student              |      telnetview |         sshview |     failed_login |
+==================== | =============== | =============== | ===============  |
+testing_at_testing.c |                 |                 |               Y  |
+What is automatically assessed for this lab:
+	failed_login: Failed login as expected.
+	telnetview: viewed file from telnet
+	sshview: viewed file from ssh

@@ -1,0 +1,1 @@
+include amap::install

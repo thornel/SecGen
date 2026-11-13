@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Story Parts Generator</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>Returns a story, in parts.</description>
+
+  <type>string_generator</type>
+  <type>story_generator</type>
+  <type>local_calculation</type>
+  <platform>linux</platform>
+  <platform>windows</platform>
+
+  <read_fact>story</read_fact>
+  <read_fact>number_of_elements</read_fact>
+
+  <!-- will choose one -->
+  <default_input into="story">
+    <value>from_beyond_by_hp_lovecraft</value>
+  </default_input>
+  <default_input into="number_of_elements">
+    <value>5</value>
+  </default_input>
+
+  <output_type>generated_strings</output_type>
+
+</generator>

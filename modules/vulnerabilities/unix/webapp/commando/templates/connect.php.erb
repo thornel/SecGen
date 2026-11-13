@@ -1,0 +1,15 @@
+<?php
+session_start();
+$servername = "127.0.0.1";
+$username = "commando_user";
+$password = "<%= @db_password %>";
+$dbname = "store";
+
+// Create connection
+$conn2 = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+?>

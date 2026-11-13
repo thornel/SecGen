@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Information Gathering: Footprinting</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+# Introduction
+In this lab on information gathering, you will dive into the initial stage of preparing for various cybersecurity assessments and penetration tests. Information gathering involves understanding a target and its potential vulnerabilities by collecting data that can be used for social engineering attacks, identifying network ranges and exposed systems, and discovering various services that may be potential entry points for attackers. This lab focuses on identifying hosts using DNS (Domain Name System) and provides hands-on experience with tools and techniques that ethical hackers and security professionals use to gather valuable insights about their targets.
+
+Throughout this lab, you will learn how to use DNS-related commands and tools to determine IP addresses associated with domain names, perform reverse DNS lookups, explore DNS zone transfers to identify servers, and utilize Whois to extract domain ownership information. You will also work with automated DNS footprinting tools like dnstracer, dnsmap, dnsenum, and dnsrecon to efficiently collect valuable data. By the end of this lab, you will have a solid foundation in information gathering techniques that are essential for ethical hacking and security testing, allowing you to move on to the scanning phase of a target assessment.
+
+# Lecture
+[Slides here](http://z.cliffe.schreuders.org/presentations/slides/DSL_DS_OSPT_Lectures_4_Information_gathering.html)
+
+# Reading
+[Part I Casing the establishment. McClure, S. and Scambray, J. and Kurtz, G. (2009), Hacking exposed, McGraw-Hill. (ISBN: 978-0-07-161375-0) Available online via the library](https://www-dawsonera-com.ezproxy.leedsbeckett.ac.uk/readonline/9780071613750)
+  </description>
+  <lab_sheet_url>https://docs.google.com/document/d/1Whs4c_mN7fFjtrYgg_uzmCGBH_EYjr7fTAgoM-OZTqQ/edit?usp=sharing</lab_sheet_url>
+
+  <type>lab-sheet</type>
+  <difficulty>easy</difficulty>
+
+  <CyBOK KA="AB" topic="Models">
+    <keyword>kill chains</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malicious Activities by Malware">
+    <keyword>cyber kill chain</keyword>
+  </CyBOK>
+  <CyBOK KA="NS" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - DNS ZONE TRANSFER</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - RECONNAISSANCE</keyword>
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>kali</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <!-- <input into_datastore="IP_addresses">
+      <network_ip system="kali"/>
+    </input> -->
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+    <utility module_path=".*/dns_tools"/>
+
+    <!-- <network type="private_network"/> -->
+
+    <network type="public_network" />
+
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+
+  </system>
+
+</scenario>

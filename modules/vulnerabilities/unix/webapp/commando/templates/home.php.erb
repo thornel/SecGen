@@ -1,0 +1,37 @@
+<?php include 'connect.php';?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<% $page_title = 'Home' %>
+<%= scope.function_template(['commando/subtemplates/header.html.erb']) %>
+
+<body>
+
+<%= scope.function_template(['commando/subtemplates/nav.html.erb']) %>
+
+<div class="container">
+  <div class="row" id="r-banner">
+    <div id="title" class="col-6"><p>Our products:</p></div>
+    <div class="col-6"><p id="basket">Basket(0)</p></div>
+  </div>
+
+  <%# Just says nothing is in stock (TODO: basket functionality) %>
+  <?php if($_GET["submit"] === "Add") echo '<div class="error_msg">Sorry, not in stock.
+</div>
+';
+?>
+
+<% @search.each { |search| -%>
+  <%= search %>
+<% } -%>
+
+</div>
+
+<%= scope.function_template(['commando/subtemplates/libraries.html.erb']) %>
+
+</body>
+
+<%= scope.function_template(['commando/subtemplates/footer.html.erb']) %>
+
+</html>

@@ -1,0 +1,461 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Break Escape SAFETYNET: Mission 6 — Follow the Money VMs</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+# Break Escape SAFETYNET Mission 6: Follow the Money
+
+Virtual machines for the Break Escape SAFETYNET mission 6 narrative experience. These VMs back the "Follow the Money" mission, where operatives infiltrate the Crypto Anarchists' HashChain Exchange and crack their way onto the backend financial servers to map ENTROPY's funding network.
+
+Based on the "Hackme and Crack Me" CTF: gain a foothold on the exchange's backend, crack weak service passwords, then abuse credential reuse to move laterally into the accounts that hold the financial records.
+
+## Included Systems
+
+**hackme_crack_me_lab** (172.16.0.2)
+- Debian 12 desktop system — HashChain Exchange backend estate
+- Foothold: an exposed Apache Druid analytics service (unauthenticated remote code execution, CVE-2021-25646)
+- Escalation: a world-readable shadow file exposes the account hashes for offline cracking
+- Four accounts hold progressive financial intelligence flags; two of them reuse the same weak password, modelling the exchange's real credential-reuse weakness
+
+**kali_cracker** (172.16.0.3)
+- Kali Linux platform — the operative's attack box / in-game console
+- John the Ripper and hashcat for offline password cracking, Metasploit for the Apache Druid foothold, nmap for enumerating the backend estate
+
+## Flag Order (document order — do not reorder without re-checking the game side)
+
+1. **flag_1** — first backend account cracked (initial financial-server access)
+2. **flag_2** — second account opened by credential reuse (lateral movement)
+3. **flag_3** — the financial database account (transaction records)
+4. **flag_4** — full estate access via privilege escalation (complete network access)
+
+These map 1:1, in order, to the four `submit_flags` tasks in
+`BreakEscape/scenarios/m06_follow_the_money/scenario.json.erb`, which reference
+`hackme_crack_me_lab:flag_1..4`. The Break Escape flag key is the `system_name`
+of the flag-bearing target below — keep them identical.
+
+## Integration with Break Escape
+
+These VMs are provisioned by the Break Escape game engine via SecGen integration. Players interact with the systems through the game's narrative and task system, with guided hints delivered via SAFETYNET field guides handed out by Agent HaX.
+
+## CyBOK Coverage
+
+- Attacks and Exploitation (exploitation frameworks, remote code execution)
+- Authentication (bruteforce, password cracking)
+- Authorisation (credential reuse, access-control misconfiguration)
+- Penetration Testing (software tools, active penetration)
+  </description>
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/safetynet/apache-druid-rce/</lab_sheet_url>
+  <type>ctf-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>medium</difficulty>
+
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+  <CyBOK KA="SS" topic="Categories of Vulnerabilities">
+    <keyword>CVEs and CWEs</keyword>
+  </CyBOK>
+  <CyBOK KA="AAA" topic="Authentication">
+    <keyword>BRUTEFORCE</keyword>
+  </CyBOK>
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>Vulnerabilities and attacks on access control misconfigurations</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>hackme_crack_me_lab</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 backend target -->
+      <value>172.16.0.2</value>
+      <!-- 1 kali cracker -->
+      <value>172.16.0.3</value>
+    </input>
+
+    <!-- Thematic HashChain account names -->
+    <input into_datastore="usernames">
+      <!-- 0 main operator / sudoer -->
+      <value>hcops</value>
+      <!-- 1 first cracked account -->
+      <value>hcauth</value>
+      <!-- 2 credential-reuse account -->
+      <value>hcledger</value>
+      <!-- 3 financial database account -->
+      <value>hcfindb</value>
+      <!-- 4 privileged vault account (flag readable via sudo) -->
+      <value>hcvault</value>
+    </input>
+
+    <!-- Weak, crackable service passwords: fixed words from Volkova's list in the game.
+         weak_passwords[0] is reused across the auth and ledger accounts to
+         model HashChain's credential-reuse weakness (flag_1 -> flag_2).
+         The vault account (hcvault, flag_4) deliberately does NOT draw from
+         here: it is given a strong generated password so its flag is reachable
+         ONLY via hcops's sudo rights (genuine privilege escalation), not by
+         cracking the vault directly. -->
+    <input into_datastore="weak_passwords">
+      <!-- 0 shared reused password (hcauth AND hcledger) -->
+      <value>moonshot</value>
+      <!-- 1 financial database account -->
+      <value>privatekey</value>
+    </input>
+
+    <!-- Accounts on the HashChain backend.
+         FLAG ORDER IS DOCUMENT ORDER of <generator type="flag_generator"/>:
+           flag_1 = hcauth   (first account cracked)
+           flag_2 = hcledger (credential reuse)
+           flag_3 = hcfindb  (financial database)
+           flag_4 = hcvault  (read by hcops via sudo — privilege escalation) -->
+    <input into_datastore="user_accounts_desktop">
+
+      <!-- main operator: sudoer, no flag. Its sudo rights are the priv-esc path to flag_4.
+           Carries a themed ops runbook only (no flag_generator), so the estate stays a four-flag
+           scenario. The runbook reinforces the intended priv-esc route (ops -> hc-vault via sudo),
+           a findable hint, not a red herring. -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="0">usernames</datastore>
+        </input>
+        <input into="password">
+          <value>hodl</value>
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+        <input into="leaked_filenames">
+          <value>ops_runbook.txt</value>
+        </input>
+        <input into="strings_to_leak">
+          <value>HASHCHAIN BACKEND -- OPS RUNBOOK (hc-ops)
+New starter notes. Keep off customer-facing boxes.
+
+- Service accounts (hc-auth, hc-ledger, hc-findb) were set from the starter word
+  list during the migration. Yes, some share a password. On the backlog to rotate.
+- This ops account can sudo to anything (ALL=(ALL) ALL). That is how we read the
+  cold-storage index on hc-vault without the vault password -- the vault login is
+  the long generated one in the safe, nobody types it.
+- Do NOT leave the shadow world-readable again after maintenance. (It is. Fix it.)
+  -- HashChain IT</value>
+        </input>
+      </generator>
+
+      <!-- hcauth: first backend account. Weak reused password. Holds flag_1. -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="1">usernames</datastore>
+        </input>
+        <input into="password">
+          <datastore access="0">weak_passwords</datastore>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <!-- Note wrapped in a concatenate encoder (not a bare <value>) so document order is preserved:
+             SecGen hoists bare <value> strings ahead of generators, which would scramble the
+             filename->content pairing. Encoders keep order, so [note, flag] pairs with [README, flag]. -->
+        <input into="leaked_filenames">
+          <value>auth_service/README.txt</value>
+          <value>flag</value>
+        </input>
+        <input into="strings_to_leak">
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>HASHCHAIN AUTH SERVICE (hc-auth) -- service account home
+This account fronts customer logins for the exchange. Password was set from the
+ops "starter list" during the migration and never rotated. Note for whoever
+inherits this: the ledger service (hc-ledger) was handed the SAME password "to
+save time" -- if you can get in here you can get in there. Flagged to I.V.; closed.</value>
+            </input>
+          </encoder>
+          <generator type="flag_generator" /> <!-- flag_1: first backend account cracked -->
+        </input>
+      </generator>
+
+      <!-- hcledger: SAME weak password as hcauth (credential reuse). Holds flag_2. -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="2">usernames</datastore>
+        </input>
+        <input into="password">
+          <datastore access="0">weak_passwords</datastore>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <input into="leaked_filenames">
+          <value>reuse_note</value>
+          <value>flag</value>
+        </input>
+        <input into="strings_to_leak">
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>HASHCHAIN INTERNAL -- CREDENTIAL POLICY EXCEPTION
+The ledger service account was provisioned with the same password as the
+auth service account "to save time during the migration". Raised as a risk.
+Closed as accepted. If you are reading this, the risk was not theoretical.</value>
+            </input>
+          </encoder>
+          <generator type="flag_generator" /> <!-- flag_2: credential reuse / lateral movement -->
+        </input>
+      </generator>
+
+      <!-- hcfindb: the financial database account. Weak password. Holds flag_3. -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="3">usernames</datastore>
+        </input>
+        <input into="password">
+          <datastore access="1">weak_passwords</datastore>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <!-- Each note is a concatenate encoder (not a bare <value>) so document order is preserved and
+             the filename->content pairing stays 1:1 (bare values are hoisted ahead of the flag
+             generator and would scramble it). Order: README, network_analysis, settlement_log,
+             custody_index, then the flag last. -->
+        <input into="leaked_filenames">
+          <value>transaction_records/README</value>
+          <value>transaction_records/network_analysis.txt</value>
+          <value>transaction_records/settlement_log.txt</value>
+          <value>transaction_records/custody_index.csv</value>
+          <value>flag</value>
+        </input>
+        <input into="strings_to_leak">
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>HASHCHAIN -- TRANSACTION LEDGER (RESTRICTED)
+Every deposit, conversion and withdrawal the exchange has ever brokered.
+Inbound wallets of interest: 1ENTROPY2RansomInc, 1ENTROPY3ZeroDaySy, 1ENTROPY1SocialFab.
+Outbound destination of interest: 1ARCHITECT9FUND.
+This account is the financial database. Its flag confirms full read access.</value>
+            </input>
+          </encoder>
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>ENTROPY FINANCIAL NETWORK -- TRANSACTION ANALYSIS
+(P. Raghavan, draft. Not for Irina yet.)
+
+1. INTO OUR MIXER (public chain, Bitcoin side) -- paying into hc-mixer-01 (times UTC):
+   14 Jul  21:40  1ENTROPY2RansomInc  $2,400,000  ransomware proceeds, pooled across victims
+   29 Jul  22:10  1ENTROPY3ZeroDaySy  $1,200,000  exploit sales
+   03 Aug  20:05  1ENTROPY1SocialFab    $680,000  disinformation contracts
+   (Plus about $12M more since January from wallets with no names on them. Same pattern.)
+
+2. OUT OF THE MIXER
+   The middle is Monero. What comes out is a fresh Bitcoin credit into one of our own
+   cold-storage slots, and the chain can't tell me which slot. The settlement log can.
+
+3. OUT OF WHEREVER IT LANDED
+   04 Aug  $3,200,000 split six ways. Advances to 1ARCHITECT9FUND. Paid on CEO authorisation.
+
+(Margin: every cell seems to use us. Are we the bank for all of them?)</value>
+            </input>
+          </encoder>
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>hc-mixer-01 :: SETTLEMENTS TO CUSTODY
+(mixer output credited to a cold slot, credits over $100,000, times UTC)
+
+date    time   slot   credit (USD)
+14 Jul  23:05  2207     $310,400
+15 Jul  04:20  4471   $2,364,000
+30 Jul  05:05  4471   $1,182,000
+04 Aug  03:35  4471     $669,800
+04 Aug  09:00  8846     $133,750
+
+Exception note: every flagged deposit into the mixer this month was released by the
+same account (CTO override). Slot 4471 has no customer behind it. -- P.R.</value>
+            </input>
+          </encoder>
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value># HashChain cold-storage custody index. Labels are whatever the account
+# manager typed. Trust the money, not the label. -- I.V.
+slot,label,opened_by,opened
+2207,OTC desk settlement,CEO,2023-02
+3815,customer reserve B,CEO,2022-09
+4471,client escrow,ops,2025-05
+5093,client escrow,CEO,2025-04
+6120,market-making float,CEO,2024-08
+8846,fees,ops,2024-01</value>
+            </input>
+          </encoder>
+          <generator type="flag_generator" /> <!-- flag_3: financial database access -->
+        </input>
+      </generator>
+
+      <!-- hcvault: privileged vault account. STRONG generated password, so the
+           flag in its 0600 home is NOT crackable directly; the only intended route
+           is hcops via sudo (privilege escalation), completing the estate. -->
+      <generator type="account">
+        <input into="username">
+          <datastore access="4">usernames</datastore>
+        </input>
+        <input into="password">
+          <generator type="strong_password_generator"/>
+        </input>
+        <input into="super_user">
+          <value>false</value>
+        </input>
+        <!-- Notes as concatenate encoders (order-preserving) with the flag generator last, so the flag
+             lands in cold_storage/full_access_flag and the two notes in their named files. -->
+        <input into="leaked_filenames">
+          <value>cold_storage/THE_ARCHITECTS_FUND.txt</value>
+          <value>cold_storage/custody_procedure.txt</value>
+          <value>cold_storage/full_access_flag</value>
+        </input>
+        <input into="strings_to_leak">
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>THE ARCHITECT'S FUND -- STRATEGIC ALLOCATION
+CUSTODY: cold slot 4471 (1ARCHITECT9FUND)
+AUTHORISED: Satoshi's Ghost (Crypto Anarchists), for The Architect
+
+Advances paid (4 August): $3.2M
+Balance pending: $12.8M USD (BTC equivalent)
+Release: pre-signed by Satoshi's Ghost. Goes out on its own in 72 hours unless the
+         wallet is moved first.
+
+PER CELL (advance paid / balance pending):
+- Critical Mass: $0.8M / $3.2M. Pacific Northwest grid control
+- Ghost Protocol: $0.4M / $1.5M. Operation Fracture (election data centre)
+- Social Fabric: $0.5M / $2.1M. Operation Fracture, with Ghost Protocol
+- Supply Chain Saboteurs: $0.3M / $1.3M. Operation Trojan Horse
+- Digital Vanguard: $0.5M / $1.9M. Operation Meltdown (hospitals)
+- Zero Day Syndicate: $0.7M / $2.8M. Operation Meltdown, ordnance
+
+OPERATION: The Architect's Masterpiece    COORDINATOR: The Architect
+Projected casualties (cells' own estimates, all operations): 350-600</value>
+            </input>
+          </encoder>
+          <encoder module_path="modules/encoders/selector/concatenate">
+            <input into="strings_to_encode">
+              <value>HASHCHAIN COLD STORAGE -- CUSTODY PROCEDURE (hc-vault)
+Air-gapped signing keys live off this host. This account holds the slot index and
+release authorisations only. Openings are logged to the exchange's on-call phone.
+A slot opens by its four-digit number at the custody console in the data centre:
+one number per try, a wrong one shuts the pad. Trust the money, not the label. -- I.V.</value>
+            </input>
+          </encoder>
+          <generator type="flag_generator" /> <!-- flag_4: complete network access via priv-esc -->
+        </input>
+      </generator>
+    </input>
+
+    <input into_datastore="desktop_root_password">
+      <generator type="strong_password_generator"/>
+    </input>
+
+    <!-- Create the users -->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>user_accounts_desktop</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">user_accounts_desktop</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>user_accounts_desktop</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/hash_tools"/>
+
+    <!-- Foothold: exposed Apache Druid analytics service, unauthenticated RCE
+         (CVE-2021-25646). Druid lands user_rwx code execution as the service
+         account, the mission's foothold onto the box and to the readable shadow.
+         Deliberately carries NO flag_generator so the scenario has exactly four
+         flags, all on the accounts above, in the order the game expects. The
+         Druid RCE is the way ONTO the box (and to the readable shadow file);
+         the flags are the cracking/reuse/priv-esc rewards, not the foothold.
+         Leak interface mirrors scenarios/ctf/eventful_data.xml (strings_to_leak
+         + leaked_filenames); port defaults to random_unregistered_port. -->
+    <vulnerability module_path=".*/apache_druid_rce">
+      <input into="strings_to_leak">
+        <value>HASHCHAIN EXCHANGE -- hc-analytics-01 (Apache Druid dashboards, backend LAN)
+# This is the no-auth analytics console Priya runs the transaction reports on.
+# If you are reading this, you have code execution on the backend estate.
+#
+# From here: the shadow file was left world-readable (another "we'll fix it after
+# the migration" job). Read it, take the service-account hashes offline and crack
+# them. The accounts you want are the HashChain service accounts (hc*), not root.
+# Start with hc-auth; the ledger service shares its password. The money is on
+# hc-findb. Cold storage (hc-vault) is reachable from the ops account over sudo.
+#   -- HashChain IT, backend runbook (do not leave on the box)</value>
+      </input>
+      <!-- Filename kept as druid_foothold_note: the m06 solve reads this note back by exact name
+           (find -name druid_foothold_note) in its foothold proof, so only the CONTENT is themed. -->
+      <input into="leaked_filenames">
+        <value>druid_foothold_note</value>
+      </input>
+    </vulnerability>
+
+    <!-- World-readable shadow file: exposes the account hashes for offline cracking -->
+    <vulnerability module_path=".*/readable_shadow"/>
+
+    <vulnerability module_path=".*/ssh_root_login">
+      <input into="root_password">
+        <datastore>desktop_root_password</datastore>
+      </input>
+    </vulnerability>
+
+    <network type="private_network">
+      <input into="IP_address">
+        <datastore access="0">IP_addresses</datastore>
+      </input>
+    </network>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>kali_cracker</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_pwtools"/>
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <network type="private_network">
+      <input into="IP_address">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </network>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

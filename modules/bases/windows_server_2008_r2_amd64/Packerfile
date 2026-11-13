@@ -1,0 +1,56 @@
+{
+"builders": [{
+
+  "type": "virtualbox-iso",
+  "vboxmanage": [
+  
+  
+  
+  [ "modifyvm", "{{.Name}}", "--natpf1", "winrm,tcp,,5985,,5985" ]
+  ],
+  "guest_os_type": "Windows2008_64",
+
+
+"headless": true,
+"disk_size": 61440,
+"iso_url": "http://download.microsoft.com/download/7/5/E/75EC4E54-5B02-42D6-8879-D8D3A25FBEF7/7601.17514.101119-1850_x64fre_server_eval_en-us-GRMSXEVAL_EN_DVD.iso",
+"iso_checksum": "4263be2cf3c59177c45085c0a7bc6ca5",
+"iso_checksum_type": "md5",
+"communicator": "winrm",
+"winrm_username": "vagrant",
+"winrm_password": "vagrant",
+"winrm_port": "5985",
+"winrm_timeout": "5h",
+"shutdown_command": "shutdown /s /t 10 /f /d p:4:1 /c \"Packer Shutdown\"",
+"shutdown_timeout": "1h",
+"floppy_files": [
+"Autounattend.xml"
+]
+}],
+"provisioners": [
+{
+"type": "windows-shell",
+"script": "scripts/vm-guest-tools.bat",
+"execute_command": "{{ .Vars }} cmd /c {{ .Path }}"
+},
+{
+"type": "powershell",
+"environment_vars": "PuppetVersion=3.8.7",
+"script": "puppet_install/windows.ps1"
+}
+],
+"post-processors": [
+{
+"type": "vagrant",
+"keep_input_artifact": false,
+"override": {
+"virtualbox": {
+"output": "/home/laptop02/bin/SecGen/.generated/windows_2008_64_virtualbox.box"
+},
+"vmware": {
+"output": "/home/laptop02/bin/SecGen/.generated/windows_2008_64_vmware_esxi.box"
+}
+}
+}
+]
+}

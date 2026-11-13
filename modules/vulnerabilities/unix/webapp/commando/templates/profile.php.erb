@@ -1,0 +1,82 @@
+<?php
+include('connect.php');
+
+if(!isset($_SESSION['username'])){
+ header("Location:login.php");
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<% $page_title = "User-Portal" %>
+<%= scope.function_template(['commando/subtemplates/header.html.erb']) %>
+
+<body>
+
+<%= scope.function_template(['commando/subtemplates/nav.html.erb']) %>
+<div class="container">
+  <div class="row">
+    <div id="pp-holder">
+      <img src="images/icon.png" alt="avi" id="pp">
+    </div>
+  </div>
+
+  <div class="row" id="success">
+    Welcome <?php echo $_SESSION['username'];?>
+  </div>
+
+  <div id="details">
+    <h3>Your Account:</h3>
+    <?php
+      $user = $_SESSION['username'];
+      $info="SELECT  * FROM <%= @user_table_name %> WHERE Username='$user'";
+      $result=mysqli_query($conn2, $info);
+      $row=mysqli_fetch_assoc($result);
+      $id = $row['ID'];
+       ?>
+    <div>
+      <ul>
+        <li>ID: <?php echo $row['ID']; ?></li>
+        <li>Name: <?php echo $row['name'];?></li>
+        <li>Address: <?php echo $row['address']; ?></li>
+        <li>Mobile: <?php echo $row['mobile']; ?></li>
+        <li>Email: <?php echo $row['Email']; ?></li>
+      </ul>
+    </div>
+    <?php
+      <%#
+      This is the default admin login credentials which is a new concept not using
+      lauras code, however it does utilse her verbose error message vulnerability and takes
+      inspiration from Secuirty Shepard: https://www.owasp.org/index.php/Top_10_2013-A5-Security_Misconfiguration
+      %>
+      $admin_uname = "<%= @admin_username %>";
+      if ($row['Username'] == $admin_uname) {
+        ?>
+    <div id="success">
+      <?php echo $_SESSION['updated']?>
+      Well Done, you have logged into an admin account!<br/>
+      This account had default Log-in Credentials! Keep hunting!<br/>
+      Here is a flag:
+      <div id="flag"><%= @default_login_flag %></div>
+    </div>
+    <?php
+      }
+      ?>
+    <% @insecure_cookie.each { |insecure_cookie| -%>
+      <%= insecure_cookie %>
+    <% } -%>
+    <footer class="footer">
+      <ul>
+        <li>
+          <a href="update_profile.php">Update Profile</a>
+        </li>
+        <li>
+          <a href="logout.php">Logout</a>
+        </li>
+      </ul>
+    </footer>
+  </div>
+</div>
+</body>
+<%= scope.function_template(['commando/subtemplates/libraries.html.erb']) %>
+</html>

@@ -1,0 +1,241 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Let's Go Phishing</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    # Introduction
+    Humans play a crucial role in the cyber security of systems and information. Many attacks target users and their mental models of cyber security systems and risk. For example, if an attacker can trick a user into performing tasks for them, the attacker can achieve their goals and gain access that they are not authorised to. Human behavior often serves as both the first line of defense and the weakest link. This lab delves into the critical role humans play in safeguarding systems and information. It highlights the fact that even the most robust technical defenses can be compromised due to human error and deception. This lab primarily focuses on a pervasive cyber threat - phishing attacks. Phishing, an artful manipulation of human psychology, lures individuals into compromising security by tricking them into revealing sensitive information, clicking malicious links, or installing malware. Through this hands-on exercise, you will gain insights into how attackers exploit human vulnerabilities, learn the tactics used to craft convincing phishing emails, and explore techniques to create malicious attachments that can compromise a user's system.
+
+    In this lab, you will embark on a simulated cybersecurity mission within a fictitious organization. Your objective is to browse the organization's website to gather information on employees, email addresses, and their potential interests. You will then employ the tactics of engagement by sending targeted phishing emails to these individuals, using techniques such as spoofing emails, creating malicious attachments (executable programs, LibreOffice documents with macros), and more. As your victims respond to your emails, they will reveal why they trust or distrust your messages, providing invaluable feedback. The ultimate goal is to persuade these users to open the malicious attachments, granting you remote access to their systems. Your mission culminates in accessing the coveted "flag" files hidden in each victim's home directory, which you will submit as proof of your success. This lab offers a unique opportunity to understand how cybersecurity threats exploit human psychology, providing a practical foundation to enhance cyber awareness and strengthen defenses against these deceptive tactics.
+  </description>
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/cyber_security_landscape/3-phishing/</lab_sheet_url>
+  <type>ctf-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>easy</difficulty>
+
+  <CyBOK KA="HF" topic="Human Error">
+    <keyword>latent usability failures in systems-of-systems</keyword>
+  </CyBOK>
+  <CyBOK KA="AB" topic="Attacks">
+    <keyword>SOCIAL ENGINEERING</keyword>
+    <keyword>MALICIOUS ACTIVITIES BY MALICIOUS ATTACHMENTS</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+    <keyword>MALCODE/MALWARE - SOCIAL ENGINEERING - BAITING</keyword>
+    <keyword>MALCODE/MALWARE - SOCIAL ENGINEERING - PRETEXTING</keyword>
+    <keyword>MALCODE/MALWARE - VIRUSES - COUNTERMEASURES</keyword>
+    <keyword>MALCODE/MALWARE - VIRUSES - MACRO VIRUSES</keyword>
+    <keyword>MALCODE/MALWARE - SPAM</keyword>
+    <keyword>MALCODE/MALWARE - SPOOFING</keyword>
+  </CyBOK>
+  <CyBOK KA="WAM" topic="Client-Side Vulnerabilities and Mitigations">
+    <keyword>E-MAIL - PHISHING</keyword>
+    <keyword>E-MAIL - SPOOFING</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>victim_server</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 victim -->
+      <network_ip system="victim_server"/>
+      <!-- 1 kali -->
+      <network_ip system="kali"/>
+    </input>
+
+
+    <service module_path=".*/phish_me_website"/>
+    <service module_path=".*/mailserver">
+      <input into="server_ip">
+        <value>accountingnow.com</value>
+      </input>
+    </service>
+    <vulnerability module_path=".*/phish_victim_bot">
+      <input into="usernames">
+        <value>s.lord</value>
+        <value>m.pierce</value>
+        <value>c.hampshire</value>
+        <value>j.addams</value>
+        <value>j.baker</value>
+        <value>j.wilkinson</value>
+      </input>
+      <input into="passwords">
+        <value>newbie</value>
+        <value>oldguy</value>
+        <value>jobgiver</value>
+        <value>kingmaker</value>
+        <value>monkeys</value>
+        <value>monkeys</value>
+      </input>
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+        <generator type="flag_generator" />
+        <generator type="flag_generator" />
+        <generator type="flag_generator" />
+        <generator type="message_generator" />
+        <generator type="message_generator" />
+      </input>
+      <input into="leaked_filenames">
+        <value>flag</value>
+        <value>flag</value>
+        <value>flag</value>
+        <value>flag</value>
+        <value>file</value>
+        <value>file</value>
+      </input>
+
+      <input into="server_ip">
+        <datastore access="0">IP_addresses</datastore>
+      </input>
+
+      <input into="phish_victim_bot_configs">
+<value>user=s.lord
+pass=newbie
+server=localhost
+recipients_name=sofia|lord
+trusted_sender=j.addams@
+senders_name=john|addams
+relevant_keyword=intern|update|install
+num_keywords=1
+accepted_file_extension=
+suspicious_of_file_name=false
+reject_all=false</value>
+<value>user=m.pierce
+pass=oldguy
+server=localhost
+recipients_name=melanie|pierce
+trusted_sender=j.baker@
+senders_name=jed|baker
+relevant_keyword=finance|balance|sheet|profit|loss|account
+num_keywords=2
+accepted_file_extension=ods
+suspicious_of_file_name=false
+reject_all=false</value>
+<value>user=c.hampshire
+pass=jobgiver
+server=localhost
+recipients_name=
+trusted_sender=careers@
+senders_name=
+relevant_keyword=
+num_keywords=0
+accepted_file_extension=odt
+suspicious_of_file_name=true
+reject_all=false</value>
+<value>user=j.addams
+pass=kingmaker
+server=localhost
+recipients_name=
+trusted_sender=
+senders_name=
+relevant_keyword=cat|joke
+num_keywords=1
+accepted_file_extension=
+suspicious_of_file_name=false
+reject_all=false</value>
+        <generator type="phish_victim_bot_config_generator">
+          <input into="user">
+            <value>j.baker</value>
+          </input>
+          <input into="pass">
+            <value>monkeys</value>
+          </input>
+          <input into="reject_all">
+            <value>true</value>
+          </input>
+        </generator>
+        <generator type="phish_victim_bot_config_generator">
+          <input into="user">
+            <value>j.wilkinson</value>
+          </input>
+          <input into="pass">
+            <value>monkeys</value>
+          </input>
+          <input into="reject_all">
+            <value>true</value>
+          </input>
+        </generator>
+      </input>
+    </vulnerability>
+
+    <utility module_path=".*/handy_cli_tools"/>
+
+    <input into_datastore="desktop_root_password">
+      <generator type="strong_password_generator"/>
+    </input>
+    <vulnerability module_path=".*/ssh_root_login">
+      <input into="root_password">
+        <datastore>desktop_root_password</datastore>
+      </input>
+    </vulnerability>
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>victim_server</value>
+        <value>accountingnow.com</value>
+        <value>kali</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="0">IP_addresses</datastore>
+        <datastore access="0">IP_addresses</datastore>
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <system>
+    <system_name>kali</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_pwtools"/>
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+    <utility module_path=".*/thunderbird"/>
+    <utility module_path=".*/libreoffice"/>
+    <!-- TODO user a normal user, and pass accounts to thunderbird -->
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>victim_server</value>
+        <value>accountingnow.com</value>
+        <value>kali</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="0">IP_addresses</datastore>
+        <datastore access="0">IP_addresses</datastore>
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

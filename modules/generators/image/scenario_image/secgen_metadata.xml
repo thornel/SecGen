@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+  <name>Scenario Image Generator</name>
+  <author>Jason Zeller</author>
+  <module_license>MIT</module_license>
+  <description>Selects a specific image from the lib/resources/images/scenario directory in base64 format.</description>
+
+  <type>scenario_image_generator</type>
+  <type>local_calculation</type>
+  <platform>linux</platform>
+  <platform>windows</platform>
+
+  <read_fact>image_filename</read_fact>
+
+  <output_type>base64_encoded_image</output_type>
+
+</generator>

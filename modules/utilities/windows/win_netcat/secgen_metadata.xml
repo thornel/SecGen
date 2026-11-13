@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Netcat for Windows</name>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>MIT</module_license>
+  <description>This module drops netcat (nc.exe) into system32. The netcat utility is used for just about anything under the sun involving TCP, UDP, or UNIX-domain sockets.
+    It can open TCP connections, send UDP packets, listen on arbitrary TCP and UDP ports, and do port scanning.
+    This version includes the -e argument which can be used to feed a shell.
+  </description>
+
+  <type>update</type>
+  <platform>windows</platform>
+
+  <!--optional details-->
+  <reference>https://github.com/diegocr/netcat</reference>
+  <reference>https://eternallybored.org/misc/netcat/</reference>
+  <software_name>windows_update</software_name>
+  <software_license>GPLv2</software_license>
+
+  <!-- for now we just make all windows modules conflict with linux bases -->
+  <conflict>
+    <module_path>bases/.*</module_path>
+    <platform>linux</platform>
+  </conflict>
+
+</utility>

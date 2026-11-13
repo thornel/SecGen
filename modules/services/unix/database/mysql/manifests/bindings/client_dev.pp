@@ -1,4 +1,8 @@
-# Private class
+# @summary
+#   Private class for installing client development bindings
+#
+# @api private
+#
 class mysql::bindings::client_dev {
 
   if $mysql::bindings::client_dev_package_name {
@@ -9,7 +13,7 @@ class mysql::bindings::client_dev {
       provider        => $mysql::bindings::client_dev_package_provider,
     }
   } else {
-    warning("No MySQL client development package configured for ${::operatingsystem}.")
+    warning(translate('No MySQL client development package configured for %{os}.', {'os' => $::operatingsystem }))
   }
 
 }

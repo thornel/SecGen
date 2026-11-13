@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Ghidra
+Exec=/bin/bash /opt/ghidra/ghidraRun
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Development;
+Icon=/opt/ghidra/docs/GhidraClass/Advanced/ghidraRight.png

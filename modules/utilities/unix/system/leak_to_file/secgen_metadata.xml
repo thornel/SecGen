@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<utility xmlns="http://www.github/cliffe/SecGen/utility"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.github/cliffe/SecGen/utility">
+  <name>Leak base64 to file</name>
+  <author>Puppet Labs</author>
+  <author>Jason Zeller</author>
+  <module_license>MIT</module_license>
+  <description>Leak base64 to a file where specified by storage_directory.</description>
+
+  <type>system</type>
+  <platform>linux</platform>
+
+  <!--optional details-->
+  <reference>https://forge.puppet.com/puppetlabs/accounts</reference>
+
+  <read_fact>leaked_filename</read_fact>
+  <read_fact>base64_file</read_fact>
+  <read_fact>storage_directory</read_fact>
+  <read_fact>account</read_fact>
+
+  <default_input into="leaked_filename">
+    <value/>
+  </default_input>
+
+  <default_input into="base64_file">
+    <value/>
+  </default_input>
+
+  <default_input into="storage_directory">
+    <value>/var/log</value>
+  </default_input>
+
+</utility>

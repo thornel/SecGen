@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Resolution auto
+GenericName=Resolution auto
+Comment=Autostart script for automatic resolution adjustment
+Exec=/opt/auto-resolution/auto-resolution.sh
+Terminal=false
+StartupNotify=false
+X-GNOME-Autostart-enabled=true

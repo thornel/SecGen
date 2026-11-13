@@ -1,0 +1,69 @@
+# Data Loss Prevention and Exfiltration Detection
+
+This week's lab is entirely problem-based.
+
+## Getting started
+### VMs in this lab
+
+==Start these VMs== (if you haven't already):
+
+- hackerbot_server (leave it running, you don't log into this)
+- ids_monitor (IP address: <%= $ids_server_ip %>)
+- web_server (IP address: <%= $web_server_ip %>, leave it running, you don't log into this through the gui console, you may ssh to it later in the lab)
+- desktop
+
+All of these VMs need to be running to complete the lab.
+
+**Ensure the ids_monitor VM is allowed promiscuous mode.** If you are completing this lab on Leeds Beckett oVirt infrastructure, this should be sorted. Otherwise, if you have used SecGen to spin up VMs, you need to ensure your VMs have permission to monitor networks using promiscuous mode. On the Leeds Beckett oVirt infrastructure we have snoop networks, which mirror all the traffic between systems. On Virtualbox, you would need to go to Advanced network settings for the host-only network on the ids_monitor and enable promiscious mode.
+
+### Your login details for the "desktop" and "ids_monitor" VMs
+User: <%= $main_user %>
+Password: tiaspbiqe2r (**t**his **i**s **a** **s**ecure **p**assword **b**ut **i**s **q**uite **e**asy **2** **r**emember)
+
+You won't login to the hackerbot_server or web_server, but all the VMs need to be running to complete the lab.
+
+## Hackerbot!
+![small-right](images/skullandusb.svg)
+
+This exercise involves interacting with Hackerbot, a chatbot who will task you to monitor the network and will attack your systems. If you satisfy Hackerbot by completing the challenges, she will reveal flags to you.
+
+Work through the below exercises, completing the Hackerbot challenges as noted.
+
+---
+## Getting Snort up and running
+
+**On the ids_monitor VM:**
+
+==Confirm Snort's output== is set to something readable:
+
+```bash
+sudo vi /etc/snort/snort.conf
+```
+> (Remember: editing using vi involves pressing "i" to insert/edit text, then *Esc*,
+
+> ":wq" to write changes and quit)
+
+==Check for the following lines:==
+`output alert_fast`
+`output log_tcpdump: tcpdump.log`
+
+```bash
+sudo vi /etc/snort/snort.debian.conf
+```
+==Check Snort's interface== which will be ens19 (or as you identified earlier), and the local network is set to your IP address range (or "any"):
+
+> Confirm the above, and exit vi (Esc, ":wq").
+
+==Restart Snort:==
+
+```bash
+sudo service snort stop
+sudo service snort start
+```
+> Using "reload" or "restart" may not update the interface.
+
+Snort should now be running, monitoring network traffic for activity.
+
+It can be helpful to monitor network traffic while writing IDS rules. You can start Wireshark with `sudo wireshark &amp;`
+
+Remember, you should add your rules to `/etc/snort/rules/local.rules`

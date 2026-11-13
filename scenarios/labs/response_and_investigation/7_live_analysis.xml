@@ -1,0 +1,352 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Live analysis lab</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    # Introduction
+    In this lab, you will dive into the world of digital forensics and incident response by investigating a potentially compromised server. Security breaches and compromises are a common occurrence in the digital age, and it's essential to understand how to analyze and gather evidence from a compromised system to determine the extent of the intrusion and identify potential threats. This lab will walk you through the process of live system analysis, using both standard Unix commands and tools provided by the FIRE (Forensic and Incident Response Environment) CD/DVD ISO, in order to collect volatile data and assess the system's security.
+
+    Throughout this hands-on lab, you will learn essential techniques for live system analysis, such as collecting information about running processes, network connections, kernel modules, and system state. You will also explore the use of static binaries to avoid potential tampering with dynamically linked executables. Additionally, you will employ tools like Chkrootkit to detect rootkits and perform offline analysis to uncover any suspicious activity or security breaches. By completing tasks such as creating a list of suspicious open ports, identifying unreported processes, and analyzing the output of data collection scripts, you will gain practical experience in investigating compromised systems, a crucial skill for cybersecurity professionals and digital forensics experts.
+
+    This is a Hackerbot lab. Work through the lab sheet, then interact with Hackerbot to complete the challenges.
+  </description>
+
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/response_and_investigation/7-live-analysis/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>hackerbot-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>intermediate</difficulty>
+
+  <CyBOK KA="F" topic="Main Memory Forensics">
+    <keyword>process information</keyword>
+    <keyword>file information</keyword>
+    <keyword>network connections</keyword>
+    <keyword>artifacts and fragments</keyword>
+    <keyword>challenges of live forensics</keyword>
+  </CyBOK>
+  <CyBOK KA="OSV" topic="OS Hardening">
+    <keyword>anomaly detection</keyword>
+  </CyBOK>
+  <CyBOK KA="AAA" topic="Accountability">
+    <keyword>The fallibility of digital evidence to tampering</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malware Detection">
+    <keyword>identifying the presence of malware</keyword>
+  </CyBOK>
+
+  <video>
+    <title>Live System Analysis: Concepts</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/aNvVtF437LI</url>
+    <type>lecture-prerecorded</type>
+    <CyBOK KA="F" topic="Main Memory Forensics">
+      <keyword>process information</keyword>
+      <keyword>file information</keyword>
+      <keyword>network connections</keyword>
+      <keyword>artifacts and fragments</keyword>
+      <keyword>challenges of live forensics</keyword>
+    </CyBOK>
+    <CyBOK KA="OSV" topic="OS Hardening">
+      <keyword>anomaly detection</keyword>
+    </CyBOK>
+    <CyBOK KA="AAA" topic="Accountability">
+      <keyword>The fallibility of digital evidence to tampering</keyword>
+    </CyBOK>
+    <CyBOK KA="MAT" topic="Malware Detection">
+      <keyword>identifying the presence of malware</keyword>
+    </CyBOK>
+  </video>
+  <video>
+    <title>Live System Analysis: Tools Demo</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://www.youtube.com/watch?v=iUInvMrBw3k</url>
+    <type>demo-prerecorded</type>
+    <CyBOK KA="F" topic="Main Memory Forensics">
+      <keyword>process information</keyword>
+      <keyword>file information</keyword>
+      <keyword>network connections</keyword>
+      <keyword>artifacts and fragments</keyword>
+      <keyword>challenges of live forensics</keyword>
+    </CyBOK>
+    <CyBOK KA="OSV" topic="OS Hardening">
+      <keyword>anomaly detection</keyword>
+    </CyBOK>
+    <CyBOK KA="AAA" topic="Accountability">
+      <keyword>The fallibility of digital evidence to tampering</keyword>
+    </CyBOK>
+    <CyBOK KA="MAT" topic="Malware Detection">
+      <keyword>identifying the presence of malware</keyword>
+    </CyBOK>
+  </video>
+  <video>
+    <title>Investigating a running process</title>
+    <by>Z. Cliffe Schreuders</by>
+    <url>https://youtu.be/9nyvtJRQ17w</url>
+    <type>demo-prerecorded</type>
+    <CyBOK KA="F" topic="Main Memory Forensics">
+      <keyword>process information</keyword>
+      <keyword>file information</keyword>
+      <keyword>network connections</keyword>
+    </CyBOK>
+  </video>
+
+  <system>
+    <system_name>desktop</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="main_username">
+      <generator type="random_sanitised_word">
+        <input into="wordlist">
+          <value>mythical_creatures</value>
+        </input>
+      </generator>
+    </input>
+    <input into_datastore="hidden_string">
+      <generator module_path=".*/random_hex"/>
+    </input>
+    <input into_datastore="nc_port">
+      <generator module_path=".*/random_unregistered_port" />
+    </input>
+
+    <input into_datastore="IP_addresses">
+      <!-- desktop -->
+      <network_ip system="desktop"/>
+      <!-- hackerbot -->
+      <network_ip system="hackerbot_server"/>
+      <!-- compromised -->
+      <network_ip system="compromised_server"/>
+    </input>
+
+    <!-- "accounts_compromised" is specified below -->
+    <input into_datastore="accounts">
+      <generator type="account">
+        <input into="username">
+          <datastore>main_username</datastore>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+      </generator>
+    </input>
+
+    <!-- an admin account used for hackerbot access to the desktop and also spoilers/administration of the challenge -->
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <input into_datastore="hackerbot_key">
+      <generator type="ssh_key_pair"/>
+    </input>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/binary_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>hackerbot</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <datastore access="0">accounts</datastore>
+      </input>
+      <input into="start_page">
+        <value>hackerbot:8080</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+
+  <system>
+    <system_name>hackerbot_server</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <service module_path=".*/ergochat"/>
+
+    <utility module_path=".*/hackerbot_webclient">
+      <input into="username">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="irc_server_ip">
+        <value>hackerbot</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/nmap"/>
+
+    <service type="httpd"/>
+
+    <utility module_path=".*/hackerbot">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+      <input into="hackerbot_configs">
+        <generator module_path=".*/live_analysis_v2">
+          <input into="accounts">
+            <datastore>accounts</datastore>
+          </input>
+
+          <input into="hackerbot_server_ip">
+            <datastore access="1">IP_addresses</datastore>
+          </input>
+          <input into="compromised_server_ip">
+            <datastore access="2">IP_addresses</datastore>
+          </input>
+          <input into="hidden_port">
+            <datastore>nc_port</datastore>
+          </input>
+          <input into="hidden_string">
+            <datastore>hidden_string</datastore>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+
+    <system>
+      <system_name>compromised_server</system_name>
+      <base distro="Debian 12" type="desktop" name="KDE"/>
+
+
+      <input into_datastore="accounts_compromised">
+        <generator type="account">
+          <input into="username">
+            <datastore>main_username</datastore>
+          </input>
+          <input into="password">
+            <value>tiaspbiqe2r</value>
+          </input>
+          <input into="super_user">
+            <value>true</value>
+          </input>
+          <input into="leaked_filenames">
+            <value>u_r_powned-hme</value>
+            <value>.a_hidden_flag-hme</value>
+            <datastore>hidden_string</datastore>
+          </input>
+          <input into="strings_to_leak">
+            <generator type="random_line_generator">
+              <input into="linelist">
+                <value>powned_messages</value>
+              </input>
+            </generator>
+            <generator type="flag_generator" />
+            <generator type="flag_generator" />
+          </input>
+        </generator>
+      </input>
+
+      <!-- Install LiME as /proc/kcore dump doesn't work with 64-bit bases since Linux 4.8 -->
+      <utility module_path=".*./lime"/>
+
+      <vulnerability module_path=".*/nc_backdoor">
+        <input into="port">
+          <datastore>nc_port</datastore>
+        </input>
+        <input into="strings_to_leak">
+          <generator type="flag_generator" />
+        </input>
+      </vulnerability>
+
+      <!-- rootkit has to be defined before accounts are created -->
+      <utility module_path=".*/alias_rootkit">
+        <input into="hidden_ports">
+          <datastore>nc_port</datastore>
+        </input>
+        <input into="hidden_strings">
+          <value>ncat</value>
+          <value>hme</value>
+          <datastore>hidden_string</datastore>
+        </input>
+      </utility>
+
+      <!-- TODO: these executables don't work on Stretch -->
+      <utility module_path=".*/adore_rootkit_static"/>
+      <!-- required for chkrootkit -->
+      <utility module_path=".*/binary_tools"/>
+
+      <utility module_path=".*/parameterised_accounts">
+        <input into="accounts">
+          <datastore>accounts_compromised</datastore>
+        </input>
+      </utility>
+
+      <service module_path=".*/vsftpd"/>
+
+      <service type="pop3"/>
+
+      <service module_path="services/unix/http/parameterised_website">
+        <!-- <input into="organisation">
+          <datastore>organisation</datastore>
+        </input> -->
+      </service>
+
+      <utility module_path=".*/hackerbot_client">
+        <input into="ssh_key_pair">
+          <datastore>hackerbot_key</datastore>
+        </input>
+      </utility>
+
+      <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+    </system>
+
+</scenario>

@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  <name>Phish Victim Bot</name>
+  <author>Michael Oultram</author>
+  <author>Stefan Paiu</author>
+  <author>Z. Cliffe Schreuders</author>
+  <module_license>Apache v2</module_license>
+  <description>A bot that replies to emails, and can be the victim of spear phishing. Polls an email server, listening to incomming email, and opens attachements, if spearphishing criteria are met.
+
+  You must provide the same number of configs as usernames. User accounts are created for you.</description>
+
+  <type>phishing</type>
+  <privilege>user_rwx</privilege>
+  <!-- TODO: this can lead to local access, but need to test the default config does before setting here -->
+  <access>user_action</access>
+  <platform>unix</platform>
+  <difficulty>medium</difficulty>
+
+  <read_fact>strings_to_leak</read_fact>
+  <read_fact>leaked_filenames</read_fact>
+  <read_fact>phish_victim_bot_configs</read_fact>
+  <read_fact>usernames</read_fact>
+  <read_fact>passwords</read_fact>
+
+  <default_input into="strings_to_leak">
+    <generator type="message_generator"/>
+    <generator type="message_generator"/>
+  </default_input>
+
+  <default_input into="leaked_filenames">
+    <generator type="filename_generator"/>
+    <generator type="filename_generator"/>
+  </default_input>
+
+  <!-- must provide the same number of configs as users! -->
+  <default_input into="phish_victim_bot_configs">
+    <generator type="phish_victim_bot_config_generator"/>
+  </default_input>
+  <default_input into="usernames">
+    <value>mailuser</value>
+  </default_input>
+  <default_input into="passwords">
+    <value>password</value>
+  </default_input>
+
+<!-- https://www.cs.bham.ac.uk/~tpc/LearnToPhish/ -->
+<!-- https://www.usenix.org/system/files/conference/ase18/ase18-paper_chothia.pdf -->
+
+  <requires>
+    <module_path>.*/puppet_module/cron.*</module_path>
+  </requires>
+  <requires>
+    <type>update</type>
+  </requires>
+
+<!-- TODO: cybok metadata -->
+</vulnerability>

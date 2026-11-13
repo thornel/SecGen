@@ -1,0 +1,3 @@
+<?php echo '<form  method="POST" action="'.$_SERVER['SCRIPT_NAME'].'">'; ?>
+<input type="text" name="search">
+<input type="submit" name="submit" value="Search"></form>

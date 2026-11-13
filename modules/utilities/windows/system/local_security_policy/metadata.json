@@ -1,0 +1,23 @@
+{
+  "name": "ayohrling-local_security_policy",
+  "version": "0.6.3",
+  "author": "Paul S. Cannon, Adam Yohrling, Corey Osman, Ryan Russell-Yates, Jordan Wesolowski, Gerben Welter, Thomas Linkin",
+  "summary": "Windows Local Security Policy management. Forked from cannonps/local_security_policy",
+  "license": "Apache 2.0",
+  "source": "https://github.com/ayohrling/local_security_policy",
+  "project_page": "https://github.com/ayohrling/local_security_policy",
+  "issues_url": "https://github.com/ayohrling/local_security_policy/issues",
+  "dependencies": [
+  
+  ],
+  "data_provider": null,
+  "tags": [
+    "windows",
+    "security"
+  ],
+  "operatingsystem_support": [
+    {
+      "operatingsystem": "windows"
+    }
+  ]
+}

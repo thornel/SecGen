@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<vulnerability xmlns="http://www.github/cliffe/SecGen/vulnerability"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.github/cliffe/SecGen/vulnerability">
+  
+  <name>Gitlist 0.4.0 RCE</name>
+  <author>Thomas Shaw</author>
+  <module_license>MIT</module_license>
+  <description>
+    GitList versions before 0.5.0 contain a remote code execution flaw in the repository file browser.
+    A filename taken from the URL is passed to the underlying git command without adequate sanitisation
+    (the blame / file-statistics feature), so an attacker who can browse a repository can inject shell
+    metacharacters into that filename and run arbitrary commands as the web server user.
+  </description>
+
+  <type>webapp</type>
+  <type>in_the_wild</type>
+  <privilege>user_rwx</privilege>
+  <access>remote</access>
+  <platform>linux</platform>
+  <difficulty>low</difficulty>
+
+  <read_fact>port</read_fact>
+  <read_fact>strings_to_leak</read_fact>
+  <read_fact>images_to_leak</read_fact>
+  <read_fact>leaked_filenames</read_fact>
+  <read_fact>strings_to_pre_leak</read_fact>
+  <read_fact>pre_leaked_filenames</read_fact>
+  <!-- optional: a secret committed into the repo then removed in a later commit, so
+       it is gone from the working tree / HEAD but recoverable from history. Empty by
+       default (no extra commits), so scenarios that do not set it are unaffected. -->
+  <read_fact>strings_to_leak_in_history</read_fact>
+  <read_fact>history_leaked_filenames</read_fact>
+  <read_fact>history_commit_message</read_fact>
+  <read_fact>history_removal_commit_message</read_fact>
+  <!-- optional cosmetic repository identity (immersion). All default to the historical
+       values, so scenarios that do not set them are unaffected. -->
+  <read_fact>repo_name</read_fact>
+  <read_fact>commit_author_name</read_fact>
+  <read_fact>commit_author_email</read_fact>
+
+  <!-- [0] leaks flag to home directory, [1..n] leak messages to gitlist repository (visible through the webapp) -->
+  <default_input into="port">
+    <value>80</value>
+  </default_input>
+
+  <default_input into="strings_to_leak">
+    <generator type="message_generator"/>
+  </default_input>
+
+  <default_input into="leaked_filenames">
+    <generator type="filename_generator"/>
+  </default_input>
+
+  <default_input into="strings_to_pre_leak">
+    <generator type="message_generator"/>
+  </default_input>
+
+  <default_input into="pre_leaked_filenames">
+    <generator type="filename_generator"/>
+  </default_input>
+
+  <!-- empty defaults: no secret buried in history unless a scenario opts in -->
+  <default_input into="strings_to_leak_in_history">
+    <value/>
+  </default_input>
+
+  <default_input into="history_leaked_filenames">
+    <value/>
+  </default_input>
+
+  <default_input into="history_commit_message">
+    <value/>
+  </default_input>
+
+  <default_input into="history_removal_commit_message">
+    <value/>
+  </default_input>
+
+  <!-- cosmetic repository identity: unchanged historical defaults -->
+  <default_input into="repo_name">
+    <value>secret_files</value>
+  </default_input>
+  <default_input into="commit_author_name">
+    <value>gitlist</value>
+  </default_input>
+  <default_input into="commit_author_email">
+    <value>git@list.com</value>
+  </default_input>
+
+  <!--optional vulnerability details-->
+  <!-- Primary vulnerability: CVE-2014-4511, the blame/file-browser command
+       injection (exploit/linux/http/gitlist_exec). The same 0.4.0 build is also
+       vulnerable to CVE-2018-1000533, the argument-injection RCE
+       (exploit/multi/http/gitlist_arg_injection); only one <msf_module> is
+       allowed, so the arg-injection module is exercised by a second tier-3 check
+       in secgen_test. -->
+  <cve>CVE-2014-4511</cve>
+  <cve>CVE-2018-1000533</cve>
+
+  <cvss_base_score>7.5</cvss_base_score>
+  <cvss_vector>AV:N/AC:L/Au:N/C:P/I:P/A:P</cvss_vector>
+
+  <!--optional hints-->
+  <msf_module>exploit/linux/http/gitlist_exec</msf_module>
+  <hint>Visit the webapp in a browser at: ip:80/gitlist </hint>
+
+  <!-- can't live alongside other web sites, since they it accepts any virtual host name -->
+  <conflict>
+    <type>webapp</type>
+  </conflict>
+
+  <!-- Patched PHP 7.4 (php2shell fix) so only GitList's own application-level RCE
+       is exploitable (CVE-2014-4511, the blame/file-browser command injection, and
+       also CVE-2018-1000533, the argument-injection RCE), not a generic PHP shell.
+       Apache is self-contained in apache.pp; GitList uses no DB. -->
+  <requires>
+    <module_path>.*utilities/unix/languages/php7_patched.*</module_path>
+  </requires>
+
+
+</vulnerability>

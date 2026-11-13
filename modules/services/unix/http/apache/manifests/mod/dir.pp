@@ -2,10 +2,11 @@
 # Parameters:
 # - $indexes provides a string for the DirectoryIndex directive http://httpd.apache.org/docs/current/mod/mod_dir.html#directoryindex
 class apache::mod::dir (
-  $dir     = 'public_html',
-  $indexes = ['index.html','index.html.var','index.cgi','index.pl','index.php','index.xhtml'],
+  $dir                   = 'public_html',
+  Array[String] $indexes = ['index.html','index.html.var','index.cgi','index.pl','index.php','index.xhtml'],
 ) {
-  validate_array($indexes)
+
+  include ::apache
   ::apache::mod { 'dir': }
 
   # Template uses
@@ -13,6 +14,7 @@ class apache::mod::dir (
   file { 'dir.conf':
     ensure  => file,
     path    => "${::apache::mod_dir}/dir.conf",
+    mode    => $::apache::file_mode,
     content => template('apache/mod/dir.conf.erb'),
     require => Exec["mkdir ${::apache::mod_dir}"],
     before  => File[$::apache::mod_dir],

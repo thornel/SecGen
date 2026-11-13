@@ -1,0 +1,9 @@
+<p>
+  <%= @business_name %> are here.
+</p>
+<p>
+  <%# intro paragraph from the organisation JSON for more differentiation %>
+  <% @intro_paragraph.each { |intro_paragraph| -%>
+    <%= intro_paragraph %>
+  <% } -%>
+</p>

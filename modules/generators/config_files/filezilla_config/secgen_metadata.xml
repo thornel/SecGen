@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<generator xmlns="http://www.github/cliffe/SecGen/generator"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.github/cliffe/SecGen/generator">
+
+  <name>Filezilla Config File Generator</name>
+  <author>Jack Biggs</author>
+  <module_license>MIT</module_license>
+  <description>Creates a Filezilla config file which includes a host, a port and a password</description>
+
+  <type>string_generator</type>
+  <type>local_calculation</type>
+  <platform>linux</platform>
+
+  <read_fact>host</read_fact>
+  <read_fact>port</read_fact>
+  <read_fact>password</read_fact>
+  <default_input into="host">
+    <value>0.0.0.0</value>
+  </default_input>
+  <default_input into="port">
+     <value>21</value>
+  </default_input>
+  <default_input into="password">
+     <value>Nothing to see here</value>
+  </default_input>
+    <output_type>config_file</output_type>
+
+</generator>

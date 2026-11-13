@@ -1,0 +1,44 @@
+Title: HTTP Lab Exercise
+
+1. Background
+
+This Labtainer exercise explores the use of wget
+from a client computer to retrieve file content
+from a server.
+It is primarily to test artifacts in service logs.
+
+2. Performing the lab
+The lab is started from the Labtainer working 
+directory on your Docker-enabled host, e.g., a Linux VM.
+From there, issue the command:
+
+    labtainer httplab
+
+The resulting virtual terminals include a display of
+these instructions, a terminal connected to a client,
+and a terminal connected to a server.
+
+To navigate this instruction, the arrow keys along with 
+with the Space/Home/End/Page-Up/Page-Down keys are usable.
+To exit navigation of this instruction, type 'q'.
+
+3. Tasks
+3.1. Use 'wget' to get files from HTTP server
+
+Use ifconfig on the server computer to find its ip address.
+There are pre-created files 'index.html', 'link1.html' and 'link2.html'
+
+Use 'wget' to get files 'http://<IPADDr>/index.html
+
+
+4. Stop the Labtainer
+
+When the lab is completed, or you'd like to stop working for a while, run
+
+    stoplab httplab
+
+from the host Labtainer working directory.  You can always restart the
+Labtainer to continue your work.  When the Labtainer is stopped, a
+zip file is created and copied to a location displayed by the stoplab
+command.  When the lab is completed, send that zip file to the instructor.
+

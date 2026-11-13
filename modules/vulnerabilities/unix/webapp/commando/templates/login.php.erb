@@ -1,0 +1,51 @@
+<?php include 'connect.php'; ?>
+
+<% $page_title = 'Log-In' %>
+<%= scope.function_template(['commando/subtemplates/header.html.erb']) %>
+
+<body>
+
+<%= scope.function_template(['commando/subtemplates/nav.html.erb']) %>
+
+<div class="container">
+  <div class="row">
+    <div id="form-holder">
+      <form method="POST" action="authentication.php">
+        <h3>Login</h3>
+        <label><b>Username</b></label><br/>
+        <input type="text" name="username"><br/><br/>
+        <label><b>Password</b></label><br/>
+        <input type="password" name="password"><br/><br/>
+        <div class="row">
+          <div class="col-5">
+            <input type="submit" name="submit" value="Log-In" id="login-button">
+          </div>
+          <div class="col-7" id="remember">
+            <label>Remember Me!</label>
+            <input type="checkbox" value="1">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <%# facilitates the verbose error message vulnerability, this is taken from lauras code %>
+  <div class="row">
+    <?php
+          if(isset($_GET['LoginError'])){
+            //how to pull the error taken from https://stackoverflow.com/questions/10048721/php-passing-a-variable-with-header-redirect (line 23)
+            $LoginError = $_GET['LoginError'];
+            ?>
+    <strong class="error"><?php echo $LoginError; ?></strong>
+    <?php
+          }
+        ?>
+  </div>
+</div>
+
+<%= scope.function_template(['commando/subtemplates/libraries.html.erb']) %>
+
+</body>
+
+<%= scope.function_template(['commando/subtemplates/footer.html.erb']) %>
+
+</html>

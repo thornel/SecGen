@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Hackme Corp</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>A bunch of servers for you to hack.
+
+Login to the attacker VM with user: root, password: toor. There are three servers for you to attack (same IP address range, ending in .3,.4,.5), and flags are often found in home directories (/home/, /root/). Beware of red herrings.
+
+Happy hacking!
+  </description>
+
+  <type>ctf</type>
+  <type>attack-ctf</type>
+  <type>pwn-ctf</type>
+  <difficulty>easy</difficulty>
+
+  <CyBOK KA="AC" topic="Symmetric Cryptography">
+    <keyword>symmetric encryption and authentication</keyword>
+  </CyBOK>
+  <CyBOK KA="F" topic="Artifact Analysis">
+    <keyword>cryptographic hashing</keyword>
+    <keyword>Encoding and alternative data formats</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Attacks and exploitation">
+    <keyword>EXPLOITATION</keyword>
+    <keyword>EXPLOITATION FRAMEWORKS</keyword>
+  </CyBOK>
+  <CyBOK KA="SOIM" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - SOFTWARE TOOLS</keyword>
+    <keyword>PENETRATION TESTING - ACTIVE PENETRATION</keyword>
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - RECONNAISSANCE</keyword>
+  </CyBOK>
+  <CyBOK KA="NS" topic="PENETRATION TESTING">
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - FINGERPRINTING</keyword>
+    <keyword>PENETRATION TESTING - NETWORK MAPPING - NMAP</keyword>
+  </CyBOK>
+
+  <!-- escalate to user and to root -->
+  <CyBOK KA="AAA" topic="Authorisation">
+    <keyword>Elevated privileges</keyword>
+  </CyBOK>
+
+  <CyBOK KA="AB" topic="Models">
+    <keyword>kill chains</keyword>
+  </CyBOK>
+  <CyBOK KA="MAT" topic="Malicious Activities by Malware">
+    <keyword>cyber kill chain</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>attack_vm</system_name>
+    <base distro="Kali" name="MSF"/>
+
+
+    <input into_datastore="IP_addresses">
+      <!-- 0 attack_vm -->
+      <network_ip system="attack_vm"/>
+      <!-- 1 hackme_server -->
+      <network_ip system="hackme_server"/>
+      <!-- 2 hackmetoo_server -->
+      <network_ip system="hackmetoo_server"/>
+      <!-- 3 hackmethree_server -->
+      <network_ip system="hackmethree_server"/>
+    </input>
+
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <value>{"username":"kali","password":"kali","super_user":"true","strings_to_leak":[],"leaked_filenames":[]}</value>
+      </input>
+      <input into="autostart">
+        <value>false</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kali_top10"/>
+    <network type="private_network"/>
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- a vulnerability that is remotely exploitable for user level access, then can be escalated to root -->
+  <system>
+    <system_name>hackme_server</system_name>
+    <base distro="Debian" type="server"/>
+
+    <utility module_path=".*/after_login_message">
+      <input into="strings_to_leak">
+        <encoder type="string_format_encoder">
+          <input into="strings_to_encode">
+            <value>Hackme</value>
+          </input>
+        </encoder>
+        <value>Well done! You hacked this server. It's possible for you to get root from here.</value>
+      </input>
+    </utility>
+
+    <vulnerability read_fact="strings_to_leak" privilege="user_rwx" access="remote">
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+      </input>
+    </vulnerability>
+
+    <vulnerability read_fact="strings_to_leak" privilege="root_rwx" access="local">
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+      </input>
+    </vulnerability>
+
+    <service/>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- any random vulnerability that is remotely exploitable and can leak a flag, they might not actually end up with shell but they will get the leaked strings, including some extra flags that will need decoding -->
+  <system>
+    <system_name>hackmetoo_server</system_name>
+    <base distro="Debian" type="server"/>
+
+    <utility module_path=".*/after_login_message">
+      <input into="strings_to_leak">
+        <encoder type="string_format_encoder">
+          <input into="strings_to_encode">
+            <value>Hackme</value>
+          </input>
+        </encoder>
+        <generator type="ascii_art_generator"/>
+        <value>Well done! You hacked this server. There's some extra flags for you to decode.</value>
+      </input>
+    </utility>
+
+    <vulnerability read_fact="strings_to_leak" access="remote">
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+        <!-- 1: random easy encoder -->
+        <encoder type="^(ascii|alpha)_reversible$" difficulty="low">
+          <input into="strings_to_encode">
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+
+        <!-- 2: random medium encoder -->
+        <encoder type="^(ascii|alpha)_reversible$" difficulty="medium">
+          <input into="strings_to_encode">
+            <generator type="flag_generator"/>
+          </input>
+        </encoder>
+      </input>
+    </vulnerability>
+
+    <service/>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+  <!-- user level access, then a medium difficulty ctf style challenge -->
+  <system>
+    <system_name>hackmethree_server</system_name>
+    <base distro="Debian" type="server"/>
+
+    <utility module_path=".*/after_login_message">
+      <input into="strings_to_leak">
+        <encoder type="string_format_encoder">
+          <input into="strings_to_encode">
+            <value>Hackme</value>
+          </input>
+        </encoder>
+        <value>Well done! You hacked this server. There is a CTF-style challenge on the server, if you can find it.</value>
+      </input>
+    </utility>
+
+    <vulnerability read_fact="strings_to_leak" privilege="user_rwx" access="remote">
+      <input into="strings_to_leak">
+        <generator type="flag_generator" />
+      </input>
+    </vulnerability>
+
+    <!-- CTF challenge generates it's own flag -->
+    <vulnerability privilege="none" access="local" type="ctf_challenge" challenge_type="pwn" difficulty="medium"/>
+
+    <service/>
+
+    <network type="private_network"/>
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>

@@ -1,14 +1,23 @@
 require 'erb'
 require_relative '../helpers/constants.rb'
-require_relative 'xml_report_generator.rb'
+require_relative '../helpers/network.rb'
+require_relative 'xml_scenario_generator.rb'
+require_relative 'xml_marker_generator.rb'
+require_relative 'xml_cybok_generator.rb'
+require_relative 'ctfd_generator.rb'
 require 'fileutils'
+require 'ipaddr'
 require 'librarian'
+require 'zip/zip'
+require 'json'
 
 class ProjectFilesCreator
 # Creates project directory, uses .erb files to create a report and the vagrant file that will be used
 # to create the virtual machines
   @systems
   @currently_processing_system
+  @scenario_networks
+  @option_range_map
 
 # @param [Object] systems list of systems that have been defined and randomised
 # @param [Object] out_dir the directory that the project output should be stored into
@@ -25,59 +34,407 @@ class ProjectFilesCreator
     @scenario = scenario
     @time = Time.new.to_s
     @options = options
+    @scenario_networks = Hash.new { |h, k| h[k] = 1 }
+    @option_range_map = {}
 
+    # Packer builder type
+    @builder_type = @options.has_key?(:esxi_url) ? :vmware_iso : :virtualbox_iso
+  end
+
+  # Optionally place the heavy, regenerable puppet/ module tree on a tmpfs
+  # scratch mount (env SECGEN_PUPPET_TMPFS, e.g. /dev/shm/secgen-puppet), while
+  # the project directory and all its records (resolved scenario.xml,
+  # datastores/flags, Vagrantfile, .vagrant VM ids, test_results) stay on the
+  # persistent disk. The per-system module copies are large and fsync-heavy, so
+  # keeping them in RAM avoids stalling a slow or encrypted backing disk. The
+  # puppet tree is reproducible from the records, so losing it on a crash costs
+  # nothing but a rebuild. Inert unless the env var names an existing directory.
+  def setup_puppet_scratch
+    scratch_root = ENV['SECGEN_PUPPET_TMPFS']
+    return if scratch_root.nil? || scratch_root.strip.empty?
+    unless File.directory?(scratch_root)
+      Print.warn "SECGEN_PUPPET_TMPFS=#{scratch_root} is not a directory; puppet/ stays on disk"
+      return
+    end
+    puppet_link = "#{@out_dir}/puppet"
+    # Leave a real (non-symlink) puppet dir alone, e.g. re-provisioning a prior build.
+    return if File.exist?(puppet_link) && !File.symlink?(puppet_link)
+    target = "#{scratch_root}/#{File.basename(@out_dir)}/puppet"
+    FileUtils.mkpath(target)
+    FileUtils.mkpath(@out_dir)
+    FileUtils.rm_f(puppet_link) if File.symlink?(puppet_link)
+    File.symlink(target, puppet_link)
+    # Each secgen_test does `require_relative '../../../../../lib/post_provision_test'`
+    # relative to its location under puppet/. With puppet/ symlinked onto tmpfs,
+    # Ruby resolves that through the symlink to <scratch>/<id>/lib, so expose the
+    # project's real lib/ (populated later in the build) at that path too, or every
+    # test fails to load the harness.
+    lib_link = "#{scratch_root}/#{File.basename(@out_dir)}/lib"
+    FileUtils.rm_f(lib_link) if File.symlink?(lib_link)
+    File.symlink("#{File.expand_path(@out_dir)}/lib", lib_link)
+    Print.std "Puppet scratch on tmpfs: #{puppet_link} -> #{target}"
+  rescue => e
+    Print.warn "Could not set up puppet tmpfs scratch (#{e.message}); puppet/ stays on disk"
   end
 
 # Generate all relevant files for the project
   def write_files
-    FileUtils.mkpath "#{@out_dir}" unless File.exists?("#{@out_dir}")
-    FileUtils.mkpath "#{@out_dir}/puppet/" unless File.exists?("#{@out_dir}/puppet/")
+    # when writing to a project that already contains a project, move everything out the way,
+    # and keep the Vagrant config, so that existing VMs can be re-provisioned/updated
+    if File.exist? "#{@out_dir}/Vagrantfile" or File.exist? "#{@out_dir}/puppet"
+      dest_dir = "#{@out_dir}/MOVED_#{Time.new.strftime("%Y%m%d_%H%M%S")}"
+      Print.warn "Project already built to this directory -- moving last build to: #{dest_dir}"
+      Dir.glob( "#{@out_dir}/**/*" ).select { |f| File.file?( f ) }.each do |f|
+        dest = "#{dest_dir}/#{f}"
+        FileUtils.mkdir_p( File.dirname( dest ) )
+        if f =~ /\.vagrant/
+          FileUtils.cp( f, dest )
+        else
+          FileUtils.mv( f, dest )
+        end
+      end
+    end
 
-    threads = []
+    FileUtils.mkpath "#{@out_dir}" unless File.exist?("#{@out_dir}")
+    setup_puppet_scratch
+    FileUtils.mkpath "#{@out_dir}/puppet/" unless File.exist?("#{@out_dir}/puppet/")
+    FileUtils.mkpath "#{@out_dir}/environments/production/" unless File.exist?("#{@out_dir}/environments/production/")
+
     # for each system, create a puppet modules directory using librarian-puppet
     @systems.each do |system|
       @currently_processing_system = system # for template access
       path = "#{@out_dir}/puppet/#{system.name}"
-      FileUtils.mkpath(path) unless File.exists?(path)
+      FileUtils.mkpath(path) unless File.exist?(path)
       pfile = "#{path}/Puppetfile"
       Print.std "Creating Puppet modules librarian-puppet file: #{pfile}"
       template_based_file_write(PUPPET_TEMPLATE_FILE, pfile)
       Print.std 'Preparing puppet modules using librarian-puppet'
-      GemExec.exe('librarian-puppet', path, 'install')
+      librarian_output = GemExec.exe('librarian-puppet', path, 'install --verbose')
+      if librarian_output[:status] != 0
+        Print.err 'Failed to prepare puppet modules!'
+        abort
+      end
+      system.module_selections.each do |selected_module|
+
+        if selected_module.module_type == 'base'
+          url = @builder_type == :vmware_iso ? selected_module.attributes['esxi_url'].first : selected_module.attributes['url'].first
+
+          unless url.nil? || url =~ /^http*/
+            Print.std "Checking to see if local basebox #{url.split('/').last} exists"
+            packerfile_path = "#{BASES_DIR}#{selected_module.attributes['packerfile_path'].first}"
+            autounattend_path = "#{BASES_DIR}#{selected_module.attributes['packerfile_path'].first.split('/').first}/Autounattend.xml.erb"
+
+            unless File.file? "#{VAGRANT_BASEBOX_STORAGE}/#{url}"
+              Print.std "Basebox #{url.split('/').last} not found, searching for packerfile"
+
+              if File.file? packerfile_path
+                Print.info "Would you like to use the packerfile to create the packerfile from the given url (y/n)"
+                # TODO: remove user interaction, this should be set via a config option
+                (Print.info "Exiting as vagrant needs the basebox to continue"; abort) unless ['y','yes'].include?(STDIN.gets.chomp.downcase)
+
+                Print.std "Packerfile #{packerfile_path.split('/').last} found, building basebox #{url.split('/').last} via packer"
+                template_based_file_write(packerfile_path, packerfile_path.split(/.erb$/).first)
+                template_based_file_write(autounattend_path, autounattend_path.split(/.erb$/).first)
+                system "cd '#{packerfile_path.split(/\/[^\/]*.erb$/).first}' && packer build Packerfile && cd '#{ROOT_DIR}'"
+                selected_module.attributes['url'][0] = "#{VAGRANT_BASEBOX_STORAGE}/#{url}"
+                selected_module.attributes['esxi_url'][0] = "#{VAGRANT_BASEBOX_STORAGE}/#{url}"
+              else
+                Print.err "Packerfile not found, vagrant error may occur, please check the secgen metadata for the base module #{selected_module.name} for errors";
+              end
+            else
+              Print.std "Vagrant basebox #{url.split('/').last} exists"
+              selected_module.attributes['url'][0] = "#{VAGRANT_BASEBOX_STORAGE}/#{url}"
+              selected_module.attributes['esxi_url'][0] = "#{VAGRANT_BASEBOX_STORAGE}/#{url}"
+            end
+          end
+        end
+      end
     end
+
+    # Create environments/production/environment.conf - Required in Puppet 4+
+    efile = "#{@out_dir}/environments/production/environment.conf"
+    Print.std "Creating Puppet Environent file: #{efile}"
+    FileUtils.touch(efile)
 
     vfile = "#{@out_dir}/Vagrantfile"
     Print.std "Creating Vagrant file: #{vfile}"
     template_based_file_write(VAGRANT_TEMPLATE_FILE, vfile)
 
-    # Create the Report.xml file
+    # Create the scenario xml file
     xfile = "#{@out_dir}/scenario.xml"
 
-    xml_report_generator = XMLReportGenerator.new(@systems, @scenario, @time)
+    xml_report_generator = XmlScenarioGenerator.new(@systems, @scenario, @time)
     xml = xml_report_generator.output
     Print.std "Creating scenario definition file: #{xfile}"
+    write_data_to_file(xml, xfile)
+
+    # each system holds the command line options, so mask any hypervisor passwords
+    systems_dump = @systems.to_s
+    [:proxmoxpass, :ovirtpass, :esxipass].each do |key|
+      secret = @options[key].to_s
+      systems_dump = systems_dump.gsub(secret, '********') unless secret.empty?
+    end
+    write_data_to_file(systems_dump, "#{@out_dir}/systems")
+    write_data_to_file(@scenario.to_s, "#{@out_dir}/scenario")
+
+
+    # Create the marker xml file
+    x2file = "#{@out_dir}/#{FLAGS_FILENAME}"
+    xml_marker_generator = XmlMarkerGenerator.new(@systems, @scenario, @time)
+    xml = xml_marker_generator.output
+    Print.std "Creating flags and hints file: #{x2file}"
+    write_data_to_file(xml, x2file)
+
+    # Create the CyBOK xml file
+    x3file = "#{@out_dir}/#{CYBOK_FILENAME}"
+    xml_cybok_generator = XmlCybokGenerator.new(@systems, @scenario, @time)
+    xml = xml_cybok_generator.output
+    Print.std "Creating CyBOK file: #{x3file}"
+    write_data_to_file(xml, x3file)
+
+    Print.std "Saving spoiler/admin records..."
+    jfile = "#{@out_dir}/datastores"
+    Print.std "Saving datastore records: #{jfile}"
+    json = JSON.generate($datastore)
+    write_data_to_file(json, jfile)
+
+    if @options[:network_map]
+      system_ips = {}
+      @systems.each do |system|
+        ips = []
+        system.module_selections.each do |mod|
+          next unless mod.module_type == 'network'
+          @options[:network_map].each_value do |network|
+            ip = network[:ips][mod.unique_id]
+            ips << ip if ip
+          end
+        end
+        system_ips[system.name] = ips.join(',') unless ips.empty?
+      end
+      jfile = "#{@out_dir}/#{IP_ADDRESSES_FILENAME}"
+      Print.std "Saving IP addresses: #{jfile}"
+      write_data_to_file(JSON.generate(system_ips), jfile)
+    end
+
+    if $datastore.has_key? "spoiler_admin_pass"
+      pfile = "#{@out_dir}/#{SPOILER_ADMIN_FILENAME}"
+      Print.std "Saving spoiler/admin passwords: #{pfile}"
+      pass_notes = $datastore["spoiler_admin_pass"].join("\n")
+      write_data_to_file(pass_notes, pfile)
+    end
+
+    # Create the CTFd zip file for import
+    ctfdfile = "#{@out_dir}/CTFd_importable.zip"
+    Print.std "Creating CTFd configuration: #{ctfdfile}"
+
+    ctfd_generator = CTFdGenerator.new(@systems, @scenario, @time)
+    ctfd_files = ctfd_generator.ctfd_files
+
+    # zip up the CTFd export
     begin
-      File.open(xfile, 'w+') do |file|
-        file.write(xml)
+      Zip::ZipFile.open(ctfdfile, Zip::ZipFile::CREATE) { |zipfile|
+        zipfile.mkdir("db")
+        ctfd_files.each do |ctfd_file_name, ctfd_file_content|
+          zipfile.get_output_stream("db/#{ctfd_file_name}") { |f|
+            f.print ctfd_file_content
+          }
+        end
+      }
+    rescue StandardError => e
+      Print.err "Error writing zip file: #{e.message}"
+      abort
+    end
+
+    # Copy the test superclass into the project/lib directory
+    Print.std "Copying post-provision testing class"
+    FileUtils.mkdir("#{@out_dir}/lib")
+    FileUtils.cp("#{ROOT_DIR}/lib/objects/post_provision_test.rb", "#{@out_dir}/lib/post_provision_test.rb")
+
+    # For Proxmox builds, ship the guest-agent client and a (non-secret) test
+    # context so post-provision tests can reach VMs via the QEMU Guest Agent.
+    # The password is NOT written here; it is read from ENV at test time.
+    if @options[:proxmoxuser] && @options[:proxmoxurl]
+      FileUtils.cp("#{ROOT_DIR}/lib/helpers/proxmox_connection.rb", "#{@out_dir}/lib/proxmox_connection.rb")
+      context = {
+        'url' => @options[:proxmoxurl],
+        'user' => @options[:proxmoxuser],
+        # Per-system facts tests need without reaching back into the SecGen
+        # checkout (e.g. which VM is the attacker — base <type>attack</type>).
+        'systems' => @systems.map { |system| system_test_context(system) }
+      }
+      write_data_to_file(JSON.pretty_generate(context), "#{@out_dir}/test_context.json")
+      Print.std "Wrote test context (credentials excluded)"
+    end
+
+    Print.std "VM(s) can be built using 'vagrant up' in #{@out_dir}"
+
+  end
+
+  def write_data_to_file(data, path)
+    begin
+      File.open(path, 'w+') do |file|
+        file.write(data)
       end
     rescue StandardError => e
       Print.err "Error writing file: #{e.message}"
-      exit
+      abort
     end
+  end
+
+  # Non-secret per-system facts for test_context.json: the system name, its base
+  # module path, and the base's <type> tags (e.g. 'attack' for a Kali box), read
+  # from the base metadata here at build time so a secgen_test doesn't have to
+  # reach back into the checkout.
+  def system_test_context(system)
+    base = system.module_selections.find { |m| m.module_type == 'base' }
+    base_path = base&.module_path
+    { 'name' => system.name,
+      'base' => base_path,
+      'base_types' => base_path ? base_type_tags(base_path) : [],
+      'proxmox_vm_config' => proxmox_vm_config(system) }
+  end
+
+  # VM settings requested by the system's modules (<proxmox_cpu>, <proxmox_cores>),
+  # keyed by Proxmox config option. Applied in post-build.
+  def proxmox_vm_config(system)
+    system.module_selections.each_with_object({}) do |mod, config|
+      %w[cpu cores].each do |option|
+        value = mod.attributes["proxmox_#{option}"]&.first
+        config[option] = value.strip if value
+      end
+    end
+  end
+
+  # The <type> values declared in a base module's secgen_metadata.xml.
+  def base_type_tags(base_module_path)
+    meta = "#{ROOT_DIR}/#{base_module_path}/secgen_metadata.xml"
+    return [] unless File.exist?(meta)
+    Nokogiri::XML(File.read(meta)).remove_namespaces!.xpath('//type').map { |n| n.text.strip }
+  rescue StandardError => e
+    Print.verbose "Could not read base types from #{base_module_path}: #{e.message}"
+    []
   end
 
 # @param [Object] template erb path
 # @param [Object] filename file to write to
   def template_based_file_write(template, filename)
-    template_out = ERB.new(File.read(template), 0, '<>-')
+    template_out = ERB.new(File.read(template), trim_mode: '<>-')
 
     begin
-      File.open(filename, 'w+') do |file|
+      File.open(filename, 'wb+') do |file|
         file.write(template_out.result(self.get_binding))
       end
     rescue StandardError => e
       Print.err "Error writing file: #{e.message}"
-      exit
+      Print.err e.backtrace.inspect
+    end
+  end
+
+
+  def lookup_network_vlan(network_module)
+    vlan_index = network_module.received_inputs['vlan']&.first&.to_i || 1
+    base_vlan = @options[:proxmoxvlan].to_i rescue 0
+    base_vlan + (vlan_index * 100)
+  end
+
+  def lookup_network_ip(network_module)
+    base_vlan = @options[:proxmoxvlan].to_i rescue 0
+    key = NetworkFunctions.compute_vlan(network_module, base_vlan)
+    @options[:network_map]&.key?(key) ? @options[:network_map][key][:ips][network_module.unique_id] : nil
+  end
+
+  def lookup_network_gateway(network_module)
+    base_vlan = @options[:proxmoxvlan].to_i rescue 0
+    key = NetworkFunctions.compute_vlan(network_module, base_vlan)
+    @options[:network_map]&.key?(key) ? @options[:network_map][key][:gateway][network_module.unique_id] : nil
+  end
+
+  def lookup_network_dns(network_module)
+    base_vlan = @options[:proxmoxvlan].to_i rescue 0
+    key = NetworkFunctions.compute_vlan(network_module, base_vlan)
+    @options[:network_map]&.key?(key) ? @options[:network_map][key][:dns_nameservers][network_module.unique_id] : nil
+  end
+
+  def lookup_network_routes(network_module)
+    base_vlan = @options[:proxmoxvlan].to_i rescue 0
+    key = NetworkFunctions.compute_vlan(network_module, base_vlan)
+    return [] unless @options[:network_map]&.key?(key)
+    @options[:network_map][key][:routes][network_module.unique_id] || []
+  end
+
+  # Resolves the IP address to use for a network module in the Vagrantfile.
+  # Priority: specific IP_address (verbatim) > range with --network-ranges override > range default
+    def resolve_network(network_module)
+    if network_module.received_inputs.include?('IP_address')
+      # Specific IP provided — use verbatim
+      network_module.received_inputs['IP_address'].first
+    else
+      ip_range = if @options.has_key?(:ip_ranges)
+                   scenario_ip_range = network_module.received_inputs['range']&.first
+                   if @option_range_map.has_key?(scenario_ip_range)
+                     @option_range_map[scenario_ip_range]
+                   else
+                     options_ips = @options[:ip_ranges].dup
+                     options_ips.delete_if { |ip| @option_range_map.has_value?(ip) }
+                     @option_range_map[scenario_ip_range] = options_ips.first
+                     options_ips.first
+                   end
+                 else
+                   network_module.received_inputs['range']&.first
+                 end
+      get_ip_from_range(ip_range)
+    end
+  end
+
+  def get_ip_from_range(ip_range)
+    # increment @scenario_networks{ip_range=>counter}
+    @scenario_networks[ip_range] += 1
+
+    # Split the range up and replace the last octet with the counter value
+    split_ip = ip_range.split('.')
+    last_octet = @scenario_networks[ip_range]
+    last_octet = last_octet % 254
+
+    # Replace the last octet in our split_ip array and return the IP
+    split_ip[3] = last_octet.to_s
+    split_ip.join('.')
+  end
+
+  # Replace 'network' with 'snoop' where the system name contains snoop
+  def get_ovirt_network_name(system_name, network_name)
+    split_name = network_name.split('-')
+    split_name[1] = 'snoop' if system_name.include? 'snoop'
+    split_name.join('-')
+  end
+
+# Determine how much memory the system requires for Vagrantfile
+  def resolve_memory(system)
+    if @options.has_key? :memory_per_vm
+      memory = @options[:memory_per_vm]
+    elsif @options.has_key? :total_memory
+      memory = @options[:total_memory].to_i / @systems.length.to_i
+    elsif (@options.has_key? :ovirtuser) && (@options.has_key? :ovirtpass)
+      # all ovirt vms -- could be more specific: && (@base_type.include? 'desktop')
+      memory = '3000'
+    elsif !@options.has_key?(:esxiuser) && desktop_base?(system)
+      # VirtualBox: current desktop distros (Kali, Debian KDE) struggle in 1GB, and attack
+      # VMs install large tool sets during provisioning (Proxmox sets its own memory)
+      memory = '3000'
+    else
+      memory = '1024'
+    end
+
+    [memory.to_i, memory_required(system)].max.to_s
+  end
+
+  # The largest <memory_required> (MB) among the system's modules; 0 if none declare it.
+  def memory_required(system)
+    system.module_selections.map { |mod| mod.attributes['memory_required']&.first.to_i }.max.to_i
+  end
+
+  def desktop_base?(system)
+    system.module_selections.any? do |mod|
+      mod.module_type == 'base' && (mod.attributes['type'] || []).include?('desktop')
     end
   end
 

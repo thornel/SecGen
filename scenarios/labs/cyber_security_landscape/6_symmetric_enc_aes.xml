@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+
+<scenario xmlns="http://www.github/cliffe/SecGen/scenario"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.github/cliffe/SecGen/scenario">
+
+  <name>Symmetric Encryption with AES</name>
+  <author>Z. Cliffe Schreuders</author>
+  <description>
+    Symmetric encryption involves using the same key for both the encryption and decryption of data. In this lab, you will explore symmetric encryption with a focus on the Advanced Encryption Standard (AES). AES is a widely used block cipher that plays a crucial role in securing data in various applications, from secure communications to data protection. This lab aims to provide you with a high-level understanding of AES and its fundamental operations, such as Substitution (SubBytes), Permutation (ShiftRows and MixColumns), and Key Addition (Round Key). You will also explore how to work with AES encryption and decryption using both the GPG tool and Python3 with the Cryptodome module. This practical hands-on experience will equip you with the knowledge and skills necessary to apply AES encryption to secure your data.
+
+    Throughout this lab, you will have the opportunity to complete a series of tasks and challenges. These practical exercises will not only help you understand the underlying principles of AES but also equip you with the skills to apply this encryption technique to real-world scenarios, ensuring the security and confidentiality of your data.
+
+    This is a Hackerbot lab. Work through the labsheet, then when prompted interact with Hackerbot.
+  </description>
+
+  <lab_sheet_url>https://cliffe.github.io/HacktivityLabSheets/labs/cyber_security_landscape/6-symmetric-enc-aes/</lab_sheet_url>
+
+  <type>ctf-lab</type>
+  <type>hackerbot-lab</type>
+  <type>lab-sheet</type>
+  <difficulty>intermediate</difficulty>
+
+  <CyBOK KA="AC" topic="Algorithms, Schemes and Protocols">
+    <keyword>ADVANCED ENCRYPTION STANDARD (AES)</keyword>
+    <keyword>ECB (ELECTRONIC CODE BOOK) BLOCK CIPHER MODE</keyword>
+  </CyBOK>
+  <CyBOK KA="AC" topic="Symmetric Cryptography">
+    <keyword>symmetric primitives</keyword>
+    <keyword>symmetric encryption and authentication</keyword>
+  </CyBOK>
+  <CyBOK KA="AC" topic="Cryptographic Implementation">
+    <keyword>Cryptographic Libraries</keyword>
+    <keyword>ENCRYPTION - TOOLS</keyword>
+  </CyBOK>
+
+  <system>
+    <system_name>desktop</system_name>
+    <base distro="Debian 12" type="desktop" name="KDE"/>
+
+    <input into_datastore="IP_addresses">
+      <network_ip system="desktop"/>
+      <network_ip system="hb_server"/>
+    </input>
+
+    <input into_datastore="hackerbot_key">
+      <generator type="ssh_key_pair"/>
+    </input>
+
+    <!--generate two accounts, YOU and someone else-->
+    <input into_datastore="accounts">
+      <generator type="account">
+        <input into="username">
+          <generator type="random_sanitised_word">
+            <input into="wordlist">
+              <value>mythical_creatures</value>
+            </input>
+          </generator>
+        </input>
+        <input into="password">
+          <value>tiaspbiqe2r</value>
+        </input>
+        <input into="super_user">
+          <value>true</value>
+        </input>
+      </generator>
+    </input>
+
+    <input into_datastore="spoiler_admin_pass">
+      <generator type="strong_password_generator"/>
+    </input>
+
+    <!--Create the users-->
+    <utility module_path=".*/parameterised_accounts">
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/kde_minimal">
+      <input into="autologin_user">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="accounts">
+        <datastore>accounts</datastore>
+      </input>
+      <input into="autostart_konsole">
+        <value>true</value>
+      </input>
+    </utility>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/hash_tools"/>
+    <utility module_path=".*/python_crypto_libs"/>
+
+    <utility module_path=".*/hosts">
+      <input into="hosts">
+        <value>hackerbot</value>
+      </input>
+      <input into="IP_addresses">
+        <datastore access="1">IP_addresses</datastore>
+      </input>
+    </utility>
+
+    <utility module_path=".*/iceweasel">
+      <input into="accounts">
+        <datastore access="0">accounts</datastore>
+      </input>
+      <input into="start_page">
+        <value>hackerbot:8080</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/hackerbot_client">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+  </system>
+
+  <system>
+    <system_name>hb_server</system_name>
+    <base distro="Kali" name="MSF"/>
+
+    <service module_path=".*/ergochat"/>
+
+    <utility module_path=".*/hackerbot_webclient">
+      <input into="username">
+        <datastore access="0" access_json="['username']">accounts</datastore>
+      </input>
+      <input into="irc_server_ip">
+        <value>hackerbot</value>
+      </input>
+    </utility>
+
+    <utility module_path=".*/metasploit_framework"/>
+    <utility module_path=".*/nmap"/>
+    <utility module_path=".*/handy_cli_tools"/>
+    <utility module_path=".*/python_crypto_libs"/>
+
+    <service type="httpd"/>
+
+    <utility module_path=".*/hackerbot">
+      <input into="ssh_key_pair">
+        <datastore>hackerbot_key</datastore>
+      </input>
+      <input into="hackerbot_configs">
+        <generator module_path=".*/symmetric_enc_aes">
+          <input into="accounts">
+            <datastore>accounts</datastore>
+          </input>
+          <input into="desktop_ip">
+            <datastore access="0">IP_addresses</datastore>
+          </input>
+          <input into="hackerbot_server_ip">
+            <datastore access="1">IP_addresses</datastore>
+          </input>
+        </generator>
+      </input>
+    </utility>
+
+    <network type="private_network"/>
+
+    <build type="cleanup">
+      <input into="root_password">
+        <datastore>spoiler_admin_pass</datastore>
+      </input>
+    </build>
+  </system>
+
+</scenario>
